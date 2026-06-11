@@ -132,9 +132,25 @@ export function AuthModal({ initialMode = "login", onClose }) {
         </form>
 
         {mode === "login" && (
-          <p className="modal-hint">
-            Demo — admin@tuti.dev · seller@tuti.dev · customer@tuti.dev · Password: password123
-          </p>
+          <>
+            <p className="modal-hint">
+              <button
+                className="ghost-action compact"
+                style={{ padding: 0, background: "none", border: "none", color: "var(--brand-dark)", textDecoration: "underline", cursor: "pointer", font: "inherit", fontSize: "0.8rem" }}
+                onClick={() => {
+                  onClose();
+                  window.history.pushState(null, "", "/reset-password");
+                  window.dispatchEvent(new PopStateEvent("popstate"));
+                }}
+                type="button"
+              >
+                Forgot your password?
+              </button>
+            </p>
+            <p className="modal-hint">
+              Demo — admin@tuti.dev · seller@tuti.dev · customer@tuti.dev · Password: password123
+            </p>
+          </>
         )}
       </div>
     </div>

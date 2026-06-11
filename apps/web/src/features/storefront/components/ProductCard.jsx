@@ -1,9 +1,15 @@
-import { Plus, Star } from "lucide-react";
+import { Heart, Plus, Star } from "lucide-react";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { bayesianScore } from "@tuti/shared/utils/rating.js";
+import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 
 export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewProduct }) {
+  const { isAuthenticated } = useAuthStore();
+  const { has, toggle } = useWishlistStore();
+  const isWishlisted = has(product.id);
+
   const score = bayesianScore(product.rating, product.reviews);
   const availabilityLabel = product.stock > 5 ? "In stock" : product.stock > 0 ? "Limited availability" : "Out of stock";
   const leadTimeLabel = product.leadTimeDays ? `${product.leadTimeDays}-day lead` : null;
@@ -62,6 +68,17 @@ export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewP
             <button className="secondary-action compact catalog-card-view" onClick={viewProduct} type="button">
               View details
             </button>
+            {isAuthenticated() ? (
+              <button
+                aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+                aria-pressed={isWishlisted}
+                className={isWishlisted ? "icon-button wishlist-btn saved" : "icon-button wishlist-btn"}
+                onClick={() => toggle(product.id, product.name)}
+                type="button"
+              >
+                <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
+              </button>
+            ) : null}
             <button className="icon-button primary" onClick={() => onAddToCart(product)} title="Add to cart" aria-label={`Add ${product.name} to cart`} type="button">
               <Plus size={20} />
             </button>

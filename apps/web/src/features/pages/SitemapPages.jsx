@@ -1,4 +1,5 @@
 export { OrderConfirmationPage } from "./sitemap/OrderConfirmationPage.jsx";
+export { ResetPasswordPage } from "./sitemap/ResetPasswordPage.jsx";
 export { FragranceFinderPage } from "./sitemap/FragranceFinderPage.jsx";
 export { GiftingPage } from "./sitemap/GiftingPage.jsx";
 export { OffersPage } from "./sitemap/OffersPage.jsx";
