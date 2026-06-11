@@ -1,0 +1,10 @@
+export { OrderConfirmationPage } from "./sitemap/OrderConfirmationPage.jsx";
+export { FragranceFinderPage } from "./sitemap/FragranceFinderPage.jsx";
+export { GiftingPage } from "./sitemap/GiftingPage.jsx";
+export { OffersPage } from "./sitemap/OffersPage.jsx";
+export { JournalPage } from "./sitemap/JournalPage.jsx";
+export { CustomerServicePage } from "./sitemap/CustomerServicePage.jsx";
+export { AccountPage } from "./sitemap/AccountPage.jsx";
+export { CartCheckoutPage } from "./sitemap/CartCheckoutPage.jsx";
+export { StoreLocatorPage } from "./sitemap/StoreLocatorPage.jsx";
+export { LegalPage } from "./sitemap/LegalPage.jsx";

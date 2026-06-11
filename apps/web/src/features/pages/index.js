@@ -1,0 +1,10 @@
+export { HomePage } from "./HomePage.jsx";
+export { CollectionsPage } from "./CollectionsPage.jsx";
+export { ShopsPage } from "./ShopsPage.jsx";
+export { AboutPage } from "./AboutPage.jsx";
+export { SellerLandingPage } from "./SellerLandingPage.jsx";
+export { SellerBrandPage } from "./SellerBrandPage.jsx";
+export { CollectionPage } from "./CollectionPage.jsx";
+export { CartCheckoutPage as CartPage } from "./SitemapPages.jsx";
+export { StorefrontPage as ShopPage } from "../storefront/StorefrontPage.jsx";
+export { ProductDetailPage as ProductPage } from "./ProductDetailPage.jsx";

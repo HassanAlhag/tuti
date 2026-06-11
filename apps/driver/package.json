@@ -1,0 +1,23 @@
+{
+  "name": "@tuti/driver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5176",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 5176"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.100.14",
+    "@tuti/shared": "*",
+    "lucide-react": "^0.563.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.2",
+    "vite": "^8.0.14"
+  }
+}

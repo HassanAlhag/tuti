@@ -1,0 +1,33 @@
+{
+  "name": "tuti-marketplace",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "backend",
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "predev":        "node -e \"const {execSync}=require('child_process');[5055,5173,5174,5175,5176,5177].forEach(p=>{try{execSync('lsof -ti :'+p+'| xargs kill -9',{stdio:'ignore'})}catch{}})\"",
+    "dev":           "npm run dev:backend & npm run dev:web & npm run dev:seller & npm run dev:admin & npm run dev:driver & npm run dev:sr",
+    "dev:backend":   "npm run dev  -w backend",
+    "dev:web":       "npm run dev  -w @tuti/web",
+    "dev:client":    "npm run dev:web",
+    "dev:seller":    "npm run dev  -w @tuti/seller",
+    "dev:admin":     "npm run dev  -w @tuti/admin",
+    "dev:driver":    "npm run dev  -w @tuti/driver",
+    "dev:sr":        "npm run dev  -w @tuti/sr",
+    "build":         "npm run build -w @tuti/web && npm run build -w @tuti/seller && npm run build -w @tuti/admin && npm run build -w @tuti/driver && npm run build -w @tuti/sr",
+    "build:web":     "npm run build -w @tuti/web",
+    "build:client":  "npm run build:web",
+    "build:seller":  "npm run build -w @tuti/seller",
+    "build:admin":   "npm run build -w @tuti/admin",
+    "build:driver":  "npm run build -w @tuti/driver",
+    "build:sr":      "npm run build -w @tuti/sr",
+    "start":         "npm run start -w backend",
+    "kill":          "lsof -ti :5055,5173,5174,5175,5176,5177 | xargs kill -9 2>/dev/null || true",
+    "seed:showcase": "node backend/src/seed/showcase-seed.mjs",
+    "seed:showcase:reset": "echo 'Seed-mode placements live in server memory and reset on server restart. Restart the backend then run: npm run seed:showcase'"
+  }
+}

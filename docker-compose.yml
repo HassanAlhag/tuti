@@ -1,0 +1,45 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: tuti
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: production
+      PORT: 5055
+      MONGO_URI: mongodb://mongo:27017/tuti
+      CLIENT_ORIGIN: http://localhost:5173
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-refresh-in-production}
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:5055/api
+
+volumes:
+  mongo_data:
+  uploads:

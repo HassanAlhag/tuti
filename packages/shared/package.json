@@ -1,0 +1,19 @@
+{
+  "name": "@tuti/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api":        "./api/client.js",
+    "./brand":      "./brand.js",
+    "./constants":  "./constants/index.js",
+    "./constants/*": "./constants/*.js",
+    "./workflows":  "./workflows/index.js",
+    "./workflows/*": "./workflows/*.js",
+    "./store/*":    "./store/*.js",
+    "./utils/*":    "./utils/*.js",
+    "./components/*": "./components/*.jsx",
+    "./providers/*":  "./providers/*.jsx",
+    "./styles/*":   "./styles/*.css"
+  }
+}

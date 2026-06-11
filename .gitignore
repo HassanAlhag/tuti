@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Uploaded files — local only; use object storage in production
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript cache
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
