@@ -1,8 +1,14 @@
 import { BadgePercent } from "lucide-react";
 import { offerSections } from "../siteMap.js";
 import { PageHero, FeatureGrid } from "./sitemapPageShared.jsx";
+import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 export function OffersPage({ promotions, getProduct, onNavigate }) {
+  useSeoMeta({
+    title: "Offers & Promotions — Perfumes, Bundles & Sale",
+    description: "Limited-time offers, bundles, seasonal sales, and promo codes on luxury perfumes, cakes, and gift sets.",
+    canonical: "https://tuti.ae/offers",
+  });
   return (
     <main className="page-shell">
       <PageHero

@@ -16,6 +16,7 @@ import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { publicSellerBrandApi } from "@tuti/shared/api/client.js";
 import { ProductCardRouter } from "../storefront/components/ProductCardRouter.jsx";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
+import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 function isImageUrl(value) {
   return /^(https?:\/\/|\/uploads\/|data:)/i.test(String(value || ""));
@@ -62,6 +63,24 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
   const loading = profileQuery.isLoading || (profileQuery.isSuccess && productsQuery.isLoading);
   const notFound = profileQuery.isError && !profileQuery.data;
   const errorMessage = profileQuery.error?.message || productsQuery.error?.message || "";
+
+  useSeoMeta({
+    title: profile ? getBrandHeading(profile) : undefined,
+    description: profile
+      ? `${getBrandHeading(profile)} — ${profile.tagline || "Browse products and shop with cash on delivery on Tuti."}`
+      : undefined,
+    ogImage: isImageUrl(profile?.logoUrl) ? profile.logoUrl : undefined,
+    canonical: profile ? `https://tuti.ae/sellers/${profile.slug || cleanSlug}` : undefined,
+    jsonLd: profile ? {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": getBrandHeading(profile),
+      "description": profile.tagline || getBrandHeading(profile),
+      "image": isImageUrl(profile.logoUrl) ? profile.logoUrl : undefined,
+      "url": `https://tuti.ae/sellers/${profile.slug || cleanSlug}`,
+      "address": profile.city ? { "@type": "PostalAddress", "addressLocality": profile.city, "addressCountry": "AE" } : undefined,
+    } : undefined,
+  });
 
   useEffect(() => {
     if (!profile?.slug && !cleanSlug) return;

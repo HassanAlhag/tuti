@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Core pages -->
+  <url><loc>https://tuti.ae/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://tuti.ae/shop</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://tuti.ae/shop/perfumes</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://tuti.ae/shop/cakes</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://tuti.ae/shop/gift-sets</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://tuti.ae/build-a-box</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+
+  <!-- Gifting and editorial -->
+  <url><loc>https://tuti.ae/gifting</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://tuti.ae/offers</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://tuti.ae/fragrance-finder</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tuti.ae/collections</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tuti.ae/shops</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+
+  <!-- Journal -->
+  <url><loc>https://tuti.ae/journal</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tuti.ae/journal/perfume-tips</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://tuti.ae/journal/how-to-choose-a-perfume</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://tuti.ae/journal/fragrance-notes-guide</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://tuti.ae/journal/oud-oriental-perfumes</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://tuti.ae/journal/gift-guides</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+
+  <!-- Brand pages -->
+  <url><loc>https://tuti.ae/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://tuti.ae/sell</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://tuti.ae/store-locator</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://tuti.ae/customer-service</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+
+  <!-- Legal -->
+  <url><loc>https://tuti.ae/legal</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://tuti.ae/legal/privacy-policy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://tuti.ae/legal/terms-conditions</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://tuti.ae/legal/cookie-policy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://tuti.ae/legal/refund-policy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://tuti.ae/legal/shipping-policy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+
+</urlset>

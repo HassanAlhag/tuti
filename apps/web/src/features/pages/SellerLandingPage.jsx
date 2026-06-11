@@ -16,6 +16,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { sellerApplicationsApi } from "@tuti/shared/api/client.js";
+import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 // ── Rep code helpers ─────────────────────────────────────────────────
 function storeRepCode(code) {
@@ -409,6 +410,12 @@ function SellerApplicationForm({ repCode }) {
 export function SellerLandingPage() {
   const [repCode, setRepCode] = useState(() => getStoredRepCode());
   const formRef  = useRef(null);
+
+  useSeoMeta({
+    title: "Sell on Tuti — List Your Perfumes, Cakes & Gift Sets",
+    description: "Join Tuti Marketplace as a seller. List perfumes, cakes, and gift sets and reach customers across the UAE with cash on delivery.",
+    canonical: "https://tuti.ae/sell",
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
