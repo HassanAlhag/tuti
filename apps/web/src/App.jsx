@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuthStore }  from "@tuti/shared/store/authStore.js";
 import { marketplaceApi } from "@tuti/shared/api/client.js";
 import { useCartStore }  from "./store/cartStore.js";
+import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 
 // ── Page components (client-owned, no seller/admin code) ──────────
 import { ClientLayout }       from "./features/layout/ClientLayout.jsx";
@@ -32,6 +33,7 @@ import {
   CustomerServicePage,
   AccountPage,
   OrderConfirmationPage,
+  ResetPasswordPage,
   StoreLocatorPage,
   LegalPage,
 } from "./features/pages/SitemapPages.jsx";
@@ -59,6 +61,7 @@ function getRoute() {
   if (p.startsWith("/support"))          return "support";
   if (p.startsWith("/customer-service")) return "customer-service";
   if (p.startsWith("/account"))          return "account";
+  if (p.startsWith("/reset-password"))   return "reset-password";
   if (p.startsWith("/store-locator"))    return "store-locator";
   if (p.startsWith("/legal"))            return "legal";
   return "home";
@@ -98,6 +101,7 @@ const DEFAULT_REVIEW = { rating: 5, title: "", body: "", verified: true, scent: 
 export default function App() {
   const { user, isAuthenticated }  = useAuthStore();
   const { items, addItem, updateQuantity, updateItemMetadata, clearCart, total } = useCartStore();
+  const { hydrate: hydrateWishlist } = useWishlistStore();
 
   const [route,       setRoute]       = useState(getRoute);
   const [category,    setCategory]    = useState(getCategory);
@@ -136,6 +140,11 @@ export default function App() {
     window.addEventListener("popstate", onPopState);
     return () => { mounted = false; window.removeEventListener("popstate", onPopState); };
   }, [isAuthenticated()]);
+
+  // Hydrate wishlist from persisted user data when auth changes
+  useEffect(() => {
+    hydrateWishlist(user?.wishlist || []);
+  }, [user?.wishlist, hydrateWishlist]);
 
   // ── Navigation ──────────────────────────────────────────────────
   function push(path) {
@@ -422,6 +431,7 @@ export default function App() {
       />
     ),
     account:            <AccountPage onNavigate={navigatePath} />,
+    "reset-password":   <ResetPasswordPage onNavigate={navigatePath} />,
     "store-locator":    <StoreLocatorPage />,
     legal:              <LegalPage />,
   };

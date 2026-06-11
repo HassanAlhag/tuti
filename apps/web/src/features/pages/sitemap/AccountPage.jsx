@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, HelpCircle, MapPin, PackageCheck, Pencil, Plus, ShoppingBag, Star, Trash2, User } from "lucide-react";
+import { Bell, CheckCircle2, HelpCircle, Heart, MapPin, PackageCheck, Pencil, Plus, Settings, ShoppingBag, Star, Trash2, User } from "lucide-react";
 import { authApi, ordersApi } from "@tuti/shared/api/client.js";
+import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
@@ -20,6 +21,7 @@ import {
 
 export function AccountPage({ onNavigate }) {
   const { user, isAuthenticated, updateUser } = useAuthStore();
+  const { ids: wishlistIds } = useWishlistStore();
   const [accountTab, setAccountTab] = useState("orders");
   const [ordersState, setOrdersState] = useState({ loading: false, error: "", orders: [] });
   const [selectedOrderId, setSelectedOrderId] = useState("");
@@ -40,6 +42,12 @@ export function AccountPage({ onNavigate }) {
   const [addrForm, setAddrForm] = useState({ label: "Home", line1: "", line2: "", city: "", isDefault: false });
   const [addrSaving, setAddrSaving] = useState(false);
   const [addrError, setAddrError] = useState("");
+
+  // Settings
+  const defaultSettings = { emailNotifications: true, whatsappNotifications: false, marketingEmails: true };
+  const [settingsForm, setSettingsForm] = useState(defaultSettings);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsOk, setSettingsOk] = useState(false);
 
   const authenticated = isAuthenticated();
 
@@ -126,9 +134,27 @@ export function AccountPage({ onNavigate }) {
     setAddrError("");
   }
 
+  async function saveSettings(e) {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsOk(false);
+    try {
+      const updated = await authApi.updateSettings(settingsForm);
+      updateUser({ settings: updated });
+      setSettingsOk(true);
+      setTimeout(() => setSettingsOk(false), 3000);
+    } catch { /* non-critical */ } finally {
+      setSettingsSaving(false);
+    }
+  }
+
   useEffect(() => {
     if (authenticated && user?.addresses) setAddresses(user.addresses);
   }, [authenticated, user?.addresses]);
+
+  useEffect(() => {
+    if (authenticated && user?.settings) setSettingsForm({ ...defaultSettings, ...user.settings });
+  }, [authenticated, user?.settings]);
 
   useEffect(() => {
     let mounted = true;
@@ -198,6 +224,8 @@ export function AccountPage({ onNavigate }) {
               { key: "orders",    label: "Orders",    Icon: PackageCheck },
               { key: "profile",   label: "Profile",   Icon: User },
               { key: "addresses", label: "Addresses", Icon: MapPin },
+              { key: "wishlist",  label: "Wishlist",  Icon: Heart },
+              { key: "settings",  label: "Settings",  Icon: Settings },
             ].map(({ key, label, Icon }) => (
               <button
                 aria-current={accountTab === key ? "page" : undefined}
@@ -338,6 +366,86 @@ export function AccountPage({ onNavigate }) {
                     <p>Add a delivery address for faster checkout.</p>
                   </div>
                 )}
+              </div>
+            </section>
+          ) : null}
+
+          {accountTab === "wishlist" ? (
+            <section className="account-form-section">
+              <div className="checkout-form-card">
+                <div className="checkout-card-heading">
+                  <span className="sitemap-card-icon"><Heart size={19} /></span>
+                  <div>
+                    <h2>Saved items</h2>
+                    <p>Products you've saved for later.</p>
+                  </div>
+                </div>
+                {wishlistIds.size > 0 ? (
+                  <div className="account-address-list">
+                    {[...wishlistIds].map((productId) => (
+                      <div className="account-address-row" key={productId}>
+                        <div>
+                          <strong>{productId}</strong>
+                          <span className="muted-label">Saved product</span>
+                        </div>
+                        <div className="account-address-actions">
+                          <button className="ghost-action compact" onClick={() => onNavigate?.(`/products/${productId}`)} type="button">
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="account-empty-state">
+                    <Heart size={22} />
+                    <h3>No saved items</h3>
+                    <p>Tap the heart on any product to save it here.</p>
+                    <button className="primary-action compact" onClick={() => onNavigate?.("/shop")} type="button">
+                      Browse products
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : null}
+
+          {accountTab === "settings" ? (
+            <section className="account-form-section">
+              <div className="checkout-form-card">
+                <div className="checkout-card-heading">
+                  <span className="sitemap-card-icon"><Settings size={19} /></span>
+                  <div>
+                    <h2>Notification settings</h2>
+                    <p>Choose how you hear from Tuti.</p>
+                  </div>
+                </div>
+                <form className="account-settings-list" onSubmit={saveSettings}>
+                  {[
+                    { key: "emailNotifications",    label: "Order and delivery updates by email",   desc: "Confirmations, status changes, and delivery notifications." },
+                    { key: "whatsappNotifications", label: "Order updates via WhatsApp",             desc: "Real-time messages when your order status changes." },
+                    { key: "marketingEmails",       label: "Promotions and new arrivals",            desc: "Offers, seasonal collections, and gift ideas." },
+                  ].map(({ key, label, desc }) => (
+                    <label className="account-settings-row" key={key}>
+                      <div>
+                        <strong>{label}</strong>
+                        <span>{desc}</span>
+                      </div>
+                      <input
+                        checked={settingsForm[key] ?? true}
+                        onChange={(e) => setSettingsForm((f) => ({ ...f, [key]: e.target.checked }))}
+                        type="checkbox"
+                        className="account-settings-toggle"
+                      />
+                    </label>
+                  ))}
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                    <button className="primary-action compact" disabled={settingsSaving} type="submit">
+                      {settingsSaving ? "Saving…" : "Save preferences"}
+                    </button>
+                    {settingsOk ? <span style={{ color: "var(--success)", fontSize: "var(--text-sm)" }}>Saved ✓</span> : null}
+                  </div>
+                </form>
               </div>
             </section>
           ) : null}

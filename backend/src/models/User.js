@@ -25,6 +25,20 @@ const userSchema = new mongoose.Schema(
       city: { type: String, trim: true, default: "" },
       isDefault: { type: Boolean, default: false },
     }],
+    wishlist: [{
+      _id: false,
+      productId: { type: String, required: true },
+      productName: { type: String, default: "" },
+      addedAt: { type: Date, default: Date.now },
+    }],
+    settings: {
+      _id: false,
+      emailNotifications: { type: Boolean, default: true },
+      whatsappNotifications: { type: Boolean, default: false },
+      marketingEmails: { type: Boolean, default: true },
+    },
+    passwordResetToken: { type: String, select: false, default: null },
+    passwordResetExpiresAt: { type: Date, select: false, default: null },
   },
   { timestamps: true }
 );

@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { env } from "../../config/env.js";
@@ -482,4 +482,125 @@ export async function deleteAddress(userId, addressId) {
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   user.addresses = (user.addresses || []).filter((a) => a.id !== addressId);
   return [...user.addresses];
+}
+
+// ── Wishlist ─────────────────────────────────────────────────────────────────
+
+export async function toggleWishlist(userId, productId, productName = "") {
+  if (env.mongoUri) {
+    const user = await User.findById(userId);
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    const idx = user.wishlist.findIndex((w) => w.productId === productId);
+    if (idx === -1) {
+      user.wishlist.push({ productId, productName, addedAt: new Date() });
+    } else {
+      user.wishlist.splice(idx, 1);
+    }
+    await user.save();
+    return { wishlist: safeUser(user).wishlist, saved: idx === -1 };
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  if (!user.wishlist) user.wishlist = [];
+  const idx = user.wishlist.findIndex((w) => w.productId === productId);
+  if (idx === -1) {
+    user.wishlist.push({ productId, productName, addedAt: new Date().toISOString() });
+  } else {
+    user.wishlist.splice(idx, 1);
+  }
+  return { wishlist: [...user.wishlist], saved: idx === -1 };
+}
+
+// ── Account settings ─────────────────────────────────────────────────────────
+
+export const updateSettingsSchema = z.object({
+  emailNotifications:    z.boolean().optional(),
+  whatsappNotifications: z.boolean().optional(),
+  marketingEmails:       z.boolean().optional(),
+});
+
+export async function updateSettings(userId, payload) {
+  const parsed = updateSettingsSchema.parse(payload);
+  if (env.mongoUri) {
+    const update = Object.fromEntries(
+      Object.entries(parsed).map(([k, v]) => [`settings.${k}`, v])
+    );
+    const user = await User.findByIdAndUpdate(userId, { $set: update }, { new: true, runValidators: true });
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    return safeUser(user).settings;
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  if (!user.settings) user.settings = { emailNotifications: true, whatsappNotifications: false, marketingEmails: true };
+  Object.assign(user.settings, parsed);
+  return { ...user.settings };
+}
+
+// ── Password reset ────────────────────────────────────────────────────────────
+
+const resetTokens = new Map(); // seed mode: token hash → { userId, expiresAt }
+
+function hashToken(raw) {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+export async function requestPasswordReset(email) {
+  const rawToken = randomBytes(32).toString("hex");
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  if (env.mongoUri) {
+    // Silently succeed even if email not found (prevent enumeration)
+    await User.findOneAndUpdate(
+      { email: email.toLowerCase().trim() },
+      { $set: { passwordResetToken: tokenHash, passwordResetExpiresAt: expiresAt } }
+    );
+    // In production: send email with reset link here
+    // For now: log token to console so dev can use it
+    console.info(`[password-reset] token for ${email}: ${rawToken}`);
+    return { ok: true };
+  }
+
+  // Seed mode: find user by email
+  for (const u of seedUsers.values()) {
+    if (u.email === email.toLowerCase().trim()) {
+      resetTokens.set(tokenHash, { userId: u._id || u.id, expiresAt });
+      // Return token directly in dev/seed mode so UI can use it
+      return { ok: true, devToken: rawToken };
+    }
+  }
+  return { ok: true }; // silent no-op for unknown email
+}
+
+export async function confirmPasswordReset(rawToken, newPassword) {
+  if (!rawToken || !newPassword || newPassword.length < 8) {
+    const err = new Error("Invalid reset request."); err.status = 400; throw err;
+  }
+  const tokenHash = hashToken(rawToken);
+
+  if (env.mongoUri) {
+    const user = await User.findOne({
+      passwordResetToken: tokenHash,
+      passwordResetExpiresAt: { $gt: new Date() },
+    }).select("+passwordResetToken +passwordResetExpiresAt +password");
+    if (!user) {
+      const err = new Error("Reset link is invalid or has expired."); err.status = 400; throw err;
+    }
+    user.password = newPassword;
+    user.passwordResetToken = null;
+    user.passwordResetExpiresAt = null;
+    await user.save();
+    return { ok: true };
+  }
+
+  const entry = resetTokens.get(tokenHash);
+  if (!entry || new Date() > entry.expiresAt) {
+    const err = new Error("Reset link is invalid or has expired."); err.status = 400; throw err;
+  }
+  const user = seedUsers.get(entry.userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  // In seed mode passwords are not bcrypt-hashed, store plain (seed-only)
+  user.password = newPassword;
+  resetTokens.delete(tokenHash);
+  return { ok: true };
 }

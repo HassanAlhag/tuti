@@ -33,14 +33,20 @@ async function request(path, options = {}, retry = true) {
 }
 
 export const authApi = {
-  register:      (p)            => request("/auth/register", { method: "POST",  body: JSON.stringify(p) }),
-  login:         (p)            => request("/auth/login",    { method: "POST",  body: JSON.stringify(p) }),
-  logout:        ()             => request("/auth/logout",   { method: "POST" }),
-  me:            ()             => request("/auth/me"),
-  updateMe:      (p)            => request("/auth/me",       { method: "PATCH", body: JSON.stringify(p) }),
-  addAddress:    (p)            => request("/auth/me/addresses", { method: "POST", body: JSON.stringify(p) }),
-  updateAddress: (id, p)        => request(`/auth/me/addresses/${id}`, { method: "PATCH", body: JSON.stringify(p) }),
-  deleteAddress: (id)           => request(`/auth/me/addresses/${id}`, { method: "DELETE" }),
+  register:             (p)       => request("/auth/register", { method: "POST",  body: JSON.stringify(p) }),
+  login:                (p)       => request("/auth/login",    { method: "POST",  body: JSON.stringify(p) }),
+  logout:               ()        => request("/auth/logout",   { method: "POST" }),
+  me:                   ()        => request("/auth/me"),
+  updateMe:             (p)       => request("/auth/me",       { method: "PATCH", body: JSON.stringify(p) }),
+  addAddress:           (p)       => request("/auth/me/addresses",      { method: "POST",   body: JSON.stringify(p) }),
+  updateAddress:        (id, p)   => request(`/auth/me/addresses/${id}`,{ method: "PATCH",  body: JSON.stringify(p) }),
+  deleteAddress:        (id)      => request(`/auth/me/addresses/${id}`,{ method: "DELETE" }),
+  toggleWishlist:       (productId, productName) =>
+    request(`/auth/me/wishlist/${encodeURIComponent(productId)}`, { method: "POST", body: JSON.stringify({ productName }) }),
+  updateSettings:       (p)       => request("/auth/me/settings", { method: "PATCH", body: JSON.stringify(p) }),
+  requestPasswordReset: (email)   => request("/auth/password-reset/request",  { method: "POST", body: JSON.stringify({ email }) }),
+  confirmPasswordReset: (token, password) =>
+    request("/auth/password-reset/confirm", { method: "POST", body: JSON.stringify({ token, password }) }),
 };
 
 export const marketplaceApi = {
