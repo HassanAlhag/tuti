@@ -21,6 +21,7 @@ import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { bayesianScore } from "@tuti/shared/utils/rating.js";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
+import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 const typeMeta = {
   perfume: {
@@ -227,6 +228,32 @@ export function ProductDetailPage({
     observer.observe(actionsRef.current);
     return () => observer.disconnect();
   }, [product?.id]);
+
+  const productShop = product ? getShop(product.shopId) : null;
+  useSeoMeta({
+    title: product ? `${product.name}${productShop?.name ? ` by ${productShop.name}` : ""}` : undefined,
+    description: product
+      ? `${product.name} — ${product.description || (product.category === "perfume" ? "Luxury perfume" : product.category === "cake" ? "Custom cake" : "Premium gift set")}. Available on Tuti with cash on delivery.`
+      : undefined,
+    ogImage: product?.imagePath || undefined,
+    canonical: product ? `https://tuti.ae/products/${product.slug || product.id}` : undefined,
+    jsonLd: product ? {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": product.name,
+      "description": product.description || product.name,
+      "image": product.imagePath || undefined,
+      "sku": product.id,
+      "brand": productShop?.name ? { "@type": "Brand", "name": productShop.name } : undefined,
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "AED",
+        "price": product.price,
+        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "url": `https://tuti.ae/products/${product.slug || product.id}`,
+      },
+    } : undefined,
+  });
 
   if (!product) {
     return (

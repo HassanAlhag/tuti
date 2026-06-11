@@ -3,8 +3,14 @@ import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { giftCategories } from "../siteMap.js";
 import { PageHero, FeatureGrid } from "./sitemapPageShared.jsx";
+import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 export function GiftingPage({ products, getShop, onAddToCart, onNavigate }) {
+  useSeoMeta({
+    title: "Luxury Gifting — Perfumes, Cakes & Gift Sets",
+    description: "Build memorable gifts with perfume and cake combinations, premium gift boxes, and free-form Build Your Box. Cash on delivery available.",
+    canonical: "https://tuti.ae/gifting",
+  });
   const giftProducts = products.filter((product) => product.category === "gift_box" || product.category === "bundle").slice(0, 3);
   const cakeDessertProducts = products
     .filter((product) => product.category === "cake" || product.category === "dessert")

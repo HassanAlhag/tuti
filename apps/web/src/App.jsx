@@ -422,7 +422,7 @@ export default function App() {
         onNavigate={navigatePath}
       />
     ),
-    journal:            <JournalPage />,
+    journal:            <JournalPage onNavigate={navigatePath} />,
     contact:            <CustomerServicePage mode="contact" onNavigate={navigatePath} />,
     "customer-service": <CustomerServicePage onNavigate={navigatePath} />,
     support: (
@@ -433,7 +433,7 @@ export default function App() {
     account:            <AccountPage onNavigate={navigatePath} />,
     "reset-password":   <ResetPasswordPage onNavigate={navigatePath} />,
     "store-locator":    <StoreLocatorPage />,
-    legal:              <LegalPage />,
+    legal:              <LegalPage onNavigate={navigatePath} />,
   };
 
   return (
