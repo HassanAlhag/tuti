@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-11 (Phase 0 Git init complete)
+Last updated: 2026-06-11 (Phase 2 Customer Account complete)
 
 ---
 
@@ -9,7 +9,7 @@ Last updated: 2026-06-11 (Phase 0 Git init complete)
 | Area | Completion |
 |---|---|
 | Customer experience (browse, cart, checkout) | ~70% |
-| Customer account (orders, profile, tracking) | ~40% |
+| Customer account (orders, profile, tracking) | ~80% |
 | Public editorial pages | ~55% |
 | Seller portal | ~60% |
 | Admin console | ~55% |
@@ -17,7 +17,7 @@ Last updated: 2026-06-11 (Phase 0 Git init complete)
 | Sales Rep portal | ~70% |
 | Backend / API | ~65% |
 | Production readiness | ~20% |
-| **Overall platform** | **~55%** |
+| **Overall platform** | **~60%** |
 
 **Top five technical risks before soft launch:**
 
@@ -71,7 +71,7 @@ Last updated: 2026-06-11 (Phase 0 Git init complete)
 | Cart | `/cart` | Working | Partial | Design review pending; functional COD checkout present | Medium |
 | Checkout | `/cart` (inline) | Working | Partial | Idempotency key added; navigates to `/orders/:id` on success | High |
 | Order confirmation | `/orders/:orderId` | Working | Partial | Persistent route; refresh-safe; guest token support. Browser QA pending | High |
-| Customer account | `/account` | Working | Partial | Orders list + detail work; no profile edit, addresses, wishlist | High |
+| Customer account | `/account` | Working | Partial | Orders, profile edit, addresses, wishlist, settings — all working; browser QA pending | Medium |
 | Offers | `/offers` | Working | Partial | Static layout; no real promotion backend | Medium |
 | Gifting | `/gifting` | Working | Partial | Static editorial; no personalisation | Low |
 | Journal | `/journal` | Working | Partial | Static placeholder; no CMS | Low |
@@ -81,7 +81,7 @@ Last updated: 2026-06-11 (Phase 0 Git init complete)
 | Customer service | `/customer-service` | Working | Partial | Static page | Low |
 | Store locator | `/store-locator` | Working | Partial | Static placeholder | Low |
 | Legal | `/legal` | Working | Partial | Static placeholder | Low |
-| Auth modal | Overlay | Working | Yes | No password reset | High |
+| Auth modal | Overlay | Working | Yes | Password reset link added | — |
 
 ### Cart and Checkout — Current Implementation Detail
 
@@ -184,7 +184,7 @@ Last updated: 2026-06-11 (Phase 0 Git init complete)
 
 | Area | Status | Known Gaps |
 |---|---|---|
-| Authentication (JWT) | Working | Access + refresh tokens; no password reset endpoint |
+| Authentication (JWT) | Working | Access + refresh tokens; password reset (token flow) |
 | Roles / permissions | Working | Middleware-enforced; no fine-grained RBAC UI |
 | Database (MongoDB) | Working | Optional; falls back to in-memory seed |
 | Products | Working | CRUD, approval workflow, stock |
@@ -338,11 +338,11 @@ node --test backend/src/modules/orders/*.test.js backend/src/shared/workflows/*.
 
 ### Current Build Status
 
-All five apps: **PASS** (verified 2026-06-08)
+All five apps: **PASS** (verified 2026-06-11, Phase 2 complete)
 
 ### Current Test Status
 
-142/142 backend tests: **PASS** (verified 2026-06-08, Slice 1A added 26 new tests)
+216/216 backend tests: **PASS** (verified 2026-06-11, Phase 2 complete)
 
 ### Automated Test Coverage
 
@@ -442,7 +442,7 @@ Git initialized (2026-06-11). Branch: `main`. Convention: `feature/*`, `hotfix/*
 | KI-001 | Checkout | ~~No order confirmation route~~ **RESOLVED** | High | `/orders/:orderId` added; refresh-safe | Slice 1A |
 | KI-002 | Orders | ~~Duplicate-submit protection absent~~ **RESOLVED** | High | Idempotency key header + sparse unique index | Slice 1A |
 | KI-003 | Uploads | Local filesystem only | High | Images lost on server restart in production | S3 / R2 integration |
-| KI-004 | Auth | No password reset | High | Customers/sellers cannot self-serve reset | Email-based reset flow |
+| KI-004 | Auth | ~~No password reset~~ **RESOLVED** | High | SHA-256 token flow; dev mode returns raw token; email-ready | Phase 2 |
 | KI-005 | Backend | ~~No Git version control~~ **RESOLVED** | High | Git initialized; `main` branch; conventional commits | Phase 0 |
 | KI-006 | Cart | Cart state is client-only | Medium | Cart lost on different device / browser | Server-side cart session |
 | KI-007 | Notifications | Bell only; no email/SMS | Medium | Users miss events when not logged in | Email/WhatsApp notification channel |
@@ -477,7 +477,15 @@ See `docs/milestones/` for individual milestone files.
 
 All scope items delivered. See `docs/status/purchase-journey-slice-1a/` for full details.
 
-**Next milestone:** Phase 1, Slice 1B — Cart and Checkout UX pass
+**Phase 1, Slice 1B — Cart and Checkout UX** — COMPLETE (2026-06-11)
+
+ARIA accessibility pass: radiogroup roles, aria-checked/pressed on checkout identity/payment buttons, live error region, descriptive remove-item labels. Order confirmation next-steps panel with COD vs card branch.
+
+**Phase 2 — Customer Account and Self-Service** — COMPLETE (2026-06-11)
+
+Profile edit, address book, password reset (SHA-256 token flow, dev mode returns raw token), wishlist (optimistic UI + Zustand store), account settings (email/WhatsApp/marketing toggles). AccountPage expanded to 5 tabs. 216/216 backend tests pass.
+
+**Next milestone:** Phase 3 — Public Marketing and Content
 
 ---
 
