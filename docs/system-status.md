@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-08 (Slice 1A complete)
+Last updated: 2026-06-11 (Phase 0 Git init complete)
 
 ---
 
@@ -21,7 +21,7 @@ Last updated: 2026-06-08 (Slice 1A complete)
 
 **Top five technical risks before soft launch:**
 
-1. No reliable version control — no Git; any file corruption or accidental deletion requires restoring from a manual backup archive
+1. ~~No reliable version control~~ **RESOLVED (Phase 0)** — Git initialized; `main` branch established; 293 files in initial commit
 2. No production file storage — uploads are local filesystem; images are lost on server restart and cannot be served in production
 3. ~~No persistent order confirmation~~ **RESOLVED (Slice 1A)** — `/orders/:orderId` route with `OrderConfirmationPage`; refresh-safe; backend-loaded
 4. ~~Mongo Build a Box nested stock deduction not implemented~~ **RESOLVED (Slice 1A)** — already implemented in `orderStock.js`; confirmed and tested
@@ -431,7 +431,7 @@ npm run kill         # Kill stale port processes
 
 ### Version Control
 
-No Git repository exists. Backup archive: `/private/tmp/tuti-backup-20260608-160219.tar.gz`
+Git initialized (2026-06-11). Branch: `main`. Convention: `feature/*`, `hotfix/*`. Backup archive still available: `/private/tmp/tuti-backup-20260608-160219.tar.gz`
 
 ---
 
@@ -443,7 +443,7 @@ No Git repository exists. Backup archive: `/private/tmp/tuti-backup-20260608-160
 | KI-002 | Orders | ~~Duplicate-submit protection absent~~ **RESOLVED** | High | Idempotency key header + sparse unique index | Slice 1A |
 | KI-003 | Uploads | Local filesystem only | High | Images lost on server restart in production | S3 / R2 integration |
 | KI-004 | Auth | No password reset | High | Customers/sellers cannot self-serve reset | Email-based reset flow |
-| KI-005 | Backend | No Git version control | High | No rollback capability | Initialize Git, establish backup workflow |
+| KI-005 | Backend | ~~No Git version control~~ **RESOLVED** | High | Git initialized; `main` branch; conventional commits | Phase 0 |
 | KI-006 | Cart | Cart state is client-only | Medium | Cart lost on different device / browser | Server-side cart session |
 | KI-007 | Notifications | Bell only; no email/SMS | Medium | Users miss events when not logged in | Email/WhatsApp notification channel |
 | KI-008 | Orders | ~~Mongo nested stock deduction not implemented~~ **RESOLVED** | Medium | Already implemented; confirmed and tested in Slice 1A | Slice 1A |
@@ -477,7 +477,7 @@ See `docs/milestones/` for individual milestone files.
 
 All scope items delivered. See `docs/status/purchase-journey-slice-1a/` for full details.
 
-**Next milestone:** Phase 1, Slice 1B — Cart and Checkout UX pass (pending scope definition)
+**Next milestone:** Phase 1, Slice 1B — Cart and Checkout UX pass
 
 ---
 
