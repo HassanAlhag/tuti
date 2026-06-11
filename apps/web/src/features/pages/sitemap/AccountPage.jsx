@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, HelpCircle, PackageCheck, ShoppingBag, User } from "lucide-react";
-import { ordersApi } from "@tuti/shared/api/client.js";
+import { CheckCircle2, HelpCircle, MapPin, PackageCheck, Pencil, Plus, ShoppingBag, Star, Trash2, User } from "lucide-react";
+import { authApi, ordersApi } from "@tuti/shared/api/client.js";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
@@ -19,13 +19,28 @@ import {
 } from "./sitemapPageShared.jsx";
 
 export function AccountPage({ onNavigate }) {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, updateUser } = useAuthStore();
+  const [accountTab, setAccountTab] = useState("orders");
   const [ordersState, setOrdersState] = useState({ loading: false, error: "", orders: [] });
   const [selectedOrderId, setSelectedOrderId] = useState("");
   const [orderFeedback, setOrderFeedback] = useState({});
   const [disputeNotes, setDisputeNotes] = useState({});
   const [feedbackLoading, setFeedbackLoading] = useState({});
   const [deepLinkNotice, setDeepLinkNotice] = useState("");
+
+  // Profile edit
+  const [profileEdit, setProfileEdit] = useState(false);
+  const [profileForm, setProfileForm] = useState({ name: "", phone: "" });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState("");
+
+  // Address book
+  const [addresses, setAddresses] = useState([]);
+  const [addrEdit, setAddrEdit] = useState(null); // null | "new" | addressId
+  const [addrForm, setAddrForm] = useState({ label: "Home", line1: "", line2: "", city: "", isDefault: false });
+  const [addrSaving, setAddrSaving] = useState(false);
+  const [addrError, setAddrError] = useState("");
+
   const authenticated = isAuthenticated();
 
   async function handleCustomerAction(orderId, action, note) {
@@ -43,6 +58,77 @@ export function AccountPage({ onNavigate }) {
       setFeedbackLoading((prev) => ({ ...prev, [orderId]: false }));
     }
   }
+
+  async function saveProfile(event) {
+    event.preventDefault();
+    setProfileSaving(true);
+    setProfileError("");
+    try {
+      const updated = await authApi.updateMe({ name: profileForm.name, phone: profileForm.phone });
+      updateUser({ name: updated.name, phone: updated.phone });
+      setProfileEdit(false);
+    } catch (err) {
+      setProfileError(err.message || "Could not save profile.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  function openProfileEdit() {
+    setProfileForm({ name: user?.name || "", phone: user?.phone || "" });
+    setProfileEdit(true);
+    setProfileError("");
+  }
+
+  async function saveAddress(event) {
+    event.preventDefault();
+    setAddrSaving(true);
+    setAddrError("");
+    try {
+      let updated;
+      if (addrEdit === "new") {
+        updated = await authApi.addAddress(addrForm);
+      } else {
+        updated = await authApi.updateAddress(addrEdit, addrForm);
+      }
+      setAddresses(updated);
+      setAddrEdit(null);
+    } catch (err) {
+      setAddrError(err.message || "Could not save address.");
+    } finally {
+      setAddrSaving(false);
+    }
+  }
+
+  async function removeAddress(id) {
+    try {
+      const updated = await authApi.deleteAddress(id);
+      setAddresses(updated);
+    } catch { /* non-critical */ }
+  }
+
+  async function setDefaultAddress(id) {
+    try {
+      const updated = await authApi.updateAddress(id, { isDefault: true });
+      setAddresses(updated);
+    } catch { /* non-critical */ }
+  }
+
+  function openNewAddress() {
+    setAddrForm({ label: "Home", line1: "", line2: "", city: "", isDefault: false });
+    setAddrEdit("new");
+    setAddrError("");
+  }
+
+  function openEditAddress(addr) {
+    setAddrForm({ label: addr.label || "Home", line1: addr.line1 || "", line2: addr.line2 || "", city: addr.city || "", isDefault: addr.isDefault || false });
+    setAddrEdit(addr.id);
+    setAddrError("");
+  }
+
+  useEffect(() => {
+    if (authenticated && user?.addresses) setAddresses(user.addresses);
+  }, [authenticated, user?.addresses]);
 
   useEffect(() => {
     let mounted = true;
@@ -106,6 +192,157 @@ export function AccountPage({ onNavigate }) {
           ))}
         </section>
       ) : (
+        <>
+          <nav className="account-tabs" aria-label="Account sections">
+            {[
+              { key: "orders",    label: "Orders",    Icon: PackageCheck },
+              { key: "profile",   label: "Profile",   Icon: User },
+              { key: "addresses", label: "Addresses", Icon: MapPin },
+            ].map(({ key, label, Icon }) => (
+              <button
+                aria-current={accountTab === key ? "page" : undefined}
+                className={accountTab === key ? "account-tab active" : "account-tab"}
+                key={key}
+                onClick={() => setAccountTab(key)}
+                type="button"
+              >
+                <Icon size={16} aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {accountTab === "profile" ? (
+            <section className="account-form-section">
+              <div className="checkout-form-card">
+                <div className="checkout-card-heading">
+                  <span className="sitemap-card-icon"><User size={19} /></span>
+                  <div>
+                    <h2>Profile</h2>
+                    <p>Your name and contact details.</p>
+                  </div>
+                  {!profileEdit ? (
+                    <button className="ghost-action compact" onClick={openProfileEdit} type="button">
+                      <Pencil size={15} /> Edit
+                    </button>
+                  ) : null}
+                </div>
+                {!profileEdit ? (
+                  <div className="account-profile-display">
+                    <span><strong>Name</strong>{user?.name || "—"}</span>
+                    <span><strong>Email</strong>{user?.email || "—"}</span>
+                    <span><strong>Phone</strong>{user?.phone || "Not set"}</span>
+                    <span><strong>Role</strong>{user?.role || "customer"}</span>
+                  </div>
+                ) : (
+                  <form className="checkout-form-grid" onSubmit={saveProfile}>
+                    <label>
+                      Full name
+                      <input required value={profileForm.name} onChange={(e) => setProfileForm((f) => ({ ...f, name: e.target.value }))} />
+                    </label>
+                    <label>
+                      Phone / WhatsApp
+                      <input value={profileForm.phone} onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+971..." />
+                    </label>
+                    {profileError ? <p className="error-state checkout-error" style={{ gridColumn: "1/-1" }}>{profileError}</p> : null}
+                    <div style={{ gridColumn: "1/-1", display: "flex", gap: "0.5rem" }}>
+                      <button className="primary-action compact" disabled={profileSaving} type="submit">
+                        {profileSaving ? "Saving…" : "Save changes"}
+                      </button>
+                      <button className="ghost-action compact" onClick={() => setProfileEdit(false)} type="button">Cancel</button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </section>
+          ) : null}
+
+          {accountTab === "addresses" ? (
+            <section className="account-form-section">
+              <div className="checkout-form-card">
+                <div className="checkout-card-heading">
+                  <span className="sitemap-card-icon"><MapPin size={19} /></span>
+                  <div>
+                    <h2>Saved addresses</h2>
+                    <p>Delivery addresses for faster checkout.</p>
+                  </div>
+                  {addrEdit === null ? (
+                    <button className="ghost-action compact" onClick={openNewAddress} type="button">
+                      <Plus size={15} /> Add
+                    </button>
+                  ) : null}
+                </div>
+
+                {addrEdit ? (
+                  <form className="checkout-form-grid" onSubmit={saveAddress}>
+                    <label>
+                      Label (e.g. Home, Work)
+                      <input value={addrForm.label} onChange={(e) => setAddrForm((f) => ({ ...f, label: e.target.value }))} />
+                    </label>
+                    <label>
+                      Address line 1
+                      <input required value={addrForm.line1} onChange={(e) => setAddrForm((f) => ({ ...f, line1: e.target.value }))} placeholder="Building, street" />
+                    </label>
+                    <label>
+                      Address line 2
+                      <input value={addrForm.line2} onChange={(e) => setAddrForm((f) => ({ ...f, line2: e.target.value }))} placeholder="Apartment, area" />
+                    </label>
+                    <label>
+                      City
+                      <input value={addrForm.city} onChange={(e) => setAddrForm((f) => ({ ...f, city: e.target.value }))} placeholder="Dubai" />
+                    </label>
+                    <label className="checkout-item-checkbox checkout-field-wide">
+                      <input
+                        checked={addrForm.isDefault}
+                        onChange={(e) => setAddrForm((f) => ({ ...f, isDefault: e.target.checked }))}
+                        type="checkbox"
+                      />
+                      Set as default address
+                    </label>
+                    {addrError ? <p className="error-state checkout-error" style={{ gridColumn: "1/-1" }}>{addrError}</p> : null}
+                    <div style={{ gridColumn: "1/-1", display: "flex", gap: "0.5rem" }}>
+                      <button className="primary-action compact" disabled={addrSaving} type="submit">
+                        {addrSaving ? "Saving…" : addrEdit === "new" ? "Add address" : "Save address"}
+                      </button>
+                      <button className="ghost-action compact" onClick={() => setAddrEdit(null)} type="button">Cancel</button>
+                    </div>
+                  </form>
+                ) : addresses.length ? (
+                  <div className="account-address-list">
+                    {addresses.map((addr) => (
+                      <div className="account-address-row" key={addr.id}>
+                        <div>
+                          <strong>{addr.label}{addr.isDefault ? <span className="account-address-default-badge">Default</span> : null}</strong>
+                          <span>{addr.line1}{addr.line2 ? `, ${addr.line2}` : ""}{addr.city ? `, ${addr.city}` : ""}</span>
+                        </div>
+                        <div className="account-address-actions">
+                          {!addr.isDefault ? (
+                            <button className="ghost-action compact" onClick={() => setDefaultAddress(addr.id)} title="Set as default" type="button">
+                              <Star size={14} /> Default
+                            </button>
+                          ) : null}
+                          <button className="ghost-action compact" onClick={() => openEditAddress(addr)} type="button">
+                            <Pencil size={14} /> Edit
+                          </button>
+                          <button className="ghost-action compact" onClick={() => removeAddress(addr.id)} type="button">
+                            <Trash2 size={14} /> Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="account-empty-state">
+                    <MapPin size={22} />
+                    <h3>No addresses saved</h3>
+                    <p>Add a delivery address for faster checkout.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : null}
+
+          {accountTab === "orders" ? (
         <section className="account-orders-layout">
           <div className="account-orders-panel">
             <div className="account-section-heading">
@@ -342,6 +579,8 @@ export function AccountPage({ onNavigate }) {
             </aside>
           )}
         </section>
+          ) : null}
+        </>
       )}
     </main>
   );
