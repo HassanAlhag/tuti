@@ -128,24 +128,30 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
 
       <section className="checkout-layout">
         <form className="checkout-form-panel" id="checkout-form" onSubmit={placeOrder}>
-          <section className="checkout-choice-grid" aria-label="Checkout identity">
+          <section className="checkout-choice-grid" aria-label="Checkout identity" role="radiogroup">
             <button
+              aria-checked={isAccountCheckout}
+              aria-pressed={isAccountCheckout}
               className={isAccountCheckout ? "checkout-choice active" : "checkout-choice"}
               disabled={!isAuthenticated()}
               onClick={() => setCheckoutMode("account")}
+              role="radio"
               type="button"
             >
-              <User size={19} />
+              <User size={19} aria-hidden="true" />
               <strong>Client login</strong>
               <span>{isAuthenticated() ? `Ordering as ${user?.name || user?.email}` : "Login to save orders and addresses"}</span>
             </button>
             <button
+              aria-checked={!isAccountCheckout}
+              aria-pressed={!isAccountCheckout}
               className={!isAccountCheckout ? "checkout-choice active" : "checkout-choice"}
               disabled={isAuthenticated()}
               onClick={() => setCheckoutMode("guest")}
+              role="radio"
               type="button"
             >
-              <ShoppingBag size={19} />
+              <ShoppingBag size={19} aria-hidden="true" />
               <strong>Guest checkout</strong>
               <span>{isAuthenticated() ? "Unavailable while signed in." : "No account required. We send the order confirmation by email."}</span>
             </button>
@@ -226,21 +232,42 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                 <p>Payment options are shown at checkout. Your order will be confirmed before preparation.</p>
               </div>
             </div>
-            <div className="payment-method-grid">
-              <button className={paymentMethod === "card" ? "payment-method active" : "payment-method"} disabled type="button">
-                <CreditCard size={20} />
+            <div className="payment-method-grid" role="radiogroup" aria-label="Payment method">
+              <button
+                aria-checked={paymentMethod === "card"}
+                aria-pressed={paymentMethod === "card"}
+                className={paymentMethod === "card" ? "payment-method active" : "payment-method"}
+                disabled
+                role="radio"
+                type="button"
+              >
+                <CreditCard size={20} aria-hidden="true" />
                 <strong>Secure checkout</strong>
                 <span>Payment options are shown at checkout.</span>
               </button>
-              <button className={paymentMethod === "cod" ? "payment-method active" : "payment-method"} onClick={() => setPaymentMethod("cod")} type="button">
-                <WalletCards size={20} />
+              <button
+                aria-checked={paymentMethod === "cod"}
+                aria-pressed={paymentMethod === "cod"}
+                className={paymentMethod === "cod" ? "payment-method active" : "payment-method"}
+                onClick={() => setPaymentMethod("cod")}
+                role="radio"
+                type="button"
+              >
+                <WalletCards size={20} aria-hidden="true" />
                 <strong>Cash on delivery</strong>
                 <span>Pay when the order arrives.</span>
               </button>
             </div>
           </section>
 
-          {orderError ? <p className="error-state checkout-error">{orderError}</p> : null}
+          <div aria-atomic="true" aria-live="polite" role="status">
+            {orderError ? (
+              <p className="error-state checkout-error">
+                {orderError}
+                {orderError.includes("retry") ? " Use the button below to try again — your cart is still intact." : ""}
+              </p>
+            ) : null}
+          </div>
         </form>
 
         <aside className="checkout-summary-card">
@@ -299,7 +326,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                     </div>
                   ) : null}
                 </div>
-                <button className="icon-button" onClick={() => updateCartQuantity(getCartLineKey(item), -1)} title="Remove one" type="button">-</button>
+                <button aria-label={`Remove one ${item.name} from cart`} className="icon-button" onClick={() => updateCartQuantity(getCartLineKey(item), -1)} type="button">-</button>
               </div>
             )) : <p className="muted-label">Your cart is empty.</p>}
           </div>
