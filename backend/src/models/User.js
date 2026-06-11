@@ -15,6 +15,16 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, select: false, default: null },
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date, default: null },
+    phone: { type: String, trim: true, default: null },
+    addresses: [{
+      _id: false,
+      id: { type: String, required: true },
+      label: { type: String, trim: true, default: "Home" },
+      line1: { type: String, trim: true, required: true },
+      line2: { type: String, trim: true, default: "" },
+      city: { type: String, trim: true, default: "" },
+      isDefault: { type: Boolean, default: false },
+    }],
   },
   { timestamps: true }
 );

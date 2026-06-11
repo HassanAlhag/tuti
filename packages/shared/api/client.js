@@ -33,10 +33,14 @@ async function request(path, options = {}, retry = true) {
 }
 
 export const authApi = {
-  register: (p) => request("/auth/register", { method: "POST", body: JSON.stringify(p) }),
-  login:    (p) => request("/auth/login",    { method: "POST", body: JSON.stringify(p) }),
-  logout:   ()  => request("/auth/logout",   { method: "POST" }),
-  me:       ()  => request("/auth/me"),
+  register:      (p)            => request("/auth/register", { method: "POST",  body: JSON.stringify(p) }),
+  login:         (p)            => request("/auth/login",    { method: "POST",  body: JSON.stringify(p) }),
+  logout:        ()             => request("/auth/logout",   { method: "POST" }),
+  me:            ()             => request("/auth/me"),
+  updateMe:      (p)            => request("/auth/me",       { method: "PATCH", body: JSON.stringify(p) }),
+  addAddress:    (p)            => request("/auth/me/addresses", { method: "POST", body: JSON.stringify(p) }),
+  updateAddress: (id, p)        => request(`/auth/me/addresses/${id}`, { method: "PATCH", body: JSON.stringify(p) }),
+  deleteAddress: (id)           => request(`/auth/me/addresses/${id}`, { method: "DELETE" }),
 };
 
 export const marketplaceApi = {

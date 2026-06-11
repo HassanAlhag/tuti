@@ -11,6 +11,7 @@ export const useAuthStore = create(
       setAuth: (user, accessToken, refreshToken) => set({ user, accessToken, refreshToken }),
       clearAuth: () => set({ user: null, accessToken: null, refreshToken: null }),
       updateAccessToken: (accessToken) => set({ accessToken }),
+      updateUser: (partial) => set((state) => ({ user: state.user ? { ...state.user, ...partial } : state.user })),
 
       isAuthenticated: () => Boolean(get().accessToken),
       isAdmin:   () => get().user?.role === "admin",

@@ -401,3 +401,85 @@ export async function getMe(userId) {
   }
   return seedUsers.get(userId) || null;
 }
+
+export const updateMeSchema = z.object({
+  name:  z.string().min(2).max(80).trim().optional(),
+  phone: z.string().max(30).trim().optional().or(z.literal("")),
+});
+
+export async function updateMe(userId, payload) {
+  const parsed = updateMeSchema.parse(payload);
+  if (env.mongoUri) {
+    const user = await User.findByIdAndUpdate(userId, { $set: parsed }, { new: true, runValidators: true });
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    return safeUser(user);
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  if (parsed.name !== undefined) user.name = parsed.name;
+  if (parsed.phone !== undefined) user.phone = parsed.phone;
+  return { ...user };
+}
+
+const addressSchema = z.object({
+  label: z.string().min(1).max(40).trim().optional().default("Home"),
+  line1: z.string().min(1).max(150).trim(),
+  line2: z.string().max(100).trim().optional().default(""),
+  city:  z.string().max(60).trim().optional().default(""),
+  isDefault: z.boolean().optional().default(false),
+});
+
+export async function addAddress(userId, payload) {
+  const parsed = addressSchema.parse(payload);
+  const id = randomUUID();
+  const address = { id, ...parsed };
+  if (env.mongoUri) {
+    const user = await User.findById(userId);
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    if (address.isDefault) user.addresses.forEach((a) => { a.isDefault = false; });
+    user.addresses.push(address);
+    await user.save();
+    return safeUser(user).addresses;
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  if (!user.addresses) user.addresses = [];
+  if (address.isDefault) user.addresses.forEach((a) => { a.isDefault = false; });
+  user.addresses.push(address);
+  return [...user.addresses];
+}
+
+export async function updateAddress(userId, addressId, payload) {
+  const parsed = addressSchema.partial().parse(payload);
+  if (env.mongoUri) {
+    const user = await User.findById(userId);
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    const idx = user.addresses.findIndex((a) => a.id === addressId);
+    if (idx === -1) { const err = new Error("Address not found."); err.status = 404; throw err; }
+    if (parsed.isDefault) user.addresses.forEach((a) => { a.isDefault = false; });
+    Object.assign(user.addresses[idx], parsed);
+    await user.save();
+    return safeUser(user).addresses;
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  const address = (user.addresses || []).find((a) => a.id === addressId);
+  if (!address) { const err = new Error("Address not found."); err.status = 404; throw err; }
+  if (parsed.isDefault) user.addresses.forEach((a) => { a.isDefault = false; });
+  Object.assign(address, parsed);
+  return [...user.addresses];
+}
+
+export async function deleteAddress(userId, addressId) {
+  if (env.mongoUri) {
+    const user = await User.findById(userId);
+    if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+    user.addresses = user.addresses.filter((a) => a.id !== addressId);
+    await user.save();
+    return safeUser(user).addresses;
+  }
+  const user = seedUsers.get(userId);
+  if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
+  user.addresses = (user.addresses || []).filter((a) => a.id !== addressId);
+  return [...user.addresses];
+}
