@@ -6192,6 +6192,40 @@ th {
   border-radius: var(--radius);
 }
 
+.order-next-steps {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--brand-light);
+  border: 1px solid rgba(0, 92, 70, 0.14);
+  border-radius: var(--radius-md);
+}
+
+.order-next-steps > strong {
+  color: var(--brand-dark);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.order-next-steps-list {
+  margin: 0;
+  padding-left: var(--sp-5);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: var(--lh-relaxed);
+}
+
+.order-next-steps-list li + li {
+  margin-top: var(--sp-2);
+}
+
+.order-tracking-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
 .build-box-page {
   gap: var(--sp-6);
 }
@@ -7816,6 +7850,9 @@ th {
   .account-orders-layout,
   .order-confirmation-panel {
     width: calc(100% - 1rem);
+  }
+  .order-confirmation-meta {
+    grid-template-columns: 1fr;
   }
   .build-box-intro-copy p,
   .build-box-promise-copy p,

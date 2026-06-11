@@ -204,11 +204,30 @@ export function OrderConfirmationPage({ onNavigate }) {
 
         <OrderStatusTimeline order={order} />
 
-        <p className="order-next-step">
-          {order.paymentMethod === "cod"
-            ? "Pay when your order arrives. The seller will prepare it after confirming your order."
-            : "Your order has been received and is being processed."}
-        </p>
+        <div className="order-next-steps">
+          <strong>What happens next</strong>
+          <ol className="order-next-steps-list">
+            <li>The seller reviews and confirms your order — usually within a few hours.</li>
+            <li>
+              {order.paymentMethod === "cod"
+                ? "A driver will be assigned to collect and deliver your order."
+                : "Your order is prepared and dispatched once payment is confirmed."}
+            </li>
+            <li>
+              {order.deliveryDate
+                ? `Your order is scheduled for delivery on ${formatDeliverySummary(order)}.`
+                : "You will receive an update when your order is ready for delivery."}
+            </li>
+            <li>
+              {order.paymentMethod === "cod"
+                ? "Pay the driver in cash when your order arrives."
+                : "Payment is already captured — no further action needed."}
+            </li>
+          </ol>
+          <p className="order-tracking-note">
+            Tracking updates will appear in the delivery timeline above as your order progresses. Keep this page bookmarked for real-time status.
+          </p>
+        </div>
 
         <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
           {isAuthenticated() ? (
