@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate, requireRole } from "../../middleware/auth.js";
+import { validate } from "../../middleware/validate.js";
 import { env } from "../../config/env.js";
 import { SalesRep } from "../../models/SalesRep.js";
 import { SellerReferral } from "../../models/SellerReferral.js";
@@ -7,6 +8,18 @@ import { CommissionEntry } from "../../models/CommissionEntry.js";
 import { User } from "../../models/User.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { getCommissionPlans } from "../marketplace/marketplace.service.js";
+import {
+  createLead,
+  createLeadSchema,
+  deleteLead,
+  exportSRReport,
+  getTargets,
+  listLeads,
+  setTargets,
+  srTargetsSchema,
+  updateLead,
+  updateLeadSchema,
+} from "./leads.service.js";
 
 export const srRouter = Router();
 
@@ -105,4 +118,78 @@ srRouter.get("/commissions", authenticate, requireRole("sales_rep"), async (req,
 // GET /api/sr/commission-plans — all available commission plans
 srRouter.get("/commission-plans", authenticate, requireRole("sales_rep"), (_req, res) => {
   res.json({ data: getCommissionPlans() });
+});
+
+// ── Leads / prospects ────────────────────────────────────────────────────────
+
+// GET /api/sr/leads
+srRouter.get("/leads", authenticate, requireRole("sales_rep"), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.json({ data: { leads: [], total: 0, page: 1, limit: 50 } });
+    const { status, search, page, limit } = req.query;
+    res.json({ data: await listLeads(rep.code, { status, search, page, limit }) });
+  } catch (err) { next(err); }
+});
+
+// POST /api/sr/leads
+srRouter.post("/leads", authenticate, requireRole("sales_rep"), validate(createLeadSchema), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
+    res.status(201).json({ data: await createLead(rep.code, req.body) });
+  } catch (err) { next(err); }
+});
+
+// PATCH /api/sr/leads/:id
+srRouter.patch("/leads/:id", authenticate, requireRole("sales_rep"), validate(updateLeadSchema), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
+    res.json({ data: await updateLead(rep.code, req.params.id, req.body) });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/sr/leads/:id
+srRouter.delete("/leads/:id", authenticate, requireRole("sales_rep"), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
+    res.json({ data: await deleteLead(rep.code, req.params.id) });
+  } catch (err) { next(err); }
+});
+
+// ── SR targets ────────────────────────────────────────────────────────────────
+
+// GET /api/sr/targets
+srRouter.get("/targets", authenticate, requireRole("sales_rep"), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.json({ data: { srCode: "", period: "", gmvTarget: 0, referralTarget: 0 } });
+    res.json({ data: await getTargets(rep.code, req.query.period) });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/sr/targets
+srRouter.put("/targets", authenticate, requireRole("sales_rep"), validate(srTargetsSchema), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
+    res.json({ data: await setTargets(rep.code, req.body) });
+  } catch (err) { next(err); }
+});
+
+// ── CSV report ────────────────────────────────────────────────────────────────
+
+// GET /api/sr/report
+srRouter.get("/report", authenticate, requireRole("sales_rep"), async (req, res, next) => {
+  try {
+    const { rep } = await findUserAndRep(req.user.sub);
+    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
+    const { from, to } = req.query;
+    const csv = await exportSRReport(rep.code, { from, to });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="sr-report-${rep.code}.csv"`);
+    res.send(csv);
+  } catch (err) { next(err); }
 });

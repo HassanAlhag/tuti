@@ -342,6 +342,22 @@ export const srPortalApi = {
   referrals: () => request("/sr/referrals"),
   commissions: () => request("/sr/commissions"),
   commissionPlans: () => request("/sr/commission-plans"),
+  listLeads: (params = {}) => {
+    const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
+    return request(`/sr/leads${q ? `?${q}` : ""}`);
+  },
+  createLead: (payload) => request("/sr/leads", { method: "POST", body: JSON.stringify(payload) }),
+  updateLead: (id, payload) => request(`/sr/leads/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteLead: (id) => request(`/sr/leads/${id}`, { method: "DELETE" }),
+  getTargets: (period) => {
+    const q = period ? `?period=${encodeURIComponent(period)}` : "";
+    return request(`/sr/targets${q}`);
+  },
+  setTargets: (payload) => request("/sr/targets", { method: "PUT", body: JSON.stringify(payload) }),
+  exportReport: (params = {}) => {
+    const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
+    return request(`/sr/report${q ? `?${q}` : ""}`);
+  },
 };
 
 export const adminAuditApi = {

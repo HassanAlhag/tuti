@@ -5,19 +5,27 @@ import {
   ArrowRight,
   Award,
   BadgeDollarSign,
+  Bell,
   CheckCircle2,
+  ClipboardList,
   Clock3,
+  Download,
   LogOut,
   Mail,
   MessageSquare,
+  Pencil,
   Phone,
+  Plus,
   ReceiptText,
   RefreshCw,
   Search,
   ShieldCheck,
+  Target,
   Ticket,
+  Trash2,
   TrendingUp,
   Users,
+  X,
 } from "lucide-react";
 import { brand } from "@tuti/shared/brand.js";
 import { authApi, srPortalApi, supportTicketsApi } from "@tuti/shared/api/client.js";
@@ -272,6 +280,18 @@ export default function App() {
   const [supportReplyDraft, setSupportReplyDraft] = useState("");
   const [supportReplyError, setSupportReplyError] = useState("");
 
+  // Leads state
+  const [leadSearch, setLeadSearch] = useState("");
+  const [leadStatus, setLeadStatus] = useState("all");
+  const [leadCreateOpen, setLeadCreateOpen] = useState(false);
+  const [leadEditId, setLeadEditId] = useState("");
+  const [leadForm, setLeadForm] = useState({ businessName: "", contactName: "", phone: "", city: "", status: "new", followUpAt: "", note: "" });
+  const [leadFormError, setLeadFormError] = useState("");
+
+  // Targets state
+  const [targetsEditing, setTargetsEditing] = useState(false);
+  const [targetsForm, setTargetsForm] = useState({ gmvTarget: "", referralTarget: "" });
+
   const [idleExpired, setIdleExpired] = useState(false);
 
   const isSRSession = isAuthenticated() && user?.role === "sales_rep" && Boolean(accessToken);
@@ -303,6 +323,22 @@ export default function App() {
     enabled: isSRSession,
   });
 
+  const leadsQuery = useQuery({
+    queryKey: ["sr", "leads", repKey, leadStatus, leadSearch],
+    queryFn: () => srPortalApi.listLeads({
+      status: leadStatus === "all" ? "" : leadStatus,
+      search: leadSearch.trim(),
+    }),
+    enabled: isSRSession,
+    keepPreviousData: true,
+  });
+
+  const targetsQuery = useQuery({
+    queryKey: ["sr", "targets", repKey],
+    queryFn: () => srPortalApi.getTargets(),
+    enabled: isSRSession,
+  });
+
   const plansQuery = useQuery({
     queryKey: ["sr", "commission-plans"],
     queryFn: () => srPortalApi.commissionPlans(),
@@ -322,9 +358,51 @@ export default function App() {
     keepPreviousData: true,
   });
 
+  const createLeadMutation = useMutation({
+    mutationFn: (payload) => srPortalApi.createLead(payload),
+    onSuccess: async () => {
+      setNotice("Lead added.");
+      setLeadCreateOpen(false);
+      setLeadForm({ businessName: "", contactName: "", phone: "", city: "", status: "new", followUpAt: "", note: "" });
+      setLeadFormError("");
+      await leadsQuery.refetch();
+    },
+    onError: (err) => setLeadFormError(err?.message || "Unable to create lead."),
+  });
+
+  const updateLeadMutation = useMutation({
+    mutationFn: ({ id, payload }) => srPortalApi.updateLead(id, payload),
+    onSuccess: async () => {
+      setNotice("Lead updated.");
+      setLeadEditId("");
+      setLeadForm({ businessName: "", contactName: "", phone: "", city: "", status: "new", followUpAt: "", note: "" });
+      setLeadFormError("");
+      await leadsQuery.refetch();
+    },
+    onError: (err) => setLeadFormError(err?.message || "Unable to update lead."),
+  });
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: (id) => srPortalApi.deleteLead(id),
+    onSuccess: async () => { setNotice("Lead removed."); await leadsQuery.refetch(); },
+    onError: (err) => setNotice("Could not delete lead: " + (err?.message || "")),
+  });
+
+  const setTargetsMutation = useMutation({
+    mutationFn: (payload) => srPortalApi.setTargets(payload),
+    onSuccess: async () => {
+      setNotice("Targets saved.");
+      setTargetsEditing(false);
+      await targetsQuery.refetch();
+    },
+    onError: (err) => setNotice("Could not save targets: " + (err?.message || "")),
+  });
+
   const profile = profileQuery.data || null;
   const referrals = Array.isArray(referralsQuery.data) ? referralsQuery.data : [];
   const commissions = Array.isArray(commissionsQuery.data) ? commissionsQuery.data : [];
+  const leads = Array.isArray(leadsQuery.data?.leads) ? leadsQuery.data.leads : [];
+  const targets = targetsQuery.data || { gmvTarget: 0, referralTarget: 0 };
   const plans = Array.isArray(plansQuery.data) ? plansQuery.data : Object.values(DEFAULT_COMMISSION_PLANS);
   const supportTickets = Array.isArray(supportQuery.data?.tickets) ? supportQuery.data.tickets : [];
 
@@ -433,6 +511,9 @@ export default function App() {
       setSupportReplyError("");
       setSupportReplyDraft("");
       setSupportCreateForm({ subject: "", description: "", category: "account_access", priority: "normal" });
+      setLeadSearch(""); setLeadStatus("all"); setLeadCreateOpen(false); setLeadEditId("");
+      setLeadForm({ businessName: "", contactName: "", phone: "", city: "", status: "new", followUpAt: "", note: "" });
+      setTargetsEditing(false);
       setSection("overview");
     }
   }
@@ -442,8 +523,27 @@ export default function App() {
       profileQuery.refetch(),
       referralsQuery.refetch(),
       commissionsQuery.refetch(),
+      leadsQuery.refetch(),
+      targetsQuery.refetch(),
       supportQuery.refetch(),
     ]);
+  }
+
+  function downloadCsv(csvText, filename) {
+    const blob = new Blob([csvText], { type: "text/csv" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleExportReport() {
+    try {
+      const csv = await srPortalApi.exportReport();
+      downloadCsv(csv, `sr-report.csv`);
+    } catch (err) {
+      setNotice("Export failed: " + (err?.message || "unknown error"));
+    }
   }
 
   if (!isSRSession) {
@@ -543,10 +643,11 @@ export default function App() {
         <div className="sr-topbar-actions">
           <div className="sr-topbar-tabs" role="tablist" aria-label="SR sections">
             {[
-              { id: "overview", icon: TrendingUp, label: "Overview" },
-              { id: "referrals", icon: Users, label: "Referrals" },
+              { id: "overview",    icon: TrendingUp,      label: "Overview" },
+              { id: "leads",       icon: ClipboardList,   label: "Leads" },
+              { id: "referrals",   icon: Users,           label: "Referrals" },
               { id: "commissions", icon: BadgeDollarSign, label: "Commissions" },
-              { id: "support", icon: MessageSquare, label: "Support" },
+              { id: "support",     icon: MessageSquare,   label: "Support" },
             ].map(({ id, icon: Icon, label }) => (
               <button key={id} className={section === id ? "sr-tab active" : "sr-tab"} type="button" onClick={() => setSection(id)}>
                 <Icon size={13} />
@@ -611,6 +712,89 @@ export default function App() {
             <StatCard icon={CheckCircle2} label="Paid commission" value={formatCurrency(paidCommission)} note="All-time earnings" />
           </section>
 
+          {/* Monthly targets */}
+          <section className="sr-panel sr-targets-panel">
+            <div className="sr-panel-head">
+              <div>
+                <span className="eyebrow">This month</span>
+                <h2>Targets &amp; progress</h2>
+              </div>
+              <div className="sr-targets-actions">
+                <button className="ghost-action compact" type="button" onClick={handleExportReport}>
+                  <Download size={14} />
+                  Export CSV
+                </button>
+                {!targetsEditing && (
+                  <button className="secondary-action compact" type="button" onClick={() => {
+                    setTargetsForm({ gmvTarget: String(targets.gmvTarget || ""), referralTarget: String(targets.referralTarget || "") });
+                    setTargetsEditing(true);
+                  }}>
+                    <Pencil size={14} />
+                    Set targets
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {targetsEditing ? (
+              <form className="sr-targets-form" onSubmit={(e) => {
+                e.preventDefault();
+                setTargetsMutation.mutate({
+                  gmvTarget:      Number(targetsForm.gmvTarget) || 0,
+                  referralTarget: Number(targetsForm.referralTarget) || 0,
+                });
+              }}>
+                <label className="sr-field">
+                  <span>GMV target (AED)</span>
+                  <input type="number" min="0" step="1000" value={targetsForm.gmvTarget}
+                    onChange={(e) => setTargetsForm((f) => ({ ...f, gmvTarget: e.target.value }))} placeholder="e.g. 50000" />
+                </label>
+                <label className="sr-field">
+                  <span>Referral target (shops)</span>
+                  <input type="number" min="0" step="1" value={targetsForm.referralTarget}
+                    onChange={(e) => setTargetsForm((f) => ({ ...f, referralTarget: e.target.value }))} placeholder="e.g. 5" />
+                </label>
+                <div className="sr-targets-form-btns">
+                  <button className="primary-action" type="submit" disabled={setTargetsMutation.isPending}>
+                    {setTargetsMutation.isPending ? "Saving…" : "Save targets"}
+                  </button>
+                  <button className="ghost-action" type="button" onClick={() => setTargetsEditing(false)}>Cancel</button>
+                </div>
+              </form>
+            ) : (
+              <div className="sr-targets-grid">
+                {(() => {
+                  const gmvPct   = targets.gmvTarget > 0 ? Math.min(100, Math.round((totalGmv / targets.gmvTarget) * 100)) : null;
+                  const refPct   = targets.referralTarget > 0 ? Math.min(100, Math.round((referrals.length / targets.referralTarget) * 100)) : null;
+                  return (
+                    <>
+                      <div className="sr-target-item">
+                        <div className="sr-target-labels">
+                          <span><Target size={12} />GMV this month</span>
+                          <strong>{formatCurrency(totalGmv)}{targets.gmvTarget > 0 ? ` / ${formatCurrency(targets.gmvTarget)}` : ""}</strong>
+                        </div>
+                        {gmvPct !== null ? (
+                          <div className="sr-target-bar"><div className="sr-target-fill" style={{ width: `${gmvPct}%` }} /></div>
+                        ) : <p className="sr-target-hint">No GMV target set. Click "Set targets" to add one.</p>}
+                        {gmvPct !== null && <span className="sr-target-pct">{gmvPct}%</span>}
+                      </div>
+                      <div className="sr-target-item">
+                        <div className="sr-target-labels">
+                          <span><Users size={12} />Referrals</span>
+                          <strong>{referrals.length}{targets.referralTarget > 0 ? ` / ${targets.referralTarget}` : ""}</strong>
+                        </div>
+                        {refPct !== null ? (
+                          <div className="sr-target-bar"><div className="sr-target-fill" style={{ width: `${refPct}%` }} /></div>
+                        ) : <p className="sr-target-hint">No referral target set.</p>}
+                        {refPct !== null && <span className="sr-target-pct">{refPct}%</span>}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </section>
+
           {/* Commission plans */}
           <section className="sr-panel">
             <div className="sr-panel-head">
@@ -670,7 +854,12 @@ export default function App() {
                 <span className="eyebrow">Pipeline</span>
                 <h2>{referrals.length ? `${referrals.length} referral${referrals.length === 1 ? "" : "s"}` : "No referrals yet"}</h2>
               </div>
-              <span className="sr-panel-meta">{activeReferrals} active</span>
+              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                <span className="sr-panel-meta">{activeReferrals} active</span>
+                <button className="ghost-action compact" type="button" onClick={handleExportReport}>
+                  <Download size={13} />Export
+                </button>
+              </div>
             </div>
 
             {referralsQuery.isLoading ? (
@@ -713,6 +902,9 @@ export default function App() {
                 <span className="eyebrow">Ledger</span>
                 <h2>{commissions.length ? `${commissions.length} entr${commissions.length === 1 ? "y" : "ies"}` : "No entries"}</h2>
               </div>
+              <button className="ghost-action compact" type="button" onClick={handleExportReport}>
+                <Download size={13} />Export
+              </button>
             </div>
 
             {commissionsQuery.isLoading ? (
@@ -727,6 +919,242 @@ export default function App() {
               <EmptyState
                 icon={ReceiptText}
                 text="No commission entries yet. Entries appear once your referred shops generate sales."
+              />
+            )}
+          </section>
+        </>
+      )}
+
+      {/* ── LEADS ── */}
+      {section === "leads" && (
+        <>
+          <section className="sr-hero-flat">
+            <div>
+              <span className="eyebrow">Prospect pipeline</span>
+              <h1>Leads</h1>
+              <p>Track pre-seller prospects before they register on the platform.</p>
+            </div>
+            <aside className="sr-hero-aside">
+              <span className="sr-profile-badge">Pipeline</span>
+              <strong className="sr-hero-amount">{leadsQuery.data?.total ?? leads.length}</strong>
+              <p>leads tracked · {leads.filter((l) => l.status === "followup" && l.followUpAt && new Date(l.followUpAt) < new Date()).length} overdue follow-ups</p>
+            </aside>
+          </section>
+
+          <section className="sr-panel">
+            <div className="sr-panel-head">
+              <div>
+                <span className="eyebrow">Lead list</span>
+                <h2>All leads</h2>
+              </div>
+              <button className="primary-action compact" type="button" onClick={() => {
+                setLeadEditId("");
+                setLeadForm({ businessName: "", contactName: "", phone: "", city: "", status: "new", followUpAt: "", note: "" });
+                setLeadFormError("");
+                setLeadCreateOpen((v) => !v);
+              }}>
+                <Plus size={14} />
+                Add lead
+              </button>
+            </div>
+
+            {leadCreateOpen && (
+              <form className="sr-lead-form" onSubmit={(e) => {
+                e.preventDefault();
+                setLeadFormError("");
+                if (!leadForm.businessName.trim()) { setLeadFormError("Business name is required."); return; }
+                createLeadMutation.mutate({
+                  businessName: leadForm.businessName.trim(),
+                  contactName:  leadForm.contactName.trim(),
+                  phone:        leadForm.phone.trim(),
+                  city:         leadForm.city.trim(),
+                  status:       leadForm.status,
+                  followUpAt:   leadForm.followUpAt || null,
+                  note:         leadForm.note.trim() || undefined,
+                });
+              }}>
+                <div className="sr-lead-form-grid">
+                  <label className="sr-field wide">
+                    <span>Business name *</span>
+                    <input value={leadForm.businessName} onChange={(e) => setLeadForm((f) => ({ ...f, businessName: e.target.value }))} placeholder="Prospect business name" required />
+                  </label>
+                  <label className="sr-field">
+                    <span>Contact name</span>
+                    <input value={leadForm.contactName} onChange={(e) => setLeadForm((f) => ({ ...f, contactName: e.target.value }))} placeholder="Primary contact" />
+                  </label>
+                  <label className="sr-field">
+                    <span>Phone</span>
+                    <input value={leadForm.phone} onChange={(e) => setLeadForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+971…" />
+                  </label>
+                  <label className="sr-field">
+                    <span>City</span>
+                    <input value={leadForm.city} onChange={(e) => setLeadForm((f) => ({ ...f, city: e.target.value }))} placeholder="Dubai, Abu Dhabi…" />
+                  </label>
+                  <label className="sr-field">
+                    <span>Status</span>
+                    <select value={leadForm.status} onChange={(e) => setLeadForm((f) => ({ ...f, status: e.target.value }))}>
+                      {["new","contacted","interested","followup","converted","lost"].map((s) => (
+                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="sr-field">
+                    <span>Follow-up date</span>
+                    <input type="datetime-local" value={leadForm.followUpAt} onChange={(e) => setLeadForm((f) => ({ ...f, followUpAt: e.target.value }))} />
+                  </label>
+                  <label className="sr-field wide">
+                    <span>Initial note</span>
+                    <textarea rows="2" value={leadForm.note} onChange={(e) => setLeadForm((f) => ({ ...f, note: e.target.value }))} placeholder="First contact context, source, etc." />
+                  </label>
+                </div>
+                {leadFormError ? <p className="sr-form-error">{leadFormError}</p> : null}
+                <div className="sr-lead-form-btns">
+                  <button className="primary-action" type="submit" disabled={createLeadMutation.isPending}>
+                    {createLeadMutation.isPending ? "Saving…" : "Add lead"}
+                  </button>
+                  <button className="ghost-action" type="button" onClick={() => { setLeadCreateOpen(false); setLeadFormError(""); }}>Cancel</button>
+                </div>
+              </form>
+            )}
+
+            <div className="sr-leads-filters">
+              <label className="sr-field">
+                <span>Search</span>
+                <div className="sr-support-search">
+                  <Search size={14} />
+                  <input value={leadSearch} onChange={(e) => setLeadSearch(e.target.value)} placeholder="Business, contact, city…" />
+                </div>
+              </label>
+              <label className="sr-field">
+                <span>Status</span>
+                <select value={leadStatus} onChange={(e) => setLeadStatus(e.target.value)}>
+                  <option value="all">All</option>
+                  {["new","contacted","interested","followup","converted","lost"].map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {leadsQuery.isLoading ? (
+              <div className="sr-loading">Loading leads…</div>
+            ) : leads.length ? (
+              <div className="sr-lead-list">
+                {leads.map((lead) => {
+                  const isOverdue = lead.status === "followup" && lead.followUpAt && new Date(lead.followUpAt) < new Date();
+                  const isEditing = leadEditId === lead.id;
+                  return (
+                    <article key={lead.id} className={`sr-lead-card${isOverdue ? " overdue" : ""}`}>
+                      {isEditing ? (
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          setLeadFormError("");
+                          if (!leadForm.businessName.trim()) { setLeadFormError("Business name is required."); return; }
+                          updateLeadMutation.mutate({
+                            id: lead.id,
+                            payload: {
+                              businessName: leadForm.businessName.trim(),
+                              contactName:  leadForm.contactName.trim(),
+                              phone:        leadForm.phone.trim(),
+                              city:         leadForm.city.trim(),
+                              status:       leadForm.status,
+                              followUpAt:   leadForm.followUpAt || null,
+                              note:         leadForm.note.trim() || undefined,
+                            },
+                          });
+                        }}>
+                          <div className="sr-lead-form-grid">
+                            <label className="sr-field wide">
+                              <span>Business name *</span>
+                              <input value={leadForm.businessName} onChange={(e) => setLeadForm((f) => ({ ...f, businessName: e.target.value }))} required />
+                            </label>
+                            <label className="sr-field">
+                              <span>Contact</span>
+                              <input value={leadForm.contactName} onChange={(e) => setLeadForm((f) => ({ ...f, contactName: e.target.value }))} />
+                            </label>
+                            <label className="sr-field">
+                              <span>Phone</span>
+                              <input value={leadForm.phone} onChange={(e) => setLeadForm((f) => ({ ...f, phone: e.target.value }))} />
+                            </label>
+                            <label className="sr-field">
+                              <span>City</span>
+                              <input value={leadForm.city} onChange={(e) => setLeadForm((f) => ({ ...f, city: e.target.value }))} />
+                            </label>
+                            <label className="sr-field">
+                              <span>Status</span>
+                              <select value={leadForm.status} onChange={(e) => setLeadForm((f) => ({ ...f, status: e.target.value }))}>
+                                {["new","contacted","interested","followup","converted","lost"].map((s) => (
+                                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="sr-field">
+                              <span>Follow-up</span>
+                              <input type="datetime-local" value={leadForm.followUpAt} onChange={(e) => setLeadForm((f) => ({ ...f, followUpAt: e.target.value }))} />
+                            </label>
+                            <label className="sr-field wide">
+                              <span>Add note</span>
+                              <textarea rows="2" value={leadForm.note} onChange={(e) => setLeadForm((f) => ({ ...f, note: e.target.value }))} placeholder="Update note…" />
+                            </label>
+                          </div>
+                          {leadFormError ? <p className="sr-form-error">{leadFormError}</p> : null}
+                          <div className="sr-lead-form-btns">
+                            <button className="primary-action" type="submit" disabled={updateLeadMutation.isPending}>
+                              {updateLeadMutation.isPending ? "Saving…" : "Save changes"}
+                            </button>
+                            <button className="ghost-action" type="button" onClick={() => { setLeadEditId(""); setLeadFormError(""); }}>Cancel</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="sr-lead-head">
+                            <div>
+                              <strong>{lead.businessName}</strong>
+                              {lead.contactName ? <span>{lead.contactName}</span> : null}
+                            </div>
+                            <div className="sr-lead-head-right">
+                              <span className={`sr-lead-pill ${lead.status}`}>{lead.status}</span>
+                              <button className="ghost-action compact icon-only" type="button" aria-label="Edit" onClick={() => {
+                                setLeadEditId(lead.id);
+                                setLeadCreateOpen(false);
+                                setLeadFormError("");
+                                const fu = lead.followUpAt ? new Date(lead.followUpAt).toISOString().slice(0, 16) : "";
+                                setLeadForm({ businessName: lead.businessName, contactName: lead.contactName || "", phone: lead.phone || "", city: lead.city || "", status: lead.status, followUpAt: fu, note: "" });
+                              }}>
+                                <Pencil size={13} />
+                              </button>
+                              <button className="ghost-action compact icon-only danger" type="button" aria-label="Delete"
+                                onClick={() => { if (window.confirm(`Remove lead "${lead.businessName}"?`)) deleteLeadMutation.mutate(lead.id); }}>
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="sr-lead-meta">
+                            {lead.phone ? <span><Phone size={11} />{lead.phone}</span> : null}
+                            {lead.city  ? <span>{lead.city}</span> : null}
+                            {lead.followUpAt ? (
+                              <span className={isOverdue ? "sr-lead-overdue" : ""}>
+                                <Bell size={11} />Follow-up: {formatDate(lead.followUpAt)}
+                              </span>
+                            ) : null}
+                            <span><Clock3 size={11} />Added {formatDate(lead.createdAt)}</span>
+                          </div>
+                          {lead.notes?.length > 0 && (
+                            <div className="sr-lead-notes">
+                              <p className="sr-lead-note-latest">{lead.notes[0].body}</p>
+                              {lead.notes.length > 1 ? <span className="sr-lead-note-more">+{lead.notes.length - 1} more</span> : null}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                icon={ClipboardList}
+                text={leadSearch || leadStatus !== "all" ? "No leads match your filters." : "No leads yet. Click 'Add lead' to start tracking prospects."}
               />
             )}
           </section>

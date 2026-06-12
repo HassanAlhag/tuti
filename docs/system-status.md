@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 7 Driver Experience complete)
+Last updated: 2026-06-12 (Phase 8 SR Experience complete)
 
 ---
 
@@ -14,10 +14,10 @@ Last updated: 2026-06-12 (Phase 7 Driver Experience complete)
 | Seller portal | ~80% |
 | Admin console | ~75% |
 | Driver portal | ~90% |
-| Sales Rep portal | ~70% |
+| Sales Rep portal | ~85% |
 | Backend / API | ~65% |
 | Production readiness | ~20% |
-| **Overall platform** | **~68%** |
+| **Overall platform** | **~70%** |
 
 **Top five technical risks before soft launch:**
 
@@ -177,9 +177,11 @@ Last updated: 2026-06-12 (Phase 7 Driver Experience complete)
 | Commission ledger | Working | Entry-level view; no breakdown |
 | Commission plans | Working | Plans displayed from constants |
 | Support tickets | Working | Create, filter, reply |
-| Lead/acquisition pipeline | Missing | No prospecting or CRM tools |
-| Follow-up reminders | Missing | Not implemented |
-| Mobile responsiveness | Partial | Layout works; not optimized for mobile-first |
+| Lead/acquisition pipeline | Working | `GET/POST /api/sr/leads`, CRUD, follow-up dates, note history |
+| Follow-up reminders | Working | `followUpAt` field; overdue badge in UI |
+| Monthly targets | Working | `GET/PUT /api/sr/targets`; progress bars on overview |
+| CSV report export | Working | `GET /api/sr/report` — referrals, commissions, leads |
+| Mobile responsiveness | Working | 375px CSS pass: 5-tab wrap, stacked forms |
 
 ---
 
@@ -211,7 +213,7 @@ Last updated: 2026-06-12 (Phase 7 Driver Experience complete)
 
 ### Active MongoDB Models
 
-User, Shop, Product, Review, Order, Notification, SupportTicket, SalesRep, Driver, SellerApplication, SellerBrandProfile, SellerReferral, SellerTransaction, CommissionEntry, DeliveryOffer, Payout, CuratedCollection, FeaturedProductPlacement, FeaturedSellerPlacement, MarketplaceEvent
+User, Shop, Product, Review, Order, Notification, SupportTicket, SalesRep, Driver, SellerApplication, SellerBrandProfile, SellerReferral, SellerTransaction, CommissionEntry, DeliveryOffer, Payout, CuratedCollection, FeaturedProductPlacement, FeaturedSellerPlacement, MarketplaceEvent, AuditEvent, Lead, SRTarget
 
 ---
 
@@ -508,7 +510,11 @@ Durable `AuditEvent` MongoDB model + ring-buffered seed fallback. `logAuditEvent
 
 Pickup confirmation step: `PATCH /api/driver/deliveries/:orderId/pickup` transitions order to "Shipped"; driver sees a "Confirm pickup" banner until they tap it. Proof-of-delivery photo upload: `proofOfDeliveryUrl` added to `driverDeliverySchema`; stored in `driverAssignment`; driver taps camera button to upload via `/api/upload`; viewable from delivery detail and history. COD reconciliation tab: dedicated view with balance summary and per-delivery COD breakdown. Delivery history tab with date-from/to filters: `GET /api/driver/history` with pagination. Mobile CSS pass at 420px: 5-tab topbar wraps cleanly, history/COD rows stack vertically. 216/216 backend tests pass.
 
-**Next milestone:** Phase 8
+**Phase 8 — Sales Rep Experience** — COMPLETE (2026-06-12)
+
+Lead/prospect pipeline: `Lead` MongoDB model (`backend/src/models/Lead.js`) with status enum (new → contacted → interested → followup → converted → lost), `followUpAt`, and note history. Full CRUD via `GET/POST /api/sr/leads`, `PATCH/DELETE /api/sr/leads/:id` — scoped to the calling rep's code, seed fallback with in-memory store. Monthly targets: `SRTarget` model; `GET /api/sr/targets` and `PUT /api/sr/targets` with upsert; displayed as progress bars on the SR overview. CSV report: `GET /api/sr/report` returns referrals + commissions + leads as a structured multi-section CSV. Frontend: new "Leads" tab (5th tab) with create form, inline edit, overdue follow-up badge, status filter, search; targets progress panel on overview with inline edit form; CSV export button on overview, referrals panel, and commissions panel. Mobile CSS pass at 375px: 5-tab topbar, form grids, target grids all collapse to single column. 216/216 backend tests pass.
+
+**Next milestone:** Phase 9
 
 ---
 
