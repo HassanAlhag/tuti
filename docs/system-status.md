@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 8 SR Experience complete)
+Last updated: 2026-06-12 (Phase 9 Financial and Operational Completion complete)
 
 ---
 
@@ -11,13 +11,13 @@ Last updated: 2026-06-12 (Phase 8 SR Experience complete)
 | Customer experience (browse, cart, checkout) | ~70% |
 | Customer account (orders, profile, tracking) | ~80% |
 | Public editorial pages | ~55% |
-| Seller portal | ~80% |
-| Admin console | ~75% |
+| Seller portal | ~85% |
+| Admin console | ~82% |
 | Driver portal | ~90% |
-| Sales Rep portal | ~85% |
-| Backend / API | ~65% |
+| Sales Rep portal | ~90% |
+| Backend / API | ~75% |
 | Production readiness | ~20% |
-| **Overall platform** | **~70%** |
+| **Overall platform** | **~75%** |
 
 **Top five technical risks before soft launch:**
 
@@ -114,6 +114,7 @@ Last updated: 2026-06-12 (Phase 8 SR Experience complete)
 | Order detail | Working | Status actions work |
 | Drivers (add, enable login) | Working | No driver notifications |
 | Payout view | Working | Payout disbursement not implemented |
+| Seller invoice download | Working | CSV invoice for any YYYY-MM period; `GET /api/marketplace/seller/invoice` |
 | Analytics | Working (basic) | Not backed by full reporting pipeline |
 | Brand profile | Working | No logo upload flow documented |
 | Notifications | Working | Bell, read, mark-all-read |
@@ -143,6 +144,10 @@ Last updated: 2026-06-12 (Phase 8 SR Experience complete)
 | Operations dashboard | Working | Live KPI summary + CSV report export buttons |
 | Analytics | Working (basic) | Not backed by full event pipeline |
 | Reports | Working | Orders, payouts, commissions CSV export; `/api/admin/reports/*` |
+| Finance — COD Settlement | Working | Driver COD batch settle UI; `POST /api/marketplace/admin/cod-settlement` |
+| Finance — Commission run | Working | Dry-run preview + live run; `POST /api/admin/reports/commissions/run` |
+| Finance — Reconciliation | Working | Open-obligations dashboard; `GET /api/admin/reports/reconciliation`; auto-refresh 5 min |
+| Refund | Working | Reverses seller balance + marks order Refunded; `POST /api/marketplace/admin/orders/:id/refund` |
 
 ---
 
@@ -202,7 +207,7 @@ Last updated: 2026-06-12 (Phase 8 SR Experience complete)
 | Tracking / analytics | Working | Page views, placement events; no aggregation pipeline |
 | Payments | Stub only | COD tracking; no gateway integration |
 | Payouts | Stub only | Status updates; no disbursement |
-| Sales Rep commissions | Working | Foundation ledger; no automated calculation cron |
+| Sales Rep commissions | Working | Foundation ledger; on-demand calculation run via admin UI (`runCommissionCalculation`) |
 | Support / disputes | Working | Ticket lifecycle, resolution; no payment side effects |
 | Seller health score | Client utility | No backend recalculation automation |
 | Rate limiting | Working | Global + auth-specific limits |
@@ -343,11 +348,11 @@ node --test backend/src/modules/orders/*.test.js backend/src/shared/workflows/*.
 
 ### Current Build Status
 
-All five apps: **PASS** (verified 2026-06-11, Phase 2 complete)
+All five apps: **PASS** (verified 2026-06-12, Phase 9 complete)
 
 ### Current Test Status
 
-216/216 backend tests: **PASS** (verified 2026-06-11, Phase 2 complete)
+216/216 backend tests: **PASS** (verified 2026-06-12, Phase 9 complete)
 
 ### Automated Test Coverage
 
@@ -514,7 +519,11 @@ Pickup confirmation step: `PATCH /api/driver/deliveries/:orderId/pickup` transit
 
 Lead/prospect pipeline: `Lead` MongoDB model (`backend/src/models/Lead.js`) with status enum (new → contacted → interested → followup → converted → lost), `followUpAt`, and note history. Full CRUD via `GET/POST /api/sr/leads`, `PATCH/DELETE /api/sr/leads/:id` — scoped to the calling rep's code, seed fallback with in-memory store. Monthly targets: `SRTarget` model; `GET /api/sr/targets` and `PUT /api/sr/targets` with upsert; displayed as progress bars on the SR overview. CSV report: `GET /api/sr/report` returns referrals + commissions + leads as a structured multi-section CSV. Frontend: new "Leads" tab (5th tab) with create form, inline edit, overdue follow-up badge, status filter, search; targets progress panel on overview with inline edit form; CSV export button on overview, referrals panel, and commissions panel. Mobile CSS pass at 375px: 5-tab topbar, form grids, target grids all collapse to single column. 216/216 backend tests pass.
 
-**Next milestone:** Phase 9
+**Phase 9 — Financial and Operational Completion** — COMPLETE (2026-06-12)
+
+Commission automation: `backend/src/modules/finance/commissionCalc.js` — `runCommissionCalculation({ dryRun })` scans active SR referrals, finds delivered orders with no existing GMV commission entry, and creates `CommissionEntry` records; dry-run mode returns preview without writing. Financial reconciliation: `backend/src/modules/finance/reconciliation.js` — `getReconciliationSummary()` returns unsettled COD, pending payouts, active disputes, and pending commissions in one parallel query. New admin routes: `GET /api/admin/reports/reconciliation`, `POST /api/admin/reports/commissions/run`. Refund endpoint: `POST /api/marketplace/admin/orders/:orderId/refund` — validates refundable status, calls `debitForRefund` to reverse seller balance buckets, transitions order to Refunded, emits audit event. Seller invoice: `GET /api/marketplace/seller/invoice?period=YYYY-MM` — structured CSV with orders table, transactions table, and summary. AdminFinance component: three-tab Finance section in admin console (Reconciliation, COD Settlement, Commission run) with MetricTile grid, driver lookup + batch settle table, dry-run preview table. Refund button added to admin order detail for Delivered/Customer Accepted orders. Seller invoice download panel added to Seller Payouts tab (month picker + Download button). 216/216 backend tests pass; all 5 apps build clean.
+
+**Next milestone:** Phase 10
 
 ---
 

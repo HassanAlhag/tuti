@@ -9,6 +9,7 @@ import {
   ArrowRight,
   ClipboardCheck,
   CreditCard,
+  Download,
   Clock,
   Gift,
   Headphones,
@@ -40,7 +41,7 @@ import { PanelHeader } from "@tuti/shared/components/PanelHeader.jsx";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { computeSellerHealth } from "@tuti/shared/utils/sellerHealth.js";
-import { marketplaceApi, ordersApi, sellerDeliveryOffersApi, sellerDriversApi, sellerFinanceApi, supportTicketsApi, uploadApi } from "@tuti/shared/api/client.js";
+import { marketplaceApi, ordersApi, sellerDeliveryOffersApi, sellerDriversApi, sellerFinanceApi, sellerInvoiceApi, supportTicketsApi, uploadApi } from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { GENDER_OPTIONS, SCENT_FAMILIES } from "@tuti/shared/constants";
 import { getAllowedOrderActions } from "@tuti/shared/workflows";
@@ -90,6 +91,23 @@ import {
 export function SellerPayouts({ seller }) {
   const shop = seller?.shop;
   const { user } = useAuthStore();
+  const [invoicePeriod, setInvoicePeriod] = useState("");
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+
+  async function handleDownloadInvoice() {
+    setInvoiceLoading(true);
+    try {
+      const csv = await sellerInvoiceApi.download(invoicePeriod || undefined);
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `invoice-${shop?.id || "seller"}-${invoicePeriod || "all"}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { /* silent */ }
+    setInvoiceLoading(false);
+  }
 
   const { data: balanceData } = useQuery({
     queryKey: ["seller-balance"],
@@ -117,6 +135,26 @@ export function SellerPayouts({ seller }) {
         <div>
           <h2 className="sd-section-title">Payouts</h2>
           <p className="sd-section-sub">Net revenue after commission and reserve hold</p>
+        </div>
+        <div className="sd-invoice-row">
+          <label className="sd-invoice-period">
+            <span>Period</span>
+            <input
+              type="month"
+              value={invoicePeriod}
+              onChange={(e) => setInvoicePeriod(e.target.value)}
+              placeholder="YYYY-MM"
+            />
+          </label>
+          <button
+            className="secondary-action compact"
+            type="button"
+            disabled={invoiceLoading}
+            onClick={handleDownloadInvoice}
+          >
+            <Download size={14} />
+            {invoiceLoading ? "Preparing…" : "Download invoice"}
+          </button>
         </div>
       </div>
 

@@ -44,6 +44,13 @@ import {
   listDriverCodSettlementCandidates,
   settleDriverCodOrders,
 } from "../finance/codSettlement.js";
+import { debitForRefund } from "../finance/sellerBalance.js";
+import { updateOrderStatus, getSeedOrders } from "../orders/orders.service.js";
+import { logAuditEvent } from "../audit/audit.service.js";
+import { Order } from "../../models/Order.js";
+import { SellerTransaction } from "../../models/SellerTransaction.js";
+import { env as _env } from "../../config/env.js";
+import { seedRepository } from "../../repositories/seedRepository.js";
 import {
   createPayout,
   getPayoutById,
@@ -656,6 +663,134 @@ marketplaceRouter.patch(
   async (req, res, next) => {
     try {
       res.json({ data: await updateSellerBrandProfile(req.params.shopId, req.body, req.user) });
+    } catch (err) { next(err); }
+  }
+);
+
+// ── Admin: order refund ───────────────────────────────────────────────────────
+
+marketplaceRouter.post(
+  "/admin/orders/:orderId/refund",
+  authenticate,
+  requireRole("admin"),
+  async (req, res, next) => {
+    try {
+      const { orderId } = req.params;
+      const { note = "" } = req.body || {};
+
+      const REFUNDABLE = new Set(["Delivered", "Customer Accepted", "Disputed"]);
+
+      let order;
+      if (_env.mongoUri) {
+        order = await Order.findOne({ orderId }).lean();
+      } else {
+        order = getSeedOrders().find((o) => o.orderId === orderId) || null;
+      }
+
+      if (!order) {
+        return res.status(404).json({ error: `Order ${orderId} not found.` });
+      }
+      if (!REFUNDABLE.has(order.status)) {
+        return res.status(409).json({ error: `Cannot refund an order with status "${order.status}".` });
+      }
+      if (order.status === "Refunded") {
+        return res.status(409).json({ error: "Order is already refunded." });
+      }
+
+      await debitForRefund(order);
+      const updated = await updateOrderStatus(orderId, "Refunded", req.user, note || "Admin refund.");
+
+      logAuditEvent({
+        action: "order.refunded",
+        actorId: req.user?.sub, actorName: req.user?.name, actorRole: req.user?.role,
+        entityType: "order", entityId: orderId,
+        summary: `Order ${orderId} refunded by admin`,
+        meta: { note, shopIds: order.shopIds },
+      });
+
+      res.json({ data: updated });
+    } catch (err) { next(err); }
+  }
+);
+
+// ── Seller: invoice CSV ───────────────────────────────────────────────────────
+
+marketplaceRouter.get(
+  "/seller/invoice",
+  authenticate,
+  requireRole("seller"),
+  async (req, res, next) => {
+    try {
+      const shopId = req.user?.shopId;
+      if (!shopId) return res.status(403).json({ error: "Seller shop not found." });
+
+      const { period } = req.query; // YYYY-MM
+      let fromDate, toDate;
+      if (period && /^\d{4}-\d{2}$/.test(period)) {
+        fromDate = new Date(`${period}-01T00:00:00Z`);
+        toDate   = new Date(fromDate);
+        toDate.setMonth(toDate.getMonth() + 1);
+      }
+
+      const inRange = (d) => {
+        if (!d) return true;
+        const dt = new Date(d);
+        if (fromDate && dt < fromDate) return false;
+        if (toDate   && dt >= toDate)  return false;
+        return true;
+      };
+
+      let orders, transactions;
+      if (_env.mongoUri) {
+        const orderFilter = { shopIds: shopId, status: { $in: ["Delivered", "Customer Accepted"] } };
+        if (fromDate) orderFilter.createdAt = { $gte: fromDate, $lt: toDate };
+        const txFilter = { shopId };
+        if (fromDate) txFilter.createdAt = { $gte: fromDate, $lt: toDate };
+        [orders, transactions] = await Promise.all([
+          Order.find(orderFilter).lean(),
+          SellerTransaction.find(txFilter).sort({ createdAt: -1 }).lean(),
+        ]);
+      } else {
+        const state = seedRepository.getState();
+        orders = getSeedOrders().filter((o) =>
+          (o.shopIds || []).includes(shopId) &&
+          ["Delivered", "Customer Accepted"].includes(o.status) &&
+          inRange(o.createdAt)
+        );
+        transactions = (state.sellerTransactions || []).filter(
+          (t) => t.shopId === shopId && inRange(t.createdAt)
+        );
+      }
+
+      function csvEsc(v) {
+        const s = String(v ?? "");
+        return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+      }
+      function row(cells) { return cells.map(csvEsc).join(","); }
+
+      const periodLabel = period || "all-time";
+      const lines = [
+        `## Tuti Invoice — Shop: ${shopId} — Period: ${periodLabel}`,
+        "",
+        "## Orders",
+        row(["Order ID", "Status", "Subtotal", "Platform Fee", "Vendor Net", "Date"]),
+        ...orders.map((o) => row([o.orderId, o.status, o.subtotal, o.platformFee, o.vendorNet, o.createdAt])),
+        "",
+        "## Transactions",
+        row(["ID", "Type", "Amount", "Order ID", "Note", "Date"]),
+        ...transactions.map((t) => row([t.id || t._id, t.type, t.amount, t.orderId || "", t.note || "", t.createdAt])),
+        "",
+        `## Summary`,
+        row(["Metric", "Value"]),
+        row(["Orders", orders.length]),
+        row(["Gross revenue", orders.reduce((s, o) => s + Number(o.subtotal || 0), 0)]),
+        row(["Platform fees", orders.reduce((s, o) => s + Number(o.platformFee || 0), 0)]),
+        row(["Net vendor earnings", orders.reduce((s, o) => s + Number(o.vendorNet || 0), 0)]),
+      ];
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="invoice-${shopId}-${periodLabel}.csv"`);
+      res.send(lines.join("\n"));
     } catch (err) { next(err); }
   }
 );

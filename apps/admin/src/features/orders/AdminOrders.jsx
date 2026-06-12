@@ -26,6 +26,7 @@ import {
   PauseCircle,
   Phone,
   ReceiptText,
+  RotateCcw,
   Search,
   ShieldCheck,
   ShoppingBag,
@@ -42,7 +43,7 @@ import {
   Warehouse,
   XCircle,
 } from "lucide-react";
-import { marketplaceApi, ordersApi } from "@tuti/shared/api/client.js";
+import { marketplaceApi, ordersApi, adminOrdersFinanceApi } from "@tuti/shared/api/client.js";
 import { NotificationBell } from "@tuti/shared/components/NotificationBell.jsx";
 import { brand } from "@tuti/shared/brand.js";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
@@ -87,6 +88,14 @@ export function AdminOrders({ focusedOrderId = "", onFocusHandled = () => {} }) 
   const updateMutation = useMutation({
     mutationFn: ({ orderId, status }) => ordersApi.updateStatus(orderId, status),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-orders"] }),
+  });
+
+  const refundMutation = useMutation({
+    mutationFn: ({ orderId, note }) => adminOrdersFinanceApi.refund(orderId, { note }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-orders"] });
+      qc.invalidateQueries({ queryKey: ["fin", "reconciliation"] });
+    },
   });
 
   const orders      = data?.orders || [];
@@ -334,6 +343,30 @@ export function AdminOrders({ focusedOrderId = "", onFocusHandled = () => {} }) 
                   {detailOrder.notes ? <p><strong>Order notes:</strong> {detailOrder.notes}</p> : null}
                 </div>
               ) : null}
+              {["Delivered", "Customer Accepted"].includes(detailOrder?.status) && (
+                <div className="ac-order-refund-row">
+                  <button
+                    className="danger-action compact"
+                    type="button"
+                    disabled={refundMutation.isPending}
+                    onClick={() => {
+                      if (window.confirm(`Issue a refund for order ${detailOrder.orderId}? This will reverse seller earnings and mark the order as Refunded.`)) {
+                        refundMutation.mutate({ orderId: detailOrder.orderId, note: "Admin-initiated refund." });
+                      }
+                    }}
+                  >
+                    <RotateCcw size={13} />
+                    {refundMutation.isPending ? "Processing refund…" : "Issue refund"}
+                  </button>
+                  <small>Reverses seller earnings and marks order as Refunded.</small>
+                </div>
+              )}
+              {refundMutation.isError && (
+                <div className="ac-order-dispute-cue">
+                  <AlertTriangle size={14} />
+                  {refundMutation.error?.message || "Refund failed."}
+                </div>
+              )}
               {detailOrder.status === "Disputed" ? (
                 <div className="ac-order-dispute-cue">
                   <AlertTriangle size={14} />

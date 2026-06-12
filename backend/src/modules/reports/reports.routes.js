@@ -5,6 +5,8 @@ import { Order } from "../../models/Order.js";
 import { Payout } from "../../models/Payout.js";
 import { CommissionEntry } from "../../models/CommissionEntry.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
+import { runCommissionCalculation } from "../finance/commissionCalc.js";
+import { getReconciliationSummary } from "../finance/reconciliation.js";
 
 export const reportsRouter = Router();
 
@@ -112,6 +114,21 @@ reportsRouter.get("/commissions", async (req, res, next) => {
     }
 
     res.json({ data: { entries, total: entries.length } });
+  } catch (err) { next(err); }
+});
+
+// ── Reconciliation summary ─────────────────────────────────────────────
+reportsRouter.get("/reconciliation", async (_req, res, next) => {
+  try {
+    res.json({ data: await getReconciliationSummary() });
+  } catch (err) { next(err); }
+});
+
+// ── Commission calculation trigger ─────────────────────────────────────
+reportsRouter.post("/commissions/run", async (req, res, next) => {
+  try {
+    const dryRun = String(req.query.dryRun || req.body?.dryRun) === "true";
+    res.json({ data: await runCommissionCalculation({ dryRun }) });
   } catch (err) { next(err); }
 });
 

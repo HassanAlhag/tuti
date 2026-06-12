@@ -5478,3 +5478,36 @@ body { background: linear-gradient(180deg, var(--paper), #f3ede1); }
   .so-launch-cards { grid-template-columns: 1fr; }
   .so-hero h1 { font-size: var(--text-xl); }
 }
+
+/* ── Seller invoice download ─────────────────────────────────────── */
+
+.sd-invoice-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.sd-invoice-period {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--muted);
+}
+.sd-invoice-period input[type="month"] {
+  min-height: 2.4rem;
+  padding: 0 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 480px) {
+  .sd-invoice-row { flex-direction: column; align-items: flex-start; }
+  .sd-invoice-period { width: 100%; }
+  .sd-invoice-period input[type="month"] { width: 100%; }
+}

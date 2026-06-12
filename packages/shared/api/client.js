@@ -373,6 +373,9 @@ export const adminAuditApi = {
 
 export const adminReportsApi = {
   summary: () => request("/admin/reports/summary"),
+  reconciliation: () => request("/admin/reports/reconciliation"),
+  runCommissions: (dryRun = false) =>
+    request(`/admin/reports/commissions/run${dryRun ? "?dryRun=true" : ""}`, { method: "POST", body: JSON.stringify({}) }),
   exportOrders:      (params = {}) => {
     const q = new URLSearchParams({ ...params, format: "csv" }).toString();
     return request(`/admin/reports/orders?${q}`);
@@ -384,6 +387,24 @@ export const adminReportsApi = {
   exportCommissions: (params = {}) => {
     const q = new URLSearchParams({ ...params, format: "csv" }).toString();
     return request(`/admin/reports/commissions?${q}`);
+  },
+};
+
+export const adminCodSettlementApi = {
+  candidates: (driverId) => request(`/marketplace/admin/drivers/${driverId}/cod-settlement-candidates`),
+  settle: (driverId, payload) =>
+    request(`/marketplace/admin/drivers/${driverId}/cod-settlements`, { method: "POST", body: JSON.stringify(payload) }),
+};
+
+export const adminOrdersFinanceApi = {
+  refund: (orderId, payload = {}) =>
+    request(`/marketplace/admin/orders/${orderId}/refund`, { method: "POST", body: JSON.stringify(payload) }),
+};
+
+export const sellerInvoiceApi = {
+  download: (period) => {
+    const q = period ? `?period=${encodeURIComponent(period)}` : "";
+    return request(`/marketplace/seller/invoice${q}`);
   },
 };
 
