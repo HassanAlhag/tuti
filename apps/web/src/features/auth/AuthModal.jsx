@@ -148,6 +148,21 @@ export function AuthModal({ initialMode = "login", onClose }) {
               </button>
             </p>
             <p className="modal-hint">
+              Seller, admin, or driver?{" "}
+              <button
+                className="ghost-action compact"
+                style={{ padding: 0, background: "none", border: "none", color: "var(--brand-dark)", textDecoration: "underline", cursor: "pointer", font: "inherit", fontSize: "0.8rem" }}
+                onClick={() => {
+                  onClose();
+                  window.history.pushState(null, "", "/login");
+                  window.dispatchEvent(new PopStateEvent("popstate"));
+                }}
+                type="button"
+              >
+                Use the unified sign-in page.
+              </button>
+            </p>
+            <p className="modal-hint">
               Demo — admin@tuti.dev · seller@tuti.dev · customer@tuti.dev · Password: password123
             </p>
           </>

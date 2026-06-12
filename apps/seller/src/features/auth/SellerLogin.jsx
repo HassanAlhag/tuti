@@ -90,7 +90,7 @@ const SHOP_CATEGORY_OPTIONS = [
   { id: "bundle",   label: "Bundle" },
 ];
 
-export function SellerLogin() {
+export function SellerLogin({ idleExpired = false, onResume }) {
   const { setAuth } = useAuthStore();
   const DEMO_EMAIL    = "seller@tuti.dev";
   const DEMO_PASSWORD = "password123";
@@ -195,6 +195,13 @@ export function SellerLogin() {
             <span>Manage your shop on Tuti</span>
           </div>
         </div>
+
+        {/* Idle expiry notice */}
+        {idleExpired && (
+          <p className="sl-error" role="alert" style={{ textAlign: "center" }}>
+            Your session expired after 15 minutes of inactivity. Please sign in again.
+          </p>
+        )}
 
         {/* Rep code badge */}
         {repCode && (

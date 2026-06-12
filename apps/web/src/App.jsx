@@ -38,6 +38,7 @@ import {
   LegalPage,
 } from "./features/pages/SitemapPages.jsx";
 import { SupportTicketsPage } from "./features/pages/SupportTicketsPage.jsx";
+import { LoginPage }          from "./features/pages/LoginPage.jsx";
 
 // ── Route helpers ─────────────────────────────────────────────────
 function getRoute() {
@@ -50,6 +51,7 @@ function getRoute() {
   if (p.startsWith("/cart"))             return "cart";
   if (p.startsWith("/collections"))      return "collections";
   if (p.startsWith("/shops"))            return "shops";
+  if (p.startsWith("/login"))             return "login";
   if (p.startsWith("/sell"))             return "sell";
   if (p.startsWith("/about"))            return "about";
   if (p.startsWith("/fragrance-finder")) return "fragrance-finder";
@@ -167,6 +169,7 @@ export default function App() {
       account:            "/account",
       "store-locator":    "/store-locator",
       legal:              "/legal",
+      login:              "/login",
     };
     if (id === "shop") {
       const params = new URLSearchParams();
@@ -194,6 +197,7 @@ export default function App() {
     }
     if (path === "/collections")                            return navigate("collections");
     if (path === "/shops")                                  return navigate("shops");
+    if (path === "/login")                                  return navigate("login");
     if (path === "/about" || path.startsWith("/about#"))    return navigate("about");
     if (path === "/sell")                                   return navigate("sell");
     if (path === "/journal")                                return navigate("journal");
@@ -434,6 +438,7 @@ export default function App() {
     "reset-password":   <ResetPasswordPage onNavigate={navigatePath} />,
     "store-locator":    <StoreLocatorPage />,
     legal:              <LegalPage onNavigate={navigatePath} />,
+    login:              <LoginPage onNavigate={navigatePath} />,
   };
 
   return (

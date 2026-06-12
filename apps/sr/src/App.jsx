@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -23,6 +23,7 @@ import { brand } from "@tuti/shared/brand.js";
 import { authApi, srPortalApi, supportTicketsApi } from "@tuti/shared/api/client.js";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useIdleTimeout } from "@tuti/shared/hooks/useIdleTimeout.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { DEFAULT_COMMISSION_PLANS } from "@tuti/shared/constants/commission.js";
 
@@ -271,9 +272,18 @@ export default function App() {
   const [supportReplyDraft, setSupportReplyDraft] = useState("");
   const [supportReplyError, setSupportReplyError] = useState("");
 
+  const [idleExpired, setIdleExpired] = useState(false);
+
   const isSRSession = isAuthenticated() && user?.role === "sales_rep" && Boolean(accessToken);
   const nonSRSession = isAuthenticated() && user && user.role !== "sales_rep";
   const repKey = user?.sub || "guest";
+
+  const handleIdle = useCallback(() => {
+    clearAuth();
+    setIdleExpired(true);
+  }, [clearAuth]);
+
+  useIdleTimeout({ enabled: isSRSession, onTimeout: handleIdle });
 
   const profileQuery = useQuery({
     queryKey: ["sr", "me", repKey],
@@ -450,7 +460,14 @@ export default function App() {
 
           <p className="sr-gate-copy">{LOGIN_COPY}</p>
 
-          {nonSRSession ? (
+          {idleExpired && (
+            <div className="sr-gate-warning" role="alert">
+              <AlertTriangle size={16} />
+              <span>Your session expired after 15 minutes of inactivity. Please sign in again.</span>
+            </div>
+          )}
+
+          {!idleExpired && nonSRSession ? (
             <div className="sr-gate-warning">
               <AlertTriangle size={16} />
               <span>This account does not have SR access.</span>

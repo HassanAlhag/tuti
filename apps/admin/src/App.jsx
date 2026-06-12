@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { authApi, marketplaceApi } from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useIdleTimeout } from "@tuti/shared/hooks/useIdleTimeout.js";
 import { AdminConsole } from "./features/shell/AdminConsole.jsx";
 
 const SECTIONS = [
@@ -30,7 +31,7 @@ function getSection() {
   return SECTIONS.includes(section) ? section : "overview";
 }
 
-function AdminLogin() {
+function AdminLogin({ idleExpired = false, onResume }) {
   const { setAuth } = useAuthStore();
   const [form, setForm] = useState({ email: "admin@tuti.dev", password: "password123" });
   const [error, setError] = useState("");
@@ -42,6 +43,11 @@ function AdminLogin() {
     setPending(true);
     try {
       const result = await authApi.login(form);
+      if (result.user?.role !== "admin") {
+        const roleLabel = { customer: "Customer Store", seller: "Seller Central", driver: "Driver Portal", sales_rep: "Sales Rep Portal" }[result.user?.role] || "another portal";
+        setError(`This account does not have admin access. Sign in at the ${roleLabel} instead.`);
+        return;
+      }
       setAuth(result.user, result.accessToken, result.refreshToken);
     } catch (err) {
       setError(err.message);
@@ -58,6 +64,11 @@ function AdminLogin() {
           <span className="eyebrow">Admin access</span>
           <h1>Tuti operations</h1>
         </div>
+        {idleExpired && (
+          <p className="admin-app-error" role="alert">
+            Your session expired after 15 minutes of inactivity. Please sign in again.
+          </p>
+        )}
         <label>
           <span>Email</span>
           <input
@@ -86,13 +97,22 @@ function AdminLogin() {
 }
 
 export default function App() {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin, clearAuth } = useAuthStore();
   const [section, setSection] = useState(getSection);
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [idleExpired, setIdleExpired] = useState(false);
 
   const canAccess = isAuthenticated() && isAdmin();
+
+  const handleIdle = useCallback(() => {
+    clearAuth();
+    setIdleExpired(true);
+    setAdminData(null);
+  }, [clearAuth]);
+
+  useIdleTimeout({ enabled: canAccess, onTimeout: handleIdle });
 
   async function loadAdminData() {
     setLoadError("");
@@ -146,8 +166,8 @@ export default function App() {
     await loadAdminData();
   }
 
-  // Not authenticated → show login
-  if (!loading && !canAccess) return <AdminLogin />;
+  // Not authenticated → show login (with idle-expired notice if applicable)
+  if (!loading && !canAccess) return <AdminLogin idleExpired={idleExpired} onResume={() => setIdleExpired(false)} />;
 
   // Loading OR authenticated but data not yet fetched (gap between login and first effect run)
   if (loading || !adminData) {

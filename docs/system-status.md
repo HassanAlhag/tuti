@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-11 (Phase 2 Customer Account complete)
+Last updated: 2026-06-12 (Phase 4 Unified Auth complete)
 
 ---
 
@@ -283,8 +283,8 @@ Customer files ticket at `/support` → Admin sees it in support queue → Admin
 
 **Token storage:** JWT in Zustand store (localStorage via persist)  
 **Shared auth:** `@tuti/shared/store/authStore.js` used by all portals  
-**Gap:** Each portal has a separate login; no single unified login entry point  
-**Gap:** Portal URLs are environment-variable driven; cross-portal links work only when env vars are set
+~~**Gap:** Each portal has a separate login; no single unified login entry point~~ **RESOLVED (Phase 4)** — `/login` route on customer web; auto-redirects to correct portal by role  
+~~**Gap:** Portal URLs are environment-variable driven; cross-portal links work only when env vars are set~~ **RESOLVED (Phase 4)** — `portalUrls.js` centralises URLs with localhost fallbacks
 
 ---
 
@@ -485,7 +485,15 @@ ARIA accessibility pass: radiogroup roles, aria-checked/pressed on checkout iden
 
 Profile edit, address book, password reset (SHA-256 token flow, dev mode returns raw token), wishlist (optimistic UI + Zustand store), account settings (email/WhatsApp/marketing toggles). AccountPage expanded to 5 tabs. 216/216 backend tests pass.
 
-**Next milestone:** Phase 3 — Public Marketing and Content
+**Phase 3 — Public Marketing and Content** — COMPLETE (2026-06-11)
+
+SEO meta tags (title, description, Open Graph, canonical) on all public routes. Journal articles (10 editorial posts). Legal sub-pages (privacy, terms, returns, cookies). `sitemap.xml` and `robots.txt`. JSON-LD structured data for products and seller pages.
+
+**Phase 4 — Unified Authentication and Portal Routing** — COMPLETE (2026-06-12)
+
+Unified `/login` route on customer web (auto-redirects to correct portal by role). `packages/shared/utils/portalUrls.js` centralises portal URLs with localhost fallbacks. `packages/shared/hooks/useIdleTimeout.js` with 15-minute idle timeout wired into seller, admin, driver, and SR portals. Role mismatch guard on admin login. AuthModal hint linking to unified login page.
+
+**Next milestone:** Phase 5 — Seller Experience
 
 ---
 

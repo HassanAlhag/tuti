@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -21,6 +21,7 @@ import { brand } from "@tuti/shared/brand.js";
 import { authApi, driverOffersApi, driverPortalApi, supportTicketsApi } from "@tuti/shared/api/client.js";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useIdleTimeout } from "@tuti/shared/hooks/useIdleTimeout.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 
 const LOGIN_COPY = "Sign in with the credentials provided by your seller.";
@@ -364,8 +365,16 @@ export default function App() {
   const [supportReplyError, setSupportReplyError] = useState("");
   const [supportNotice, setSupportNotice] = useState("");
   const [querySupportTicketId, setQuerySupportTicketId] = useState(getSupportTicketFromQuery);
+  const [idleExpired, setIdleExpired] = useState(false);
 
   const isDriverSession = isAuthenticated() && user?.role === "driver" && Boolean(accessToken);
+
+  const handleIdle = useCallback(() => {
+    clearAuth();
+    setIdleExpired(true);
+  }, [clearAuth]);
+
+  useIdleTimeout({ enabled: isDriverSession, onTimeout: handleIdle });
   const nonDriverSession = isAuthenticated() && user && user.role !== "driver";
   const driverKey = user?.driverId || "guest";
   const shopKey = user?.shopId || "guest";
@@ -696,7 +705,14 @@ export default function App() {
 
           <p className="dp-gate-copy">{LOGIN_COPY}</p>
 
-          {nonDriverSession ? (
+          {idleExpired && (
+            <div className="dp-gate-warning" role="alert">
+              <AlertTriangle size={16} />
+              <span>Your session expired after 15 minutes of inactivity. Please sign in again.</span>
+            </div>
+          )}
+
+          {!idleExpired && nonDriverSession ? (
             <div className="dp-gate-warning">
               <AlertTriangle size={16} />
               <span>This account does not have driver access.</span>

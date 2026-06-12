@@ -10,8 +10,9 @@
  * Routing: /seller, /seller/products, /seller/orders, ...
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuthStore }    from "@tuti/shared/store/authStore.js";
+import { useIdleTimeout }  from "@tuti/shared/hooks/useIdleTimeout.js";
 import { marketplaceApi, uploadApi } from "@tuti/shared/api/client.js";
 import { SellerLayout }    from "./features/shell/SellerLayout.jsx";
 import { SellerLogin }     from "./features/auth/SellerLogin.jsx";
@@ -49,7 +50,7 @@ const DEFAULT_PRODUCT = {
 };
 
 export default function App() {
-  const { user, isAuthenticated, isSeller, isAdmin } = useAuthStore();
+  const { user, isAuthenticated, isSeller, isAdmin, clearAuth } = useAuthStore();
   const [section,    setSection]    = useState(getSection);
   const [seller,     setSeller]     = useState(null);
   const [loading,    setLoading]    = useState(true);
@@ -57,8 +58,17 @@ export default function App() {
   const [newProduct, setNewProduct] = useState(DEFAULT_PRODUCT);
   const [uploadNote, setUploadNote] = useState("");
   const [deepLinkTarget, setDeepLinkTarget] = useState({ orderId: "", productId: "", notice: "" });
+  const [idleExpired, setIdleExpired] = useState(false);
 
   const canAccess = isAuthenticated() && (isSeller() || isAdmin());
+
+  const handleIdle = useCallback(() => {
+    clearAuth();
+    setIdleExpired(true);
+    setSeller(null);
+  }, [clearAuth]);
+
+  useIdleTimeout({ enabled: canAccess, onTimeout: handleIdle });
 
   // ── Load seller data ────────────────────────────────────────────
   useEffect(() => {
@@ -152,7 +162,7 @@ export default function App() {
 
   // ── Auth gate ───────────────────────────────────────────────────
   if (!loading && !canAccess) {
-    return <SellerLogin />;
+    return <SellerLogin idleExpired={idleExpired} onResume={() => setIdleExpired(false)} />;
   }
 
   if (loading) return <div className="sd-loading" style={{ minHeight: "100vh" }}>Loading…</div>;
