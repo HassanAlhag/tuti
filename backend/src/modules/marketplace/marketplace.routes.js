@@ -26,6 +26,8 @@ import {
   updateSellerProductSchema,
   updateSellerStock,
   updateSellerStockSchema,
+  updateSellerStockBulk,
+  bulkStockSchema,
   updateShopContractStatus,
   updateShopPaymentRules,
   updateStatusSchema,
@@ -196,6 +198,25 @@ marketplaceRouter.patch(
         ? (req.body.shopId || req.user.shopId)
         : req.user.shopId;
       res.json({ data: await updateSellerStock(req.params.productId, shopId, req.body) });
+    } catch (err) { next(err); }
+  }
+);
+
+/* ── Seller: bulk stock update ──────────────────────────────────────
+   Accepts { items: [{ productId, delta?, stock? }, ...] }.
+   Returns per-item ok/error results. Max 100 items per request.
+   ─────────────────────────────────────────────────────────────────── */
+marketplaceRouter.patch(
+  "/seller/products/stock-bulk",
+  authenticate,
+  requireRole("seller", "admin"),
+  validate(bulkStockSchema),
+  async (req, res, next) => {
+    try {
+      const shopId = req.user.role === "admin"
+        ? (req.body.shopId || req.user.shopId)
+        : req.user.shopId;
+      res.json({ data: await updateSellerStockBulk(shopId, req.body) });
     } catch (err) { next(err); }
   }
 );

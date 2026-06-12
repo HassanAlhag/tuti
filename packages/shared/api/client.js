@@ -79,6 +79,8 @@ export const marketplaceApi = {
     request(`/marketplace/seller/products/${productId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   updateSellerStock: (productId, payload) =>
     request(`/marketplace/seller/products/${productId}/stock`, { method: "PATCH", body: JSON.stringify(payload) }),
+  updateSellerStockBulk: (items) =>
+    request("/marketplace/seller/products/stock-bulk", { method: "PATCH", body: JSON.stringify({ items }) }),
   listSalesReps: () => request("/marketplace/admin/sales-reps"),
   createSalesRep: (payload) => request("/marketplace/admin/sales-reps", { method: "POST", body: JSON.stringify(payload) }),
   listReferrals: () => request("/marketplace/admin/referrals"),

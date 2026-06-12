@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 4 Unified Auth complete)
+Last updated: 2026-06-12 (Phase 5 Seller Experience complete)
 
 ---
 
@@ -11,7 +11,7 @@ Last updated: 2026-06-12 (Phase 4 Unified Auth complete)
 | Customer experience (browse, cart, checkout) | ~70% |
 | Customer account (orders, profile, tracking) | ~80% |
 | Public editorial pages | ~55% |
-| Seller portal | ~60% |
+| Seller portal | ~80% |
 | Admin console | ~55% |
 | Driver portal | ~80% |
 | Sales Rep portal | ~70% |
@@ -107,9 +107,9 @@ Last updated: 2026-06-12 (Phase 4 Unified Auth complete)
 | Login | Working | No password reset; no 2FA |
 | Overview dashboard | Working | Data is live; no trend charts |
 | Product listing | Working | No bulk ops; no inventory bulk edit |
-| Product creation | Working | Image upload is local-only |
-| Product editing | Working | No image replacement flow |
-| Stock / inventory | Working | Manual adjustments only |
+| Product creation | Working | S3/R2 upload abstraction in place; local disk fallback |
+| Product editing | Working | S3/R2 upload abstraction in place |
+| Stock / inventory | Working | Per-product and bulk stock adjustment (`PATCH /seller/products/stock-bulk`) |
 | Order list | Working | Filters work; no export |
 | Order detail | Working | Status actions work |
 | Drivers (add, enable login) | Working | No driver notifications |
@@ -118,7 +118,7 @@ Last updated: 2026-06-12 (Phase 4 Unified Auth complete)
 | Brand profile | Working | No logo upload flow documented |
 | Notifications | Working | Bell, read, mark-all-read |
 | Support tickets | Working | Same as driver/SR support |
-| Onboarding | Missing | No structured onboarding wizard |
+| Onboarding | Working | Multi-step wizard: welcome → brand → product → launch; auto-shown for new sellers |
 | Bank detail / KYC | Missing | Payment gateway not integrated |
 
 ---
@@ -493,7 +493,11 @@ SEO meta tags (title, description, Open Graph, canonical) on all public routes. 
 
 Unified `/login` route on customer web (auto-redirects to correct portal by role). `packages/shared/utils/portalUrls.js` centralises portal URLs with localhost fallbacks. `packages/shared/hooks/useIdleTimeout.js` with 15-minute idle timeout wired into seller, admin, driver, and SR portals. Role mismatch guard on admin login. AuthModal hint linking to unified login page.
 
-**Next milestone:** Phase 5 — Seller Experience
+**Phase 5 — Seller Experience** — COMPLETE (2026-06-12)
+
+Multi-step seller onboarding wizard (welcome → brand → product → launch); auto-shown for new sellers with 0 products; persists dismissal per shop in localStorage. S3/R2 upload abstraction (`backend/src/shared/storage.js`): set `AWS_S3_BUCKET` + credentials to upload to S3-compatible storage; local disk stays working without env vars; Cloudflare R2 supported via `AWS_S3_ENDPOINT`. Bulk inventory adjustment: `PATCH /api/marketplace/seller/products/stock-bulk` (up to 100 lines per request) + "Adjust stock" panel in the products UI. Mobile-responsive seller portal CSS pass: topbar actions collapse to icon-only, section header stacks, bulk editor adapts on ≤ 520px.
+
+**Next milestone:** Phase 6 — Admin Experience
 
 ---
 

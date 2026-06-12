@@ -7,3 +7,4 @@ export { SellerCustomers } from "../customers/SellerCustomers.jsx";
 export { SellerAnalytics } from "../analytics/SellerAnalytics.jsx";
 export { SellerPayouts } from "../finance/SellerPayouts.jsx";
 export { SellerBrandProfile } from "../growth/brand/SellerBrandProfile.jsx";
+export { SellerOnboarding, isOnboardingDone } from "../onboarding/SellerOnboarding.jsx";

@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuthStore }    from "@tuti/shared/store/authStore.js";
 import { useIdleTimeout }  from "@tuti/shared/hooks/useIdleTimeout.js";
-import { marketplaceApi, uploadApi } from "@tuti/shared/api/client.js";
+import { marketplaceApi, sellerBrandProfileApi, uploadApi } from "@tuti/shared/api/client.js";
 import { SellerLayout }    from "./features/shell/SellerLayout.jsx";
 import { SellerLogin }     from "./features/auth/SellerLogin.jsx";
 import {
@@ -26,9 +26,11 @@ import {
   SellerAnalytics,
   SellerPayouts,
   SellerSupportTickets,
+  SellerOnboarding,
+  isOnboardingDone,
 } from "./features/shell/SellerPortal.jsx";
 
-const SECTIONS  = ["overview", "brand", "products", "orders", "drivers", "customers", "analytics", "payouts", "support"];
+const SECTIONS  = ["overview", "onboarding", "brand", "products", "orders", "drivers", "customers", "analytics", "payouts", "support"];
 
 function getSectionFromQuery() {
   const section = new URLSearchParams(window.location.search).get("section");
@@ -51,14 +53,15 @@ const DEFAULT_PRODUCT = {
 
 export default function App() {
   const { user, isAuthenticated, isSeller, isAdmin, clearAuth } = useAuthStore();
-  const [section,    setSection]    = useState(getSection);
-  const [seller,     setSeller]     = useState(null);
-  const [loading,    setLoading]    = useState(true);
-  const [loadError,  setLoadError]  = useState("");
-  const [newProduct, setNewProduct] = useState(DEFAULT_PRODUCT);
-  const [uploadNote, setUploadNote] = useState("");
+  const [section,       setSection]       = useState(getSection);
+  const [seller,        setSeller]        = useState(null);
+  const [brandProfile,  setBrandProfile]  = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [loadError,     setLoadError]     = useState("");
+  const [newProduct,    setNewProduct]    = useState(DEFAULT_PRODUCT);
+  const [uploadNote,    setUploadNote]    = useState("");
   const [deepLinkTarget, setDeepLinkTarget] = useState({ orderId: "", productId: "", notice: "" });
-  const [idleExpired, setIdleExpired] = useState(false);
+  const [idleExpired,   setIdleExpired]   = useState(false);
 
   const canAccess = isAuthenticated() && (isSeller() || isAdmin());
 
@@ -77,8 +80,22 @@ export default function App() {
     let mounted = true;
     setLoading(true);
 
-    marketplaceApi.getSeller(user?.shopId || undefined)
-      .then((data)  => { if (mounted) setSeller(data); })
+    Promise.all([
+      marketplaceApi.getSeller(user?.shopId || undefined),
+      sellerBrandProfileApi.get().catch(() => null),
+    ])
+      .then(([sellerData, bp]) => {
+        if (!mounted) return;
+        setSeller(sellerData);
+        setBrandProfile(bp);
+        // Auto-navigate new sellers to the onboarding wizard
+        const shopId = sellerData?.shop?.id;
+        const isNew  = (sellerData?.products?.length || 0) === 0;
+        const sectionFromUrl = getSection();
+        if (isNew && !isOnboardingDone(shopId) && sectionFromUrl === "overview") {
+          setSection("onboarding");
+        }
+      })
       .catch((e)    => { if (mounted) setLoadError(e.message); })
       .finally(()   => { if (mounted) setLoading(false); });
 
@@ -174,6 +191,12 @@ export default function App() {
 
   // ── Section content ─────────────────────────────────────────────
   const content = {
+    onboarding: <SellerOnboarding
+                  seller={seller}
+                  brandProfile={brandProfile}
+                  onGoToSection={goToSection}
+                  onFinish={() => goToSection("overview")}
+                />,
     overview:  <SellerOverview  seller={seller} />,
     brand:     <SellerBrandProfile seller={seller} />,
     products:  <SellerProducts  seller={seller} productDraft={newProduct} setProductDraft={setNewProduct} onProductSubmit={submitProduct} uploadNote={uploadNote} onRefreshSeller={refreshSeller} focusedProductId={deepLinkTarget.productId} onFocusHandled={(notice) => setDeepLinkTarget((current) => ({ ...current, notice: notice || "" }))} />,

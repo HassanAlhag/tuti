@@ -2,11 +2,11 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import multer from "multer";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
+import { createStorageProvider } from "./shared/storage.js";
 import { authenticate, requireRole } from "./middleware/auth.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { crmRouter } from "./modules/crm/crm.routes.js";
@@ -31,23 +31,10 @@ const uploadsDir = env.uploadDir
 
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-  fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME_TYPES.has(file.mimetype)) return cb(null, true);
-    cb(new Error("Only JPEG, PNG, and WebP images are accepted."));
-  },
-});
+// Storage provider is resolved once at startup (async); the upload endpoint
+// waits on this promise. If S3 env vars are present the provider uses S3,
+// otherwise it falls back to local disk.
+const storageProviderPromise = createStorageProvider(uploadsDir);
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -103,17 +90,23 @@ export function createApp() {
     "/api/upload",
     authenticate,
     requireRole("seller", "admin"),
-    (req, res) => {
-      upload.single("image")(req, res, (err) => {
-        if (err) {
-          if (err.code === "LIMIT_FILE_SIZE") {
-            return res.status(413).json({ error: "File too large. Maximum size is 5 MB." });
+    async (req, res) => {
+      try {
+        const { upload, getPublicUrl } = await storageProviderPromise;
+        upload.single("image")(req, res, (err) => {
+          if (err) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+              return res.status(413).json({ error: "File too large. Maximum size is 5 MB." });
+            }
+            return res.status(400).json({ error: err.message || "Invalid file." });
           }
-          return res.status(400).json({ error: err.message || "Invalid file." });
-        }
-        if (!req.file) return res.status(400).json({ error: "No image provided." });
-        res.json({ data: { url: `/uploads/${req.file.filename}`, filename: req.file.filename } });
-      });
+          if (!req.file) return res.status(400).json({ error: "No image provided." });
+          const url = getPublicUrl(req);
+          res.json({ data: { url, filename: req.file.filename || req.file.key } });
+        });
+      } catch (err) {
+        res.status(500).json({ error: "Storage provider unavailable." });
+      }
     },
   );
 

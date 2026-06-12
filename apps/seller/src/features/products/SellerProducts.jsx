@@ -157,6 +157,49 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
     onSuccess: () => invalidateSellerData(),
   });
 
+  /* ── Bulk stock adjustment ──────────────────────────────────── */
+  const [bulkMode,   setBulkMode]   = useState(false);
+  const [bulkDrafts, setBulkDrafts] = useState({});
+  const [bulkNote,   setBulkNote]   = useState("");
+
+  const bulkMutation = useMutation({
+    mutationFn: (items) => marketplaceApi.updateSellerStockBulk(items),
+    onSuccess: (results) => {
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length) {
+        setBulkNote(`${failed.length} product(s) failed to update.`);
+      } else {
+        setBulkNote("");
+        setBulkMode(false);
+        setBulkDrafts({});
+        invalidateSellerData();
+      }
+    },
+    onError: (err) => setBulkNote(err?.message || "Bulk update failed."),
+  });
+
+  function openBulkMode() {
+    const initial = {};
+    products.forEach((p) => { initial[p.id] = String(p.stock ?? 0); });
+    setBulkDrafts(initial);
+    setBulkNote("");
+    setBulkMode(true);
+  }
+
+  function closeBulkMode() {
+    setBulkMode(false);
+    setBulkDrafts({});
+    setBulkNote("");
+  }
+
+  function handleBulkSubmit() {
+    const items = products
+      .filter((p) => String(bulkDrafts[p.id] ?? p.stock) !== String(p.stock))
+      .map((p) => ({ productId: p.id, stock: Number(bulkDrafts[p.id]) }));
+    if (!items.length) { closeBulkMode(); return; }
+    bulkMutation.mutate(items);
+  }
+
   async function handleEditSubmit(e) {
     e.preventDefault();
     if (!editForm || !editingProduct) return;
@@ -285,11 +328,65 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
             {lowStock.length > 0 && <span className="sd-sub-warn"> &nbsp;·&nbsp; {lowStock.length} low stock</span>}
           </p>
         </div>
-        <span className="sd-type-pill sd-type-pill--sm">
-          <ShopIcon size={12} />
-          {typeLabel}
-        </span>
+        <div className="sd-section-header-actions">
+          {products.length > 0 && !bulkMode && (
+            <button className="secondary-action compact" type="button" onClick={openBulkMode}>
+              <Package size={14} />
+              Adjust stock
+            </button>
+          )}
+          <span className="sd-type-pill sd-type-pill--sm">
+            <ShopIcon size={12} />
+            {typeLabel}
+          </span>
+        </div>
       </div>
+
+      {/* ── Bulk stock editor ───────────────────────────────────── */}
+      {bulkMode && (
+        <div className="sd-bulk-stock">
+          <div className="sd-bulk-stock-header">
+            <strong>Adjust stock quantities</strong>
+            <p>Change the values below and click Save. Only modified rows are sent.</p>
+          </div>
+          <div className="sd-bulk-stock-table">
+            {products.map((product) => {
+              const changed = String(bulkDrafts[product.id] ?? product.stock) !== String(product.stock);
+              return (
+                <div key={product.id} className={`sd-bulk-row${changed ? " changed" : ""}`}>
+                  <div className="sd-bulk-row-name">
+                    <span className="sd-bulk-row-title">{product.name}</span>
+                    <span className="sd-bulk-row-current">current: {product.stock}</span>
+                  </div>
+                  <input
+                    className="sd-bulk-input"
+                    type="number"
+                    min={0}
+                    step={1}
+                    aria-label={`New stock for ${product.name}`}
+                    value={bulkDrafts[product.id] ?? product.stock}
+                    onChange={(e) => setBulkDrafts((d) => ({ ...d, [product.id]: e.target.value }))}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          {bulkNote && <p className="sd-bulk-note" role="alert">{bulkNote}</p>}
+          <div className="sd-bulk-actions">
+            <button className="ghost-action compact" type="button" onClick={closeBulkMode}>
+              Cancel
+            </button>
+            <button
+              className="primary-action compact"
+              type="button"
+              onClick={handleBulkSubmit}
+              disabled={bulkMutation.isPending}
+            >
+              {bulkMutation.isPending ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Summary chips ───────────────────────────────────────── */}
       <div className="sd-products-summary">

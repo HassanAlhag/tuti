@@ -1225,6 +1225,33 @@ export async function updateSellerStock(productId, shopId, rawPayload) {
   return seedRepository.updateProduct(productId, shopId, { stock: resolveStock(product.stock) });
 }
 
+export const bulkStockItemSchema = z.object({
+  productId: z.string().min(1),
+  delta: z.coerce.number().int().optional(),
+  stock: z.coerce.number().int().min(0).optional(),
+}).refine((d) => d.delta != null || d.stock != null, { message: "Each item needs 'delta' or 'stock'." });
+
+export const bulkStockSchema = z.object({
+  items: z.array(bulkStockItemSchema).min(1).max(100),
+});
+
+export async function updateSellerStockBulk(shopId, rawPayload) {
+  const parsed = bulkStockSchema.safeParse(rawPayload);
+  if (!parsed.success) {
+    const err = new Error("Invalid bulk stock update: " + parsed.error.issues.map((i) => i.message).join(", "));
+    err.status = 422;
+    throw err;
+  }
+  const results = await Promise.allSettled(
+    parsed.data.items.map((item) => updateSellerStock(item.productId, shopId, item))
+  );
+  return results.map((r, i) => ({
+    productId: parsed.data.items[i].productId,
+    ok: r.status === "fulfilled",
+    ...(r.status === "fulfilled" ? { stock: r.value?.stock } : { error: r.reason?.message }),
+  }));
+}
+
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
