@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 6 Admin Experience complete)
+Last updated: 2026-06-12 (Phase 7 Driver Experience complete)
 
 ---
 
@@ -13,11 +13,11 @@ Last updated: 2026-06-12 (Phase 6 Admin Experience complete)
 | Public editorial pages | ~55% |
 | Seller portal | ~80% |
 | Admin console | ~75% |
-| Driver portal | ~80% |
+| Driver portal | ~90% |
 | Sales Rep portal | ~70% |
 | Backend / API | ~65% |
 | Production readiness | ~20% |
-| **Overall platform** | **~65%** |
+| **Overall platform** | **~68%** |
 
 **Top five technical risks before soft launch:**
 
@@ -154,12 +154,15 @@ Last updated: 2026-06-12 (Phase 6 Admin Experience complete)
 | Delivery list | Working | Assigned by seller |
 | Delivery detail | Working | Address, items, COD amount |
 | Accept delivery offer | Working | First-accepted wins |
-| Mark delivered | Working | COD toggle + note |
+| Pickup confirmation | Working | `PATCH /api/driver/deliveries/:id/pickup` → status Shipped |
+| Mark delivered | Working | COD toggle + note + POD photo |
+| Proof of delivery | Working | Photo upload via `/api/upload`; stored in `driverAssignment.proofOfDeliveryUrl` |
+| COD reconciliation | Working | Dedicated COD tab with per-delivery breakdown |
+| Delivery history | Working | Date-filtered past deliveries; `GET /api/driver/history` |
 | COD balance | Working | Cash tracking only; no transfer |
 | Support tickets | Working | Create, filter, reply |
 | Notifications | Missing | No push / bell in driver portal |
 | Real-time tracking | Missing | No GPS or live location |
-| Proof of delivery | Missing | No photo upload |
 | Route optimization | Missing | Out of scope for MVP |
 
 ---
@@ -501,7 +504,11 @@ Multi-step seller onboarding wizard (welcome → brand → product → launch); 
 
 Durable `AuditEvent` MongoDB model + ring-buffered seed fallback. `logAuditEvent` emitted from all key admin actions: product status changes, shop contract actions (suspend / reactivate / terminate), order status changes, payout status changes, and seller application conversions. Admin notifications for new seller applications. `GET /api/admin/audit` with filters (action, entityType, date range, actor) and `GET /api/admin/audit/export.csv`. `GET /api/admin/reports/summary` (today KPI: ordersToday, gmvToday, disputedOrders, pendingPayouts, totalOrders) + CSV export for orders, payouts, and commissions. AdminAuditLog UI rewritten with real data, filter bar, pagination, and CSV export button. Operations dashboard upgraded with live KPI panel and CSV report export buttons. Payout history panel has CSV export. 216/216 backend tests pass.
 
-**Next milestone:** Phase 7
+**Phase 7 — Driver Experience** — COMPLETE (2026-06-12)
+
+Pickup confirmation step: `PATCH /api/driver/deliveries/:orderId/pickup` transitions order to "Shipped"; driver sees a "Confirm pickup" banner until they tap it. Proof-of-delivery photo upload: `proofOfDeliveryUrl` added to `driverDeliverySchema`; stored in `driverAssignment`; driver taps camera button to upload via `/api/upload`; viewable from delivery detail and history. COD reconciliation tab: dedicated view with balance summary and per-delivery COD breakdown. Delivery history tab with date-from/to filters: `GET /api/driver/history` with pagination. Mobile CSS pass at 420px: 5-tab topbar wraps cleanly, history/COD rows stack vertically. 216/216 backend tests pass.
+
+**Next milestone:** Phase 8
 
 ---
 

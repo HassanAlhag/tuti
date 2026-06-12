@@ -1106,3 +1106,235 @@ body {
     align-items: flex-start;
   }
 }
+
+/* ── Pickup confirmation banner ─────────────────────────── */
+.dp-pickup-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--brand-tint, #fdf6ee);
+  border: 1px solid var(--brand-mid, #e8c97a);
+  border-radius: var(--radius);
+  margin-bottom: var(--sp-3);
+}
+
+.dp-pickup-banner > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dp-pickup-banner strong {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.dp-pickup-banner span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Proof of delivery ──────────────────────────────────── */
+.dp-pod-upload {
+  margin-top: var(--sp-2);
+}
+
+.dp-pod-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  background: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+  width: 100%;
+  justify-content: center;
+}
+
+.dp-pod-btn:hover { border-color: var(--brand); color: var(--brand); }
+
+.dp-pod-preview {
+  position: relative;
+  display: inline-block;
+  max-width: 160px;
+}
+
+.dp-pod-preview img {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: block;
+}
+
+.dp-pod-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--danger, #dc2626);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dp-pod-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--brand);
+  margin-top: var(--sp-1);
+  text-decoration: underline;
+}
+
+.dp-complete-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  text-align: center;
+  color: var(--success, #16a34a);
+}
+
+/* ── COD section ────────────────────────────────────────── */
+.dp-cod-section,
+.dp-history-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.dp-section-header {
+  padding: var(--sp-4) 0 var(--sp-2);
+}
+
+.dp-section-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: var(--sp-1) 0;
+}
+
+.dp-section-header p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.dp-cod-breakdown { overflow: hidden; }
+
+.dp-cod-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dp-cod-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.dp-cod-row > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dp-cod-row-amount {
+  text-align: right;
+  min-width: 90px;
+}
+
+.dp-cod-note {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  background: var(--warning-tint, #fffbeb);
+  border: 1px solid var(--warning-mid, #fcd34d);
+  color: var(--warning-dark, #92400e);
+  font-size: 13px;
+  border-radius: var(--radius);
+}
+
+/* ── History section ────────────────────────────────────── */
+.dp-history-filters {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.dp-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.dp-history-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.dp-history-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 100px;
+}
+
+.dp-history-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  font-size: 13px;
+}
+
+/* ── 375px mobile pass ──────────────────────────────────── */
+@media (max-width: 420px) {
+  .dp-topbar-tabs { flex-wrap: wrap; }
+  .dp-tab {
+    flex: 1 1 calc(33.333% - 0.5rem);
+    justify-content: center;
+    font-size: 11px;
+  }
+  .dp-pickup-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dp-history-row,
+  .dp-cod-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dp-history-meta,
+  .dp-cod-row-amount {
+    text-align: left;
+    align-items: flex-start;
+  }
+  .dp-history-filters {
+    flex-direction: column;
+  }
+}

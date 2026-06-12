@@ -3,6 +3,7 @@ import { authenticate, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
   assignDriverToOrder,
+  confirmDriverPickup,
   createDriver,
   createDriverSchema,
   acceptDriverOffer,
@@ -11,6 +12,7 @@ import {
   getDriverDelivery,
   getDriverProfile,
   listDriverDeliveries,
+  listDriverHistory,
   listDriverOffers,
   listDrivers,
   recordDriverDelivery,
@@ -152,3 +154,18 @@ driverRouter.patch(
     } catch (err) { next(err); }
   }
 );
+
+driverRouter.patch("/deliveries/:orderId/pickup", authenticate, requireRole("driver"), async (req, res, next) => {
+  try {
+    if (!req.user?.driverId) return res.status(403).json({ error: "Driver profile is not linked." });
+    res.json({ data: await confirmDriverPickup(req.user.driverId, req.params.orderId, req.user) });
+  } catch (err) { next(err); }
+});
+
+driverRouter.get("/history", authenticate, requireRole("driver"), async (req, res, next) => {
+  try {
+    if (!req.user?.driverId) return res.status(403).json({ error: "Driver profile is not linked." });
+    const { from, to, limit, page } = req.query;
+    res.json({ data: await listDriverHistory(req.user.driverId, req.user.shopId, { from, to, limit, page }) });
+  } catch (err) { next(err); }
+});

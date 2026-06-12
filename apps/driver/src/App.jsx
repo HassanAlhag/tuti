@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowRight,
+  Camera,
   CheckCircle2,
   Clock3,
+  History,
   MessageSquare,
   LogOut,
   MapPin,
@@ -16,9 +18,10 @@ import {
   Ticket,
   Truck,
   WalletCards,
+  X,
 } from "lucide-react";
 import { brand } from "@tuti/shared/brand.js";
-import { authApi, driverOffersApi, driverPortalApi, supportTicketsApi } from "@tuti/shared/api/client.js";
+import { authApi, driverOffersApi, driverPortalApi, supportTicketsApi, uploadApi } from "@tuti/shared/api/client.js";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { useIdleTimeout } from "@tuti/shared/hooks/useIdleTimeout.js";
@@ -348,6 +351,13 @@ export default function App() {
   const [codCollected, setCodCollected] = useState(true);
   const [deliveryNote, setDeliveryNote] = useState("");
   const [section, setSection] = useState(getSectionFromQuery);
+  const [podUrl, setPodUrl] = useState("");
+  const [podUploading, setPodUploading] = useState(false);
+  const [podError, setPodError] = useState("");
+  const podInputRef = useRef(null);
+  const [historyFrom, setHistoryFrom] = useState("");
+  const [historyTo, setHistoryTo] = useState("");
+  const [historyPage, setHistoryPage] = useState(1);
   const [supportSearch, setSupportSearch] = useState("");
   const [supportStatus, setSupportStatus] = useState("all");
   const [supportPriority, setSupportPriority] = useState("all");
@@ -410,6 +420,12 @@ export default function App() {
     keepPreviousData: true,
   });
 
+  const historyQuery = useQuery({
+    queryKey: ["driver", "history", driverKey, shopKey, historyFrom, historyTo, historyPage],
+    queryFn: () => driverPortalApi.listHistory({ from: historyFrom, to: historyTo, page: historyPage }),
+    enabled: isDriverSession && section === "history",
+  });
+
   const deliveries = Array.isArray(deliveriesQuery.data) ? deliveriesQuery.data : [];
   const offers = Array.isArray(offersQuery.data) ? offersQuery.data : [];
   const supportTickets = Array.isArray(supportTicketsQuery.data?.tickets) ? supportTicketsQuery.data.tickets : [];
@@ -459,6 +475,7 @@ export default function App() {
     const tasks = [meQuery.refetch(), deliveriesQuery.refetch(), offersQuery.refetch(), supportTicketsQuery.refetch()];
     if (detailOrderId) tasks.push(selectedTaskQuery.refetch());
     if (selectedSupportTicketId) tasks.push(selectedSupportTicketQuery.refetch());
+    if (section === "history") tasks.push(historyQuery.refetch());
     await Promise.all(tasks);
   };
 
@@ -498,11 +515,23 @@ export default function App() {
     onSettled: () => setPendingOfferId(""),
   });
 
+  const pickupMutation = useMutation({
+    mutationFn: (orderId) => driverPortalApi.confirmPickup(orderId),
+    onSuccess: async () => {
+      setTaskError("");
+      setTaskNote("Pickup confirmed — order marked as Shipped.");
+      await queryClient.invalidateQueries({ queryKey: ["driver"] });
+    },
+    onError: (err) => setTaskError(err?.message || "Unable to confirm pickup."),
+  });
+
   const completeMutation = useMutation({
     mutationFn: ({ orderId, payload }) => driverPortalApi.recordDelivery(orderId, payload),
     onSuccess: async () => {
       setTaskError("");
       setTaskNote("Delivery marked complete.");
+      setPodUrl("");
+      setPodError("");
       await queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err) => setTaskError(err?.message || "Unable to complete delivery."),
@@ -679,9 +708,33 @@ export default function App() {
       payload: {
         codCollected,
         note: deliveryNote.trim(),
+        proofOfDeliveryUrl: podUrl,
       },
     });
     setDeliveryNote("");
+    await refreshAll();
+  }
+
+  async function handlePodUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPodUploading(true);
+    setPodError("");
+    try {
+      const result = await uploadApi.uploadImage(file);
+      setPodUrl(result.url);
+    } catch (err) {
+      setPodError(err?.message || "Photo upload failed.");
+    } finally {
+      setPodUploading(false);
+      if (podInputRef.current) podInputRef.current.value = "";
+    }
+  }
+
+  async function handleConfirmPickup() {
+    if (!selectedTask) return;
+    setTaskError("");
+    await pickupMutation.mutateAsync(selectedTask.orderId);
     await refreshAll();
   }
 
@@ -793,27 +846,23 @@ export default function App() {
 
         <div className="dp-topbar-actions">
           <div className="dp-topbar-tabs" role="tablist" aria-label="Driver sections">
-            <button
-              className={section === "deliveries" ? "dp-tab active" : "dp-tab"}
-              type="button"
-              onClick={() => setSection("deliveries")}
-            >
+            <button className={section === "deliveries" ? "dp-tab active" : "dp-tab"} type="button" onClick={() => setSection("deliveries")}>
               <Truck size={13} />
               Deliveries
             </button>
-            <button
-              className={section === "offers" ? "dp-tab active" : "dp-tab"}
-              type="button"
-              onClick={() => setSection("offers")}
-            >
+            <button className={section === "offers" ? "dp-tab active" : "dp-tab"} type="button" onClick={() => setSection("offers")}>
               <Ticket size={13} />
               Offers
             </button>
-            <button
-              className={section === "support" ? "dp-tab active" : "dp-tab"}
-              type="button"
-              onClick={() => setSection("support")}
-            >
+            <button className={section === "cod" ? "dp-tab active" : "dp-tab"} type="button" onClick={() => setSection("cod")}>
+              <WalletCards size={13} />
+              COD
+            </button>
+            <button className={section === "history" ? "dp-tab active" : "dp-tab"} type="button" onClick={() => setSection("history")}>
+              <History size={13} />
+              History
+            </button>
+            <button className={section === "support" ? "dp-tab active" : "dp-tab"} type="button" onClick={() => setSection("support")}>
               <MessageSquare size={13} />
               Support
             </button>
@@ -829,7 +878,128 @@ export default function App() {
         </div>
       </header>
 
-      {section === "support" ? (
+      {section === "cod" ? (
+        <section className="dp-cod-section">
+          <div className="dp-section-header">
+            <span className="eyebrow">Cash on delivery</span>
+            <h1>COD reconciliation</h1>
+            <p>Your outstanding cash balance from all deliveries. This is for tracking only — no transfer is executed here.</p>
+          </div>
+
+          <div className="dp-stats-grid">
+            <StatCard icon={WalletCards} label="Total COD to remit" value={formatCurrency(codToRemit)} note="Outstanding cash balance" />
+            <StatCard icon={CheckCircle2} label="Delivered today" value={deliveredToday} note="Completed in this session" />
+            <StatCard icon={Truck} label="Total deliveries" value={profile?.totalDeliveries || 0} note="All time" />
+          </div>
+
+          <div className="dp-panel dp-cod-breakdown">
+            <div className="dp-panel-head">
+              <div>
+                <span className="eyebrow">Per-delivery breakdown</span>
+                <h2>COD collected per delivery</h2>
+              </div>
+            </div>
+            {deliveries.filter((t) => t.driverAssignment?.codCollected).length === 0 ? (
+              <p className="dp-muted" style={{ padding: "var(--sp-4)" }}>No COD collected in your current active deliveries.</p>
+            ) : (
+              <div className="dp-cod-list">
+                {deliveries
+                  .filter((t) => t.driverAssignment?.codCollected)
+                  .map((task) => (
+                    <div className="dp-cod-row" key={task.orderId}>
+                      <div>
+                        <strong>{task.orderId}</strong>
+                        <span>{task.customerName || "Customer"}</span>
+                        <small>{task.deliveryAddress || "—"}</small>
+                      </div>
+                      <div className="dp-cod-row-amount">
+                        <strong>{formatCurrency(task.driverAssignment?.codAmount || task.codAmount || 0)}</strong>
+                        <small>Collected {task.driverAssignment?.deliveredAt ? new Date(task.driverAssignment.deliveredAt).toLocaleDateString() : "—"}</small>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          <div className="dp-panel dp-cod-note">
+            <AlertTriangle size={16} />
+            <p>COD amounts are recorded when you mark a delivery complete with "COD collected: Yes". Remit cash to your seller or admin as instructed separately.</p>
+          </div>
+        </section>
+      ) : section === "history" ? (
+        <section className="dp-history-section">
+          <div className="dp-section-header">
+            <span className="eyebrow">Delivery history</span>
+            <h1>Past deliveries</h1>
+            <p>All completed deliveries assigned to your driver account.</p>
+          </div>
+
+          <div className="dp-history-filters">
+            <label className="dp-field">
+              <span>From</span>
+              <input type="date" value={historyFrom} onChange={(e) => { setHistoryFrom(e.target.value); setHistoryPage(1); }} />
+            </label>
+            <label className="dp-field">
+              <span>To</span>
+              <input type="date" value={historyTo} onChange={(e) => { setHistoryTo(e.target.value); setHistoryPage(1); }} />
+            </label>
+            {(historyFrom || historyTo) && (
+              <button className="secondary-action compact" type="button" onClick={() => { setHistoryFrom(""); setHistoryTo(""); setHistoryPage(1); }}>
+                Clear
+              </button>
+            )}
+          </div>
+
+          <div className="dp-panel">
+            <div className="dp-panel-head">
+              <div>
+                <span className="eyebrow">Results</span>
+                <h2>{historyQuery.data?.data?.total ?? 0} delivery records</h2>
+              </div>
+              <span className="dp-panel-meta">Page {historyPage}</span>
+            </div>
+
+            {historyQuery.isLoading ? (
+              <div className="dp-loading">Loading history…</div>
+            ) : historyQuery.isError ? (
+              <div className="dp-banner error"><AlertTriangle size={14} /><span>{historyQuery.error?.message || "Unable to load history."}</span></div>
+            ) : (historyQuery.data?.data?.orders || []).length === 0 ? (
+              <EmptyState icon={History} text="No delivery history for the selected date range." />
+            ) : (
+              <div className="dp-task-list">
+                {(historyQuery.data?.data?.orders || []).map((task) => (
+                  <div className="dp-history-row" key={task.orderId}>
+                    <div className="dp-history-main">
+                      <strong>{task.orderId}</strong>
+                      <span>{task.customerName || "Customer"}</span>
+                      <small>{task.deliveryAddress || "—"}</small>
+                    </div>
+                    <div className="dp-history-meta">
+                      <span className={`dp-status ${getStatusTone(task.status)}`}>{task.status}</span>
+                      <strong>{formatCurrency(task.driverAssignment?.codAmount || task.codAmount || 0)}</strong>
+                      <small>{task.driverAssignment?.deliveredAt ? new Date(task.driverAssignment.deliveredAt).toLocaleDateString("en-AE") : "—"}</small>
+                      {task.driverAssignment?.proofOfDeliveryUrl ? (
+                        <a href={task.driverAssignment.proofOfDeliveryUrl} target="_blank" rel="noopener noreferrer" className="dp-pod-link">
+                          <Camera size={12} /> POD
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(historyQuery.data?.data?.total || 0) > 50 && (
+              <div className="dp-history-pager">
+                <button className="secondary-action compact" disabled={historyPage <= 1} onClick={() => setHistoryPage((p) => p - 1)}>← Prev</button>
+                <span>Page {historyPage}</span>
+                <button className="secondary-action compact" disabled={(historyQuery.data?.data?.orders || []).length < 50} onClick={() => setHistoryPage((p) => p + 1)}>Next →</button>
+              </div>
+            )}
+          </div>
+        </section>
+      ) : section === "support" ? (
         <>
           <section className="dp-support-hero">
             <div className="dp-support-hero-copy">
@@ -1202,26 +1372,38 @@ export default function App() {
                           <div className="dp-complete-state">
                             <CheckCircle2 size={16} />
                             <span>This delivery is already completed.</span>
+                            {selectedTask.driverAssignment?.proofOfDeliveryUrl ? (
+                              <a className="dp-pod-link" href={selectedTask.driverAssignment.proofOfDeliveryUrl} target="_blank" rel="noopener noreferrer">
+                                <Camera size={13} /> View proof of delivery
+                              </a>
+                            ) : null}
                           </div>
                         ) : (
                           <form className="dp-delivery-form" onSubmit={handleMarkDelivered}>
+                            {/* Pickup confirmation — only show when order is not yet Shipped */}
+                            {selectedTask.status !== "Shipped" && (
+                              <div className="dp-pickup-banner">
+                                <div>
+                                  <strong>Confirm pickup first</strong>
+                                  <span>Tap below when you have collected the order from the seller.</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="secondary-action compact"
+                                  onClick={handleConfirmPickup}
+                                  disabled={pickupMutation.isPending}
+                                >
+                                  <Package size={14} />
+                                  {pickupMutation.isPending ? "Confirming…" : "Confirm pickup"}
+                                </button>
+                              </div>
+                            )}
+
                             <label className="dp-field">
                               <span>COD collected</span>
                               <div className="dp-switch-row" role="group" aria-label="COD collected">
-                                <button
-                                  type="button"
-                                  className={codCollected ? "dp-switch active" : "dp-switch"}
-                                  onClick={() => setCodCollected(true)}
-                                >
-                                  Yes
-                                </button>
-                                <button
-                                  type="button"
-                                  className={!codCollected ? "dp-switch active" : "dp-switch"}
-                                  onClick={() => setCodCollected(false)}
-                                >
-                                  No
-                                </button>
+                                <button type="button" className={codCollected ? "dp-switch active" : "dp-switch"} onClick={() => setCodCollected(true)}>Yes</button>
+                                <button type="button" className={!codCollected ? "dp-switch active" : "dp-switch"} onClick={() => setCodCollected(false)}>No</button>
                               </div>
                             </label>
 
@@ -1235,7 +1417,41 @@ export default function App() {
                               />
                             </label>
 
-                            <button className="primary-action full-width" type="submit" disabled={completeMutation.isPending}>
+                            {/* Proof of delivery photo */}
+                            <div className="dp-field">
+                              <span>Proof of delivery photo</span>
+                              <div className="dp-pod-upload">
+                                {podUrl ? (
+                                  <div className="dp-pod-preview">
+                                    <img src={podUrl} alt="Proof of delivery" />
+                                    <button type="button" className="dp-pod-remove" onClick={() => setPodUrl("")} aria-label="Remove photo">
+                                      <X size={14} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="dp-pod-btn"
+                                    onClick={() => podInputRef.current?.click()}
+                                    disabled={podUploading}
+                                  >
+                                    <Camera size={16} />
+                                    {podUploading ? "Uploading…" : "Take or choose photo"}
+                                  </button>
+                                )}
+                                <input
+                                  ref={podInputRef}
+                                  type="file"
+                                  accept="image/*"
+                                  capture="environment"
+                                  style={{ display: "none" }}
+                                  onChange={handlePodUpload}
+                                />
+                              </div>
+                              {podError ? <small className="dp-form-error">{podError}</small> : null}
+                            </div>
+
+                            <button className="primary-action full-width" type="submit" disabled={completeMutation.isPending || podUploading}>
                               <CheckCircle2 size={16} />
                               {completeMutation.isPending ? "Saving…" : "Mark delivered"}
                             </button>

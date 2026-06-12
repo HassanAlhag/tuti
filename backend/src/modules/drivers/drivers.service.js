@@ -156,9 +156,10 @@ export const updateDriverSchema = z.object({
 });
 
 export const driverDeliverySchema = z.object({
-  codCollected: z.coerce.boolean().default(false),
-  codAmount:    z.coerce.number().min(0).default(0),
-  note:         z.string().max(500).optional().default(""),
+  codCollected:        z.coerce.boolean().default(false),
+  codAmount:           z.coerce.number().min(0).default(0),
+  note:                z.string().max(500).optional().default(""),
+  proofOfDeliveryUrl:  z.string().url().max(1000).optional().default(""),
 });
 
 export const sellerDriverAssignSchema = z.object({
@@ -1563,6 +1564,89 @@ export async function getDriverProfile(driverId, shopId) {
   };
 }
 
+export async function confirmDriverPickup(driverId, orderId, user) {
+  const now = new Date();
+
+  if (env.mongoUri) {
+    const order = await Order.findOne({ orderId, "driverAssignment.driverId": driverId }).lean();
+    if (!order) { const e = new Error("Order not found or not assigned to this driver."); e.status = 404; throw e; }
+    if (order.status === "Shipped" || order.status === "Delivered") {
+      const e = new Error("Order is already picked up or delivered."); e.status = 409; throw e;
+    }
+    if (!["Ready for Delivery", "Processing"].includes(order.status)) {
+      const e = new Error(`Cannot confirm pickup from status "${order.status}".`); e.status = 409; throw e;
+    }
+    const historyEntry = {
+      from: order.status, to: "Shipped",
+      by: user?.name || user?.sub || "driver", role: "driver",
+      note: "Driver confirmed pickup.", timestamp: now,
+    };
+    const updated = await Order.findOneAndUpdate(
+      { orderId },
+      { $set: { status: "Shipped", "driverAssignment.pickedUpAt": now }, $push: { statusHistory: historyEntry } },
+      { returnDocument: "after" }
+    ).lean();
+    return updated;
+  }
+
+  const orders = getSeedOrders();
+  const order = orders.find((o) => o.orderId === orderId && o.driverAssignment?.driverId === driverId);
+  if (!order) { const e = new Error("Order not found or not assigned to this driver."); e.status = 404; throw e; }
+  if (order.status === "Shipped" || order.status === "Delivered") {
+    const e = new Error("Order is already picked up or delivered."); e.status = 409; throw e;
+  }
+  if (!["Ready for Delivery", "Processing"].includes(order.status)) {
+    const e = new Error(`Cannot confirm pickup from status "${order.status}".`); e.status = 409; throw e;
+  }
+  if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+  order.statusHistory.push({
+    from: order.status, to: "Shipped",
+    by: user?.name || user?.sub || "driver", role: "driver",
+    note: "Driver confirmed pickup.", timestamp: now.toISOString(),
+  });
+  order.status = "Shipped";
+  order.driverAssignment = { ...order.driverAssignment, pickedUpAt: now.toISOString() };
+  order.updatedAt = now.toISOString();
+  return order;
+}
+
+const DRIVER_HISTORY_STATUSES = new Set(["Delivered", "Customer Accepted", "Refunded", "Cancelled"]);
+
+export async function listDriverHistory(driverId, shopId, { from, to, limit = 50, page = 1 } = {}) {
+  const safeShopId = getSellerShopIdOrThrow(shopId);
+  const safeLimit = Math.min(Math.max(Number(limit) || 50, 1), 200);
+  const safePage  = Math.max(Number(page) || 1, 1);
+  const skip      = (safePage - 1) * safeLimit;
+
+  if (env.mongoUri) {
+    const filter = {
+      shopIds: safeShopId,
+      "driverAssignment.driverId": driverId,
+      status: { $in: [...DRIVER_HISTORY_STATUSES] },
+    };
+    if (from || to) {
+      filter["driverAssignment.deliveredAt"] = {};
+      if (from) filter["driverAssignment.deliveredAt"].$gte = new Date(from);
+      if (to)   filter["driverAssignment.deliveredAt"].$lte = new Date(to);
+    }
+    const [orders, total] = await Promise.all([
+      Order.find(filter).sort({ "driverAssignment.deliveredAt": -1 }).skip(skip).limit(safeLimit).lean(),
+      Order.countDocuments(filter),
+    ]);
+    return { orders: orders.map(normalizeDriverTaskOrder), total, page: safePage };
+  }
+
+  let orders = getSeedOrders().filter(
+    (o) => Array.isArray(o.shopIds) && o.shopIds.includes(safeShopId) &&
+      o.driverAssignment?.driverId === driverId &&
+      DRIVER_HISTORY_STATUSES.has(o.status)
+  );
+  if (from) { const d = new Date(from); orders = orders.filter((o) => new Date(o.driverAssignment?.deliveredAt || 0) >= d); }
+  if (to)   { const d = new Date(to);   orders = orders.filter((o) => new Date(o.driverAssignment?.deliveredAt || 0) <= d); }
+  orders.sort((a, b) => new Date(b.driverAssignment?.deliveredAt || 0) - new Date(a.driverAssignment?.deliveredAt || 0));
+  return { orders: orders.slice(skip, skip + safeLimit).map(normalizeDriverTaskOrder), total: orders.length, page: safePage };
+}
+
 export async function listDriverDeliveries(driverId, shopId) {
   const safeShopId = getSellerShopIdOrThrow(shopId);
 
@@ -1685,10 +1769,11 @@ export async function recordDriverDelivery(driverId, orderId, rawPayload, user) 
     const codAmount = codCollected ? resolveCodAmount(order, parsed.data) : 0;
     const updatedAssignment = {
       ...order.driverAssignment,
-      deliveredAt:  now,
+      deliveredAt:        now,
       codCollected,
       codAmount,
-      note:         parsed.data.note || "",
+      note:               parsed.data.note || "",
+      proofOfDeliveryUrl: parsed.data.proofOfDeliveryUrl || "",
     };
 
     const historyEntry = {
@@ -1742,10 +1827,11 @@ export async function recordDriverDelivery(driverId, orderId, rawPayload, user) 
 
   order.driverAssignment = {
     ...order.driverAssignment,
-    deliveredAt:  now.toISOString(),
+    deliveredAt:        now.toISOString(),
     codCollected,
     codAmount,
-    note:         parsed.data.note || "",
+    note:               parsed.data.note || "",
+    proofOfDeliveryUrl: parsed.data.proofOfDeliveryUrl || "",
   };
 
   const historyEntry = {

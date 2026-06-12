@@ -272,6 +272,11 @@ export const driverPortalApi = {
   listDeliveries: () => request("/driver/deliveries"),
   getDelivery: (orderId) => request(`/driver/deliveries/${orderId}`),
   recordDelivery: (orderId, payload) => request(`/driver/deliveries/${orderId}/delivery`, { method: "PATCH", body: JSON.stringify(payload) }),
+  confirmPickup: (orderId) => request(`/driver/deliveries/${orderId}/pickup`, { method: "PATCH" }),
+  listHistory: (params = {}) => {
+    const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
+    return request(`/driver/history${q ? `?${q}` : ""}`);
+  },
 };
 
 export const sellerDriversApi = {
