@@ -5,6 +5,7 @@ import {
   BarChart2,
   Clock,
   CreditCard,
+  Download,
   Headphones,
   LayoutDashboard,
   LockKeyhole,
@@ -15,7 +16,7 @@ import {
   WalletCards,
   ArrowRight,
 } from "lucide-react";
-import { adminOperationsApi } from "@tuti/shared/api/client.js";
+import { adminOperationsApi, adminReportsApi } from "@tuti/shared/api/client.js";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { PageTitle } from "@tuti/shared/components/PageTitle.jsx";
 import { PanelHeader } from "@tuti/shared/components/PanelHeader.jsx";
@@ -144,8 +145,17 @@ function FinanceMetric({ label, value, note, money = false }) {
   );
 }
 
+function downloadCsv(text, filename) {
+  const blob = new Blob([text], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AdminOperationsDashboard() {
   const [queueLimit, setQueueLimit] = useState(5);
+  const [exportingReport, setExportingReport] = useState("");
   const summaryQuery = useQuery({
     queryKey: ["admin-operations-summary", queueLimit],
     queryFn: () => adminOperationsApi.summary({ queueLimit }),
@@ -153,11 +163,30 @@ export function AdminOperationsDashboard() {
     refetchOnWindowFocus: false,
   });
 
+  const kpiQuery = useQuery({
+    queryKey: ["admin-reports-summary"],
+    queryFn: () => adminReportsApi.summary(),
+    retry: 1,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
   const summary = summaryQuery.data || null;
   const snapshotEntries = useMemo(() => Object.entries(summary?.snapshot || {}), [summary]);
   const queueEntries = useMemo(() => Object.entries(summary?.queues || {}), [summary]);
   const finance = summary?.finance || null;
   const quickLinks = summary?.quickLinks || [];
+  const kpi = kpiQuery.data?.data || null;
+
+  async function exportReport(type) {
+    setExportingReport(type);
+    try {
+      const fn = { orders: adminReportsApi.exportOrders, payouts: adminReportsApi.exportPayouts, commissions: adminReportsApi.exportCommissions }[type];
+      const result = await fn();
+      downloadCsv(typeof result === "string" ? result : JSON.stringify(result), `${type}-${Date.now()}.csv`);
+    } catch { /* silent */ } finally {
+      setExportingReport("");
+    }
+  }
 
   function navigate(route) {
     if (!route) return;
@@ -280,6 +309,38 @@ export function AdminOperationsDashboard() {
             />
           );
         })}
+      </section>
+
+      {/* Live KPI + report exports */}
+      <section className="panel ops-finance-band">
+        <PanelHeader icon={BarChart2} title="Today's KPIs" action={
+          <div style={{ display: "flex", gap: 6 }}>
+            {["orders", "payouts", "commissions"].map((type) => (
+              <button
+                key={type}
+                className="btn btn-sm btn-outline"
+                disabled={exportingReport === type}
+                onClick={() => exportReport(type)}
+              >
+                <Download size={13} style={{ marginRight: 4 }} />
+                {exportingReport === type ? "…" : type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
+          </div>
+        } />
+        <div className="ops-finance-grid">
+          {kpi ? (
+            <>
+              <FinanceMetric label="Orders today" value={kpi.ordersToday} note="Placed since midnight" />
+              <FinanceMetric label="GMV today" value={kpi.gmvToday} note="Delivered / accepted" money />
+              <FinanceMetric label="Total orders" value={kpi.totalOrders} note="All time" />
+              <FinanceMetric label="Disputed orders" value={kpi.disputedOrders} note="Currently in dispute" />
+              <FinanceMetric label="Pending payouts" value={kpi.pendingPayouts} note="Pending or processing" />
+            </>
+          ) : (
+            <EmptyState icon={BarChart2} text={kpiQuery.isLoading ? "Loading KPIs…" : "KPI data unavailable."} />
+          )}
+        </div>
       </section>
 
       <section className="panel ops-links-band">

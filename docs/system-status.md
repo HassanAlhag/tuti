@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 5 Seller Experience complete)
+Last updated: 2026-06-12 (Phase 6 Admin Experience complete)
 
 ---
 
@@ -12,12 +12,12 @@ Last updated: 2026-06-12 (Phase 5 Seller Experience complete)
 | Customer account (orders, profile, tracking) | ~80% |
 | Public editorial pages | ~55% |
 | Seller portal | ~80% |
-| Admin console | ~55% |
+| Admin console | ~75% |
 | Driver portal | ~80% |
 | Sales Rep portal | ~70% |
 | Backend / API | ~65% |
 | Production readiness | ~20% |
-| **Overall platform** | **~60%** |
+| **Overall platform** | **~65%** |
 
 **Top five technical risks before soft launch:**
 
@@ -138,11 +138,11 @@ Last updated: 2026-06-12 (Phase 5 Seller Experience complete)
 | Payments center | Working | Payout status actions; no real gateway |
 | Support queue | Working | Dispute resolution actions |
 | Sales Reps | Working | List, view |
-| Audit log | Working | UI only; not a durable event stream |
+| Audit log | Working | Durable event stream; filter bar; CSV export |
 | Role matrix | Working | UI only; no backend policy enforcement |
-| Operations dashboard | Working | Live summary stats |
+| Operations dashboard | Working | Live KPI summary + CSV report export buttons |
 | Analytics | Working (basic) | Not backed by full event pipeline |
-| Reports | Missing | No export, no financial reports |
+| Reports | Working | Orders, payouts, commissions CSV export; `/api/admin/reports/*` |
 
 ---
 
@@ -448,7 +448,7 @@ Git initialized (2026-06-11). Branch: `main`. Convention: `feature/*`, `hotfix/*
 | KI-007 | Notifications | Bell only; no email/SMS | Medium | Users miss events when not logged in | Email/WhatsApp notification channel |
 | KI-008 | Orders | ~~Mongo nested stock deduction not implemented~~ **RESOLVED** | Medium | Already implemented; confirmed and tested in Slice 1A | Slice 1A |
 | KI-009 | Driver | No push notifications | Medium | Driver misses new offers | WebSocket or push channel |
-| KI-010 | Admin | Audit log is not a durable stream | Low | Compliance gap | Durable event log table |
+| KI-010 | Admin | ~~Audit log is not a durable stream~~ **RESOLVED** | Low | AuditEvent MongoDB model + service + routes; emitted from all key admin actions | Phase 6 |
 | KI-011 | API | No Swagger/OpenAPI documentation | Low | Integration friction | Add API docs |
 | KI-012 | Dev | Port collisions require manual kill | Low | Developer friction | Supervisor / PM2 for dev |
 
@@ -497,7 +497,11 @@ Unified `/login` route on customer web (auto-redirects to correct portal by role
 
 Multi-step seller onboarding wizard (welcome → brand → product → launch); auto-shown for new sellers with 0 products; persists dismissal per shop in localStorage. S3/R2 upload abstraction (`backend/src/shared/storage.js`): set `AWS_S3_BUCKET` + credentials to upload to S3-compatible storage; local disk stays working without env vars; Cloudflare R2 supported via `AWS_S3_ENDPOINT`. Bulk inventory adjustment: `PATCH /api/marketplace/seller/products/stock-bulk` (up to 100 lines per request) + "Adjust stock" panel in the products UI. Mobile-responsive seller portal CSS pass: topbar actions collapse to icon-only, section header stacks, bulk editor adapts on ≤ 520px.
 
-**Next milestone:** Phase 6 — Admin Experience
+**Phase 6 — Admin Experience** — COMPLETE (2026-06-12)
+
+Durable `AuditEvent` MongoDB model + ring-buffered seed fallback. `logAuditEvent` emitted from all key admin actions: product status changes, shop contract actions (suspend / reactivate / terminate), order status changes, payout status changes, and seller application conversions. Admin notifications for new seller applications. `GET /api/admin/audit` with filters (action, entityType, date range, actor) and `GET /api/admin/audit/export.csv`. `GET /api/admin/reports/summary` (today KPI: ordersToday, gmvToday, disputedOrders, pendingPayouts, totalOrders) + CSV export for orders, payouts, and commissions. AdminAuditLog UI rewritten with real data, filter bar, pagination, and CSV export button. Operations dashboard upgraded with live KPI panel and CSV report export buttons. Payout history panel has CSV export. 216/216 backend tests pass.
+
+**Next milestone:** Phase 7
 
 ---
 

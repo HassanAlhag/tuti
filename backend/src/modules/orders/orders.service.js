@@ -24,6 +24,7 @@ import {
   releaseDisputeHold,
 } from "../finance/sellerBalance.js";
 import { reverseOrderCommissions as reverseSalesRepCommissions } from "../finance/commissionReversal.js";
+import { logAuditEvent } from "../audit/audit.service.js";
 
 const orderItemMetadataSchema = z.object({
   cakeWriting: z.string().max(120).optional(),
@@ -521,6 +522,13 @@ export async function updateOrderStatus(orderId, status, user, note = null, cour
       await recordDeliveryEarning(order);
     }
     await notifyOrderStatusChanged(order, status);
+    logAuditEvent({
+      action: `order.status.${status.toLowerCase().replace(/ /g, "_")}`,
+      actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+      entityType: "order", entityId: orderId,
+      summary: `Order ${orderId} status changed to ${status}`,
+      meta: { shopIds: order.shopIds, note },
+    });
     return order;
   }
 
@@ -539,6 +547,13 @@ export async function updateOrderStatus(orderId, status, user, note = null, cour
     await recordDeliveryEarning(order);
   }
   await notifyOrderStatusChanged(order, status);
+  logAuditEvent({
+    action: `order.status.${status.toLowerCase().replace(/ /g, "_")}`,
+    actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+    entityType: "order", entityId: orderId,
+    summary: `Order ${orderId} status changed to ${status}`,
+    meta: { shopIds: order.shopIds, note },
+  });
   return order;
 }
 

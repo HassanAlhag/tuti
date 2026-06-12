@@ -12,6 +12,8 @@ import { Shop } from "../../models/Shop.js";
 import { User } from "../../models/User.js";
 import { normalizePermissions } from "../users/user.roles.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
+import { logAuditEvent } from "../audit/audit.service.js";
+import { createNotificationsForRole } from "../notifications/notifications.service.js";
 
 // ── Seed data ─────────────────────────────────────────────────────────
 const SEED_APPLICATIONS = [
@@ -267,10 +269,26 @@ export async function createApplication(rawPayload) {
 
   if (env.mongoUri) {
     const doc = await SellerApplication.create(app);
+    createNotificationsForRole({
+      recipientRole: "admin",
+      title: "New seller application",
+      message: `${app.businessName} (${app.city}) submitted a seller application.`,
+      type: "new_application",
+      entityType: "seller_application",
+      entityId: app.id,
+    });
     return doc.toObject();
   }
 
   seedApplications.set(app.id, app);
+  createNotificationsForRole({
+    recipientRole: "admin",
+    title: "New seller application",
+    message: `${app.businessName} (${app.city}) submitted a seller application.`,
+    type: "new_application",
+    entityType: "seller_application",
+    entityId: app.id,
+  });
   return app;
 }
 
@@ -562,6 +580,13 @@ export async function convertToSeller(applicationId, user) {
       { returnDocument: "after" }
     ).lean();
 
+    logAuditEvent({
+      action: "seller_application.converted",
+      actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+      entityType: "seller_application", entityId: applicationId,
+      summary: `Application for "${app.businessName}" converted to seller account (shop: ${shopId})`,
+      meta: { shopId, email: app.email },
+    });
     return {
       application:  updated,
       shopId,
@@ -629,6 +654,13 @@ export async function convertToSeller(applicationId, user) {
     convertedAt:      nowSeed,
   });
 
+  logAuditEvent({
+    action: "seller_application.converted",
+    actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+    entityType: "seller_application", entityId: applicationId,
+    summary: `Application for "${app.businessName}" converted to seller account (shop: ${shopId})`,
+    meta: { shopId, email: app.email },
+  });
   return {
     application:  app,
     shopId,

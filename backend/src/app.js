@@ -23,6 +23,8 @@ import { notificationsRouter } from "./modules/notifications/notifications.route
 import { sellerApplicationsRouter } from "./modules/seller-applications/seller-applications.routes.js";
 import { usersRouter } from "./modules/users/users.routes.js";
 import { srRouter } from "./modules/sr/sr.routes.js";
+import { auditRouter } from "./modules/audit/audit.routes.js";
+import { reportsRouter } from "./modules/reports/reports.routes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = env.uploadDir
@@ -132,6 +134,8 @@ export function createApp() {
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/users", usersRouter);
   app.use("/api/sr", srRouter);
+  app.use("/api/admin/audit", auditRouter);
+  app.use("/api/admin/reports", reportsRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });

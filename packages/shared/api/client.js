@@ -339,6 +339,33 @@ export const srPortalApi = {
   commissionPlans: () => request("/sr/commission-plans"),
 };
 
+export const adminAuditApi = {
+  list: (params = {}) => {
+    const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
+    return request(`/admin/audit${q ? `?${q}` : ""}`);
+  },
+  exportCsv: (params = {}) => {
+    const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
+    return request(`/admin/audit/export.csv${q ? `?${q}` : ""}`);
+  },
+};
+
+export const adminReportsApi = {
+  summary: () => request("/admin/reports/summary"),
+  exportOrders:      (params = {}) => {
+    const q = new URLSearchParams({ ...params, format: "csv" }).toString();
+    return request(`/admin/reports/orders?${q}`);
+  },
+  exportPayouts:     (params = {}) => {
+    const q = new URLSearchParams({ ...params, format: "csv" }).toString();
+    return request(`/admin/reports/payouts?${q}`);
+  },
+  exportCommissions: (params = {}) => {
+    const q = new URLSearchParams({ ...params, format: "csv" }).toString();
+    return request(`/admin/reports/commissions?${q}`);
+  },
+};
+
 export const uploadApi = {
   uploadImage: (file) => {
     const { accessToken } = useAuthStore.getState();

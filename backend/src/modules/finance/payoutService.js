@@ -27,6 +27,7 @@ import { SellerTransaction } from "../../models/SellerTransaction.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { getSeedOrders } from "../orders/orders.service.js";
 import { releaseEarningToAvailable } from "./sellerBalance.js";
+import { logAuditEvent } from "../audit/audit.service.js";
 
 // ── Allowed status transitions ────────────────────────────────────────────────
 
@@ -778,9 +779,17 @@ export async function createPayout({ shopId, orderIds, method, notes, adminId })
 export async function updatePayoutStatus({ payoutId, newStatus, adminId, reason }) {
   if (!payoutId)  { const e = new Error("payoutId is required."); e.status = 400; throw e; }
   if (!newStatus) { const e = new Error("newStatus is required."); e.status = 400; throw e; }
-  return env.mongoUri
-    ? mongoUpdatePayoutStatus({ payoutId, newStatus, adminId, reason })
-    : seedUpdatePayoutStatus({ payoutId, newStatus, adminId, reason });
+  const payout = env.mongoUri
+    ? await mongoUpdatePayoutStatus({ payoutId, newStatus, adminId, reason })
+    : await seedUpdatePayoutStatus({ payoutId, newStatus, adminId, reason });
+  logAuditEvent({
+    action: `payout.${newStatus}`,
+    actorId: adminId, actorName: adminId, actorRole: "admin",
+    entityType: "payout", entityId: payoutId,
+    summary: `Payout ${payoutId} status changed to ${newStatus} for shop ${payout?.shopId}`,
+    meta: { shopId: payout?.shopId, amount: payout?.amount, reason },
+  });
+  return payout;
 }
 
 // ── Seller read-only ──────────────────────────────────────────────────────────

@@ -134,7 +134,7 @@ export function AdminConsole({
     support: <AdminSupport adminData={adminData} focusedOrderId={deepLinkTarget.orderId} onFocusHandled={(notice) => setDeepLinkTarget((current) => ({ ...current, notice: notice || "" }))} />,
     roles: <AdminRoleMatrix roles={adminData.roles} />,
     "sales-reps": <AdminSalesReps />,
-    audit: <AdminAuditLog adminData={adminData} />,
+    audit: <AdminAuditLog />,
     merchandising: <AdminMerchandising adminData={adminData} />,
   }[activeSection];
 

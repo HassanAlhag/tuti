@@ -6,11 +6,12 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock,
+  Download,
   WalletCards,
   X,
   XCircle,
 } from "lucide-react";
-import { adminPayoutsApi, marketplaceApi } from "@tuti/shared/api/client.js";
+import { adminPayoutsApi, adminReportsApi, marketplaceApi } from "@tuti/shared/api/client.js";
 import { EmptyState }  from "@tuti/shared/components/EmptyState.jsx";
 import { MetricCard }  from "@tuti/shared/components/MetricCard.jsx";
 import { PageTitle }   from "@tuti/shared/components/PageTitle.jsx";
@@ -44,9 +45,18 @@ function formatDate(val) {
     : new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(d);
 }
 
+function downloadCsv(text, filename) {
+  const blob = new Blob([text], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AdminPayouts() {
   const qc = useQueryClient();
   const [selectedShopId, setSelectedShopId] = useState("");
+  const [exportingCsv,   setExportingCsv]   = useState(false);
   const [createModal,    setCreateModal]    = useState(false);
   const [releaseModal,   setReleaseModal]   = useState(false);
   const [selectedOrders, setSelectedOrders] = useState(new Set());
@@ -194,7 +204,29 @@ export function AdminPayouts() {
 
       {/* Payout list */}
       <section className="panel">
-        <PanelHeader icon={WalletCards} title="Payout history" action={`${payouts.length} record${payouts.length !== 1 ? "s" : ""}`} />
+        <PanelHeader
+          icon={WalletCards}
+          title="Payout history"
+          action={
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <span>{payouts.length} record{payouts.length !== 1 ? "s" : ""}</span>
+              <button
+                className="btn btn-sm btn-outline"
+                disabled={exportingCsv}
+                onClick={async () => {
+                  setExportingCsv(true);
+                  try {
+                    const result = await adminReportsApi.exportPayouts();
+                    downloadCsv(typeof result === "string" ? result : JSON.stringify(result), `payouts-${Date.now()}.csv`);
+                  } catch { /* silent */ } finally { setExportingCsv(false); }
+                }}
+              >
+                <Download size={13} style={{ marginRight: 4 }} />
+                {exportingCsv ? "Exporting…" : "Export CSV"}
+              </button>
+            </div>
+          }
+        />
         {payoutsLoading ? (
           <div className="app-status">Loading payouts…</div>
         ) : payouts.length === 0 ? (

@@ -13,6 +13,7 @@ import { rankPerfumes, rankShops } from "../../shared/rating.js";
 import { canTransitionProductStatus } from "../../shared/workflows/productWorkflow.js";
 import { createNotificationsForRole } from "../notifications/notifications.service.js";
 import { getSeedOrders } from "../orders/orders.service.js";
+import { logAuditEvent } from "../audit/audit.service.js";
 
 export const createProductSchema = z.object({
   name: z.string().min(1).max(120).trim(),
@@ -543,6 +544,13 @@ export async function updateProductStatus(productId, status, user) {
         entityId: product.id,
       });
     }
+    logAuditEvent({
+      action: `product.${status.toLowerCase().replace(/ /g, "_")}`,
+      actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+      entityType: "product", entityId: product.id,
+      summary: `Product "${product.name}" status changed to ${status}`,
+      meta: { shopId: product.shopId },
+    });
     return product;
   }
 
@@ -572,6 +580,13 @@ export async function updateProductStatus(productId, status, user) {
       entityId: product.id,
     });
   }
+  logAuditEvent({
+    action: `product.${status.toLowerCase().replace(/ /g, "_")}`,
+    actorId: user?.sub, actorName: user?.name, actorRole: user?.role,
+    entityType: "product", entityId: product.id,
+    summary: `Product "${product.name}" status changed to ${status}`,
+    meta: { shopId: product.shopId },
+  });
   return product;
 }
 
@@ -848,6 +863,13 @@ export async function updateShopContractStatus(shopId, payload, adminUser) {
         }
       }
     }
+    logAuditEvent({
+      action: `shop.contract.${action}`,
+      actorId: adminUser?.sub, actorName: adminUser?.name, actorRole: adminUser?.role,
+      entityType: "shop", entityId: shop.id,
+      summary: `Shop "${shop.name}" contract action: ${action}`,
+      meta: { contractStatus: shop.contractStatus, note: parsed.data.note },
+    });
     return shop.toObject();
   }
 
@@ -908,6 +930,13 @@ export async function updateShopContractStatus(shopId, payload, adminUser) {
       }
     }
   }
+  logAuditEvent({
+    action: `shop.contract.${action}`,
+    actorId: adminUser?.sub, actorName: adminUser?.name, actorRole: adminUser?.role,
+    entityType: "shop", entityId: shop.id,
+    summary: `Shop "${shop.name}" contract action: ${action}`,
+    meta: { contractStatus: shop.contractStatus, note: parsed.data.note },
+  });
   return shop;
 }
 
