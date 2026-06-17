@@ -9,6 +9,7 @@ import { useAuthStore }     from "@tuti/shared/store/authStore.js";
 import { NotificationBell } from "../notifications/NotificationBell.jsx";
 import { AuthModal }         from "../auth/AuthModal.jsx";
 import { ClientFooter }      from "./ClientFooter.jsx";
+import { CookieConsent }     from "./CookieConsent.jsx";
 import { useCartStore }      from "../../store/cartStore.js";
 import { getPortalUrl }      from "./portalUrls.js";
 
@@ -453,6 +454,8 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
           onClose={() => setShowAuth(false)}
         />
       )}
+
+      <CookieConsent />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { sendOrderConfirmation } from "../../shared/email.js";
+import { sendOrderConfirmationSms, sendOrderStatusSms } from "../../shared/sms.js";
 import {
   createOrder,
   createOrderSchema,
@@ -29,9 +30,11 @@ ordersRouter.post("/", optionalAuth, validate(createOrderSchema), async (req, re
     const idempotencyKey = rawKey && /^[0-9a-f-]{8,128}$/i.test(rawKey) ? rawKey : null;
     const order = await createOrder(req.body, req.user?.sub, idempotencyKey);
     res.status(201).json({ data: order });
-    // Fire-and-forget confirmation email
+    // Fire-and-forget confirmation notifications
     const toEmail = req.body.customerEmail || req.body.email || req.user?.email;
+    const toPhone = req.body.customerPhone || req.body.phone;
     if (toEmail) sendOrderConfirmation(order, toEmail).catch(() => {});
+    if (toPhone) sendOrderConfirmationSms(toPhone, order.id || order._id).catch(() => {});
   } catch (err) { next(err); }
 });
 
@@ -66,7 +69,10 @@ ordersRouter.patch(
   validate(updateOrderStatusSchema),
   async (req, res, next) => {
     try {
-      res.json({ data: await updateOrderStatus(req.params.orderId, req.body.status, req.user, req.body.note, req.body.courierRef) });
+      const updated = await updateOrderStatus(req.params.orderId, req.body.status, req.user, req.body.note, req.body.courierRef);
+      res.json({ data: updated });
+      const phone = updated.customerPhone || updated.deliveryAddress?.phone;
+      if (phone) sendOrderStatusSms(phone, req.params.orderId, req.body.status).catch(() => {});
     } catch (err) { next(err); }
   }
 );

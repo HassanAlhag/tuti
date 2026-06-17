@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -10,6 +11,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
 import { logger } from "./shared/logger.js";
+
+if (env.sentryDsn) {
+  Sentry.init({ dsn: env.sentryDsn, environment: env.nodeEnv, tracesSampleRate: 0.1 });
+}
 import { createStorageProvider } from "./shared/storage.js";
 import { authenticate, requireRole } from "./middleware/auth.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -85,12 +90,18 @@ export function createApp() {
   // Serve uploaded images
   app.use("/uploads", express.static(uploadsDir));
 
-  app.get("/api/health", (_req, res) => {
+  app.get("/api/health", async (_req, res) => {
+    const { connection } = await import("mongoose").catch(() => ({ connection: null }));
+    const dbState = env.mongoUri
+      ? (connection?.readyState === 1 ? "connected" : "disconnected")
+      : "seed-memory";
     res.json({
       data: {
         ok: true,
         env: env.nodeEnv,
-        database: env.mongoUri ? "mongodb-configured" : "seed-memory",
+        database: dbState,
+        uptime: Math.floor(process.uptime()),
+        version: process.env.npm_package_version || "0.2.0",
       },
     });
   });
@@ -152,7 +163,10 @@ export function createApp() {
   app.use((error, req, res, _next) => {
     const status = error.status || 500;
     const message = status < 500 ? error.message : "Unexpected server error.";
-    if (status >= 500) (req.log || logger).error({ err: error }, "Unhandled server error");
+    if (status >= 500) {
+      (req.log || logger).error({ err: error }, "Unhandled server error");
+      if (env.sentryDsn) Sentry.captureException(error);
+    }
     res.status(status).json({ error: message });
   });
 

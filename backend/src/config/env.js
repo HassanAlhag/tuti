@@ -75,6 +75,12 @@ export function buildEnv(rawEnv = process.env) {
     emailUser: rawEnv.EMAIL_USER || "",
     emailPass: rawEnv.EMAIL_PASS || "",
     emailFrom: rawEnv.EMAIL_FROM || "Tuti <noreply@tuti.ae>",
+    // SMS / WhatsApp (Twilio) — leave empty to use console logging in dev
+    twilioSid:   rawEnv.TWILIO_ACCOUNT_SID  || "",
+    twilioToken: rawEnv.TWILIO_AUTH_TOKEN   || "",
+    twilioFrom:  rawEnv.TWILIO_FROM_NUMBER  || "",
+    // Error monitoring (Sentry)
+    sentryDsn: rawEnv.SENTRY_DSN || "",
   };
 }
 
