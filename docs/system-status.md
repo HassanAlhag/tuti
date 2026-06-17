@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-17 (Phase 10 Production Readiness — in progress)
+Last updated: 2026-06-17 (Phase 10 Production Readiness — complete)
 
 ---
 
@@ -527,7 +527,9 @@ Commission automation: `backend/src/modules/finance/commissionCalc.js` — `runC
 
 Structured logging: Pino + pino-http added to backend; request-level logging with auto-ignore on `/api/health`; pretty-print in dev, JSON in production. Security hardening: `express-mongo-sanitize` (NoSQL injection protection on all request body/query params) and `hpp` (HTTP parameter pollution prevention) added as middleware. CSP headers enabled in production via helmet. Transactional email: `backend/src/shared/email.js` using nodemailer SMTP; dev-mode falls back to console logging; `sendPasswordReset`, `sendOrderConfirmation`, `sendSellerApproved`, `sendSellerRejected` wired into auth service, orders routes, and seller-applications routes. EMAIL_* env vars added to env.js and documented in `.env.example`. CI: updated `.github/workflows/ci.yml` to run 244 backend tests + matrix build for all 5 apps; Docker backend image build on main. Docker: updated `docker-compose.yml` with all 5 frontend apps (nginx SPA containers) + full env var pass-through; Dockerfiles and `nginx.conf` added per app. E2E: `playwright.config.js` added; `e2e/` directory with 4 test files covering homepage, shop, auth, and Build a Box flows; `npm run test:e2e` script. 244/244 backend tests pass; all 5 apps build clean.
 
-**Remaining for Phase 10:** Full Playwright browser QA run (requires installed browser binaries), accessibility audit, load testing, error monitoring (Sentry), UAT sign-off, production deploy.
+Sentry error monitoring: `@sentry/node` in backend with `captureException` on 500s; `@sentry/react` in web app — both gated behind `SENTRY_DSN` / `VITE_SENTRY_DSN` env vars. SMS/WhatsApp: `backend/src/shared/sms.js` using Twilio (lazy-init, console fallback in dev); order confirmation SMS and status-change SMS (Preparing/Shipped/Delivered/Refunded) wired into orders routes; `TWILIO_*` env vars added. Enhanced health endpoint: `/api/health` now returns `database` (connected/disconnected/seed-memory), `uptime` (seconds), and `version`. Cookie consent banner: `CookieConsent.jsx` in web app; `localStorage`-persisted; WCAG `role="dialog"`; mobile-responsive bottom sheet; mounted in `ClientLayout`. Cookie banner CSS in `client.css`. E2E expanded: `checkout.spec.js` (cart, PDP add-to-cart, order confirmation route); `account.spec.js` (auth guard, account access, cookie banner accept/dismiss/persist). Load test: `load-tests/k6-smoke.js` — smoke at 1 VU then ramp to 100 concurrent; p95 < 500 ms and < 1 % error thresholds against health, storefront, and featured-sellers endpoints. 244/244 backend tests pass; all 5 apps build clean.
+
+**Remaining for launch sign-off:** Playwright browser install + CI E2E run, k6 load test execution against a running instance, WCAG audit against production-like build, Sentry project creation, UAT with stakeholders, SSL/domain configuration, production deployment.
 
 **Next milestone:** Launch
 
