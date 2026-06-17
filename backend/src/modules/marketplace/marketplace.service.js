@@ -98,36 +98,252 @@ function getRankings(state) {
   };
 }
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function toNumber(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function normalizeArray(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item) => item != null).map((item) => (typeof item === "object" ? { ...item } : item));
+}
+
+function normalizeNotePyramid(value) {
+  if (!value || typeof value !== "object") return undefined;
+  return {
+    top: normalizeArray(value.top),
+    heart: normalizeArray(value.heart),
+    base: normalizeArray(value.base),
+  };
+}
+
+function isPublicShop(shop) {
+  return normalizeText(shop?.status) === "Approved";
+}
+
+function isPublicProduct(product, publicShopIds) {
+  return normalizeText(product?.status) === "Live" && publicShopIds.has(normalizeText(product?.shopId));
+}
+
+function sanitizePublicProduct(product, publicProductIds = null) {
+  if (!product) return null;
+  return {
+    id: normalizeText(product.id),
+    name: normalizeText(product.name),
+    shopId: normalizeText(product.shopId),
+    category: normalizeText(product.category) || "perfume",
+    price: toNumber(product.price),
+    originalPrice: product.originalPrice != null ? toNumber(product.originalPrice) : undefined,
+    stock: toNumber(product.stock),
+    status: "Live",
+    tags: normalizeArray(product.tags),
+    occasionTags: normalizeArray(product.occasionTags),
+    releaseType: normalizeText(product.releaseType),
+    collection: normalizeText(product.collection),
+    color: normalizeText(product.color) || "#52796f",
+    accent: normalizeText(product.accent) || "#e9c46a",
+    imagePath: product.imagePath || null,
+    rating: toNumber(product.rating),
+    reviews: toNumber(product.reviews),
+    orders: toNumber(product.orders),
+    verifiedReviews: toNumber(product.verifiedReviews),
+    family: normalizeText(product.family),
+    gender: normalizeText(product.gender),
+    notes: normalizeArray(product.notes),
+    notePyramid: normalizeNotePyramid(product.notePyramid),
+    occasion: normalizeArray(product.occasion),
+    intensity: normalizeText(product.intensity),
+    longevity: normalizeText(product.longevity),
+    description: normalizeText(product.description),
+    ingredients: normalizeArray(product.ingredients),
+    howToUse: normalizeText(product.howToUse),
+    deliveryReturns: normalizeText(product.deliveryReturns),
+    size: normalizeText(product.size),
+    cakeType: normalizeText(product.cakeType),
+    flavors: normalizeArray(product.flavors),
+    servings: normalizeText(product.servings),
+    allergens: normalizeArray(product.allergens),
+    leadTimeDays: product.leadTimeDays != null ? toNumber(product.leadTimeDays) : undefined,
+    customMessageAvailable: Boolean(product.customMessageAvailable),
+    bundledProductIds: publicProductIds
+      ? filterPublicProductIds(product.bundledProductIds, publicProductIds)
+      : normalizeArray(product.bundledProductIds),
+    includes: normalizeArray(product.includes),
+    createdAt: product.createdAt || null,
+    updatedAt: product.updatedAt || null,
+  };
+}
+
+function sanitizePublicShop(shop) {
+  if (!shop) return null;
+  return {
+    id: normalizeText(shop.id),
+    name: normalizeText(shop.name),
+    city: normalizeText(shop.city),
+    status: "Approved",
+    fulfillmentRate: toNumber(shop.fulfillmentRate),
+    serviceRating: toNumber(shop.serviceRating),
+    avatar: normalizeText(shop.avatar),
+    story: normalizeText(shop.story),
+    cover: normalizeText(shop.cover),
+    category: normalizeText(shop.category),
+    categories: normalizeArray(shop.categories),
+    deliveryModel: normalizeText(shop.deliveryModel),
+    createdAt: shop.createdAt || null,
+    updatedAt: shop.updatedAt || null,
+  };
+}
+
+function sanitizePublicReview(review) {
+  if (!review) return null;
+  return {
+    id: normalizeText(review.id),
+    productId: normalizeText(review.productId),
+    customer: normalizeText(review.customer),
+    rating: toNumber(review.rating),
+    title: normalizeText(review.title),
+    body: normalizeText(review.body),
+    verified: Boolean(review.verified),
+    helpful: toNumber(review.helpful),
+    date: normalizeText(review.date),
+    aspects: review.aspects && typeof review.aspects === "object"
+      ? {
+        scent: toNumber(review.aspects.scent),
+        longevity: toNumber(review.aspects.longevity),
+        value: toNumber(review.aspects.value),
+      }
+      : undefined,
+    createdAt: review.createdAt || null,
+    updatedAt: review.updatedAt || null,
+  };
+}
+
+function filterPublicProductIds(productIds, publicProductIds) {
+  return normalizeArray(productIds)
+    .map((id) => normalizeText(id))
+    .filter((id) => id && publicProductIds.has(id));
+}
+
+function sanitizePublicProductRefRecord(record, publicProductIds) {
+  if (!record) return null;
+  const result = { ...record };
+  const hadProductIds = Array.isArray(record.productIds);
+  const hadProductId = Boolean(record.productId);
+  const hadItems = Array.isArray(record.items);
+
+  if (hadProductIds) {
+    result.productIds = filterPublicProductIds(record.productIds, publicProductIds);
+  }
+
+  if (hadProductId) {
+    const productId = normalizeText(record.productId);
+    if (!publicProductIds.has(productId)) return null;
+    result.productId = productId;
+  }
+
+  if (hadItems) {
+    result.items = record.items
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const productId = normalizeText(item.productId);
+        if (productId && !publicProductIds.has(productId)) return null;
+        return { ...item, ...(productId ? { productId } : {}) };
+      })
+      .filter(Boolean);
+  }
+
+  delete result._id;
+  delete result.__v;
+
+  if (!hadProductIds && !hadProductId && !hadItems) return result;
+
+  const remainingProductRefs = [
+    ...(Array.isArray(result.productIds) ? result.productIds : []),
+    ...(result.productId ? [result.productId] : []),
+    ...(Array.isArray(result.items) ? result.items.map((item) => normalizeText(item.productId)).filter(Boolean) : []),
+  ];
+
+  return remainingProductRefs.length ? result : null;
+}
+
+function getPublicRankings(publicProducts, publicShops, publicProductIds) {
+  const perfumesOnly = publicProducts.filter((p) => !p.category || p.category === "perfume");
+  return {
+    topPerfumes: rankPerfumes(perfumesOnly)
+      .map((product) => {
+        const sanitized = sanitizePublicProduct(product, publicProductIds);
+        return sanitized ? { ...sanitized, score: product.score } : null;
+      })
+      .filter(Boolean),
+    topShops: rankShops(publicShops, perfumesOnly)
+      .map((shop) => {
+        const sanitized = sanitizePublicShop(shop);
+        return sanitized ? { ...sanitized, score: shop.score } : null;
+      })
+      .filter(Boolean),
+  };
+}
+
+function buildPublicStorefrontPayload({ products = [], shops = [], reviews = [], promotions = [], collections = [], roles = [] }) {
+  const publicShops = shops.filter(isPublicShop);
+  const publicShopIds = new Set(publicShops.map((shop) => normalizeText(shop.id)).filter(Boolean));
+  const publicProducts = products.filter((product) => isPublicProduct(product, publicShopIds));
+  const publicProductIds = new Set(publicProducts.map((product) => normalizeText(product.id)).filter(Boolean));
+
+  return {
+    products: publicProducts.map((product) => sanitizePublicProduct(product, publicProductIds)).filter(Boolean),
+    shops: publicShops.map(sanitizePublicShop).filter(Boolean),
+    reviews: reviews
+      .filter((review) => publicProductIds.has(normalizeText(review.productId)))
+      .map(sanitizePublicReview)
+      .filter(Boolean),
+    promotions: promotions
+      .map((promotion) => sanitizePublicProductRefRecord(promotion, publicProductIds))
+      .filter(Boolean),
+    collections: collections
+      .map((collection) => sanitizePublicProductRefRecord(collection, publicProductIds))
+      .filter(Boolean),
+    roles,
+    rankings: getPublicRankings(publicProducts, publicShops, publicProductIds),
+  };
+}
+
 export async function getStorefrontData() {
   if (env.mongoUri) {
-    const [products, shops, reviews] = await Promise.all([
-      Product.find({}).sort({ createdAt: -1 }).lean(),
-      Shop.find({}).sort({ createdAt: -1 }).lean(),
-      Review.find({}).sort({ createdAt: -1 }).lean(),
-    ]);
-
     const state = seedRepository.getState();
-    return {
+    const shops = await Shop.find({ status: "Approved" }).sort({ createdAt: -1 }).lean();
+    const publicShopIds = shops.map((shop) => normalizeText(shop.id)).filter(Boolean);
+    const products = publicShopIds.length
+      ? await Product.find({ status: "Live", shopId: { $in: publicShopIds } }).sort({ createdAt: -1 }).lean()
+      : [];
+    const publicProductIds = products.map((product) => normalizeText(product.id)).filter(Boolean);
+    const reviews = publicProductIds.length
+      ? await Review.find({ productId: { $in: publicProductIds } }).sort({ createdAt: -1 }).lean()
+      : [];
+
+    return buildPublicStorefrontPayload({
       products,
       shops,
       reviews,
       promotions: state.promotions,
       collections: state.collections,
       roles: state.roles,
-      rankings: getRankings({ products, shops }),
-    };
+    });
   }
 
   const state = seedRepository.getState();
-  return {
+  return buildPublicStorefrontPayload({
     products: state.products,
     shops: state.shops,
     reviews: state.reviews,
     promotions: state.promotions,
     collections: state.collections,
     roles: state.roles,
-    rankings: getRankings(state),
-  };
+  });
 }
 
 function customerSummariesFromOrders(orders, knownCustomers) {
@@ -1287,7 +1503,9 @@ function escapeRegex(value) {
 
 export async function searchProducts({ q = "", category, family, gender, occasion, minPrice, maxPrice, inStock, page = 1, limit = 20 }) {
   if (env.mongoUri) {
-    const filter = { status: "Live" };
+    const publicShops = await Shop.find({ status: "Approved" }).select("id").lean();
+    const publicShopIds = publicShops.map((shop) => normalizeText(shop.id)).filter(Boolean);
+    const filter = { status: "Live", shopId: { $in: publicShopIds } };
     const normalizedQ = String(q || "").trim();
 
     if (normalizedQ) {
@@ -1318,19 +1536,33 @@ export async function searchProducts({ q = "", category, family, gender, occasio
     const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
     const safePage = Math.max(Number(page) || 1, 1);
     const skip = (safePage - 1) * safeLimit;
-    const [results, total] = await Promise.all([
+    const [results, total, publicProductIdDocs] = await Promise.all([
       Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
       Product.countDocuments(filter),
+      Product.find({ status: "Live", shopId: { $in: publicShopIds } }).select("id").lean(),
     ]);
 
-    return { results, total, page: safePage, pages: Math.max(1, Math.ceil(total / safeLimit)) };
+    const publicProductIds = new Set(publicProductIdDocs.map((product) => normalizeText(product.id)).filter(Boolean));
+    return {
+      results: results.map((product) => sanitizePublicProduct(product, publicProductIds)).filter(Boolean),
+      total,
+      page: safePage,
+      pages: Math.max(1, Math.ceil(total / safeLimit)),
+    };
   }
 
   const state = seedRepository.getState();
-  const normalizedQ = q.trim().toLowerCase();
+  const publicShopIds = new Set((state.shops || []).filter(isPublicShop).map((shop) => normalizeText(shop.id)).filter(Boolean));
+  const allPublicProductIds = new Set(
+    (state.products || [])
+      .filter((product) => isPublicProduct(product, publicShopIds))
+      .map((product) => normalizeText(product.id))
+      .filter(Boolean)
+  );
+  const normalizedQ = String(q || "").trim().toLowerCase();
 
-  let results = state.products.filter((product) => {
-    if (product.status !== "Live") return false;
+  let results = (state.products || []).filter((product) => {
+    if (!isPublicProduct(product, publicShopIds)) return false;
 
     if (normalizedQ) {
       const haystack = [
@@ -1352,9 +1584,11 @@ export async function searchProducts({ q = "", category, family, gender, occasio
     return true;
   });
 
+  const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const safePage = Math.max(Number(page) || 1, 1);
   const total = results.length;
-  const start = (page - 1) * limit;
-  results = results.slice(start, start + limit);
+  const start = (safePage - 1) * safeLimit;
+  results = results.slice(start, start + safeLimit).map((product) => sanitizePublicProduct(product, allPublicProductIds)).filter(Boolean);
 
-  return { results, total, page, pages: Math.ceil(total / limit) };
+  return { results, total, page: safePage, pages: Math.max(1, Math.ceil(total / safeLimit)) };
 }

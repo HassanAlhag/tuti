@@ -4,17 +4,25 @@ const API_BASE = import.meta.env?.VITE_API_URL
   || (import.meta.env?.DEV ? "http://localhost:5055/api" : "/api");
 
 async function refreshAccessToken() {
-  const { refreshToken, updateAccessToken, clearAuth } = useAuthStore.getState();
+  const { refreshToken, updateTokens, clearAuth } = useAuthStore.getState();
   if (!refreshToken) { clearAuth(); return null; }
-  const res = await fetch(`${API_BASE}/auth/refresh`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
-  });
-  if (!res.ok) { clearAuth(); return null; }
-  const payload = await res.json();
-  updateAccessToken(payload.data.accessToken);
-  return payload.data.accessToken;
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) { clearAuth(); return null; }
+    const payload = await res.json();
+    const nextAccessToken = payload?.data?.accessToken;
+    const nextRefreshToken = payload?.data?.refreshToken;
+    if (!nextAccessToken || !nextRefreshToken) { clearAuth(); return null; }
+    updateTokens(nextAccessToken, nextRefreshToken);
+    return nextAccessToken;
+  } catch {
+    clearAuth();
+    return null;
+  }
 }
 
 async function request(path, options = {}, retry = true) {

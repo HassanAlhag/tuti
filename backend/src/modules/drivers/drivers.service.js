@@ -633,6 +633,7 @@ export async function recordSellerDriverDelivery(driverId, orderId, shopId, rawP
       codCollected,
       codAmount,
       note: parsed.data.note || "",
+      proofOfDeliveryUrl: parsed.data.proofOfDeliveryUrl || "",
     };
 
     const historyEntry = {
@@ -690,6 +691,7 @@ export async function recordSellerDriverDelivery(driverId, orderId, shopId, rawP
     codCollected,
     codAmount,
     note: parsed.data.note || "",
+    proofOfDeliveryUrl: parsed.data.proofOfDeliveryUrl || "",
   };
 
   const historyEntry = {
@@ -1049,6 +1051,10 @@ async function notifyDeliveryCompleted(order, driver, shopId = null) {
   }
 
   await runNotificationTasks(tasks);
+}
+
+function getNotificationShopId(order) {
+  return Array.isArray(order?.shopIds) ? order.shopIds[0] || null : null;
 }
 
 async function persistOrderHistory(orderId, shopId, entry) {
@@ -1444,10 +1450,12 @@ function normalizeDriverAssignment(assignment) {
     driverName: assignment.driverName || "",
     driverPhone: assignment.driverPhone || "",
     assignedAt: assignment.assignedAt || null,
+    pickedUpAt: assignment.pickedUpAt || null,
     deliveredAt: assignment.deliveredAt || null,
     codCollected: Boolean(assignment.codCollected),
     codAmount: Number(assignment.codAmount) || 0,
     note: assignment.note || "",
+    proofOfDeliveryUrl: assignment.proofOfDeliveryUrl || "",
   };
 }
 
@@ -1808,7 +1816,7 @@ export async function recordDriverDelivery(driverId, orderId, rawPayload, user) 
     // Accrue referral commissions — same trigger as the regular Delivered transition.
     // Errors are swallowed inside accrueDeliveredOrderCommissions to avoid reversing delivery.
     await accrueDeliveredOrderCommissions(updated);
-    await notifyDeliveryCompleted(updated, { name: updated?.driverAssignment?.driverName || "driver" }, safeShopId);
+    await notifyDeliveryCompleted(updated, { name: updated?.driverAssignment?.driverName || "driver" }, getNotificationShopId(updated));
     return updated;
   }
 
@@ -1860,7 +1868,7 @@ export async function recordDriverDelivery(driverId, orderId, rawPayload, user) 
   }
   // Accrue referral commissions — same trigger as the regular Delivered transition.
   await accrueDeliveredOrderCommissions(order);
-  await notifyDeliveryCompleted(order, { name: order?.driverAssignment?.driverName || "driver" }, safeShopId);
+  await notifyDeliveryCompleted(order, { name: order?.driverAssignment?.driverName || "driver" }, getNotificationShopId(order));
   return order;
 }
 

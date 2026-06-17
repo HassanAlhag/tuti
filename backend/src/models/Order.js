@@ -143,10 +143,12 @@ const driverAssignmentSchema = new mongoose.Schema(
     driverName:   { type: String, default: "" },
     driverPhone:  { type: String, default: "" },
     assignedAt:   { type: Date, default: Date.now },
+    pickedUpAt:   { type: Date, default: null },
     deliveredAt:  { type: Date, default: null },
     codCollected: { type: Boolean, default: false },
     codAmount:    { type: Number, default: 0 },
     note:         { type: String, default: "" },
+    proofOfDeliveryUrl: { type: String, default: "" },
     // ── COD settlement markers (set by admin during cash reconciliation) ──
     codSettledAt:      { type: Date,   default: null },
     codSettledBy:      { type: String, default: null },

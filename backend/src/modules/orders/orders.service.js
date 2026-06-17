@@ -35,7 +35,7 @@ const orderItemMetadataSchema = z.object({
 
 export const createOrderSchema = z.object({
   checkoutMode: z.enum(["guest", "account"]).default("guest"),
-  paymentMethod: z.enum(["card", "cod"]).default("card"),
+  paymentMethod: z.enum(["card", "cod"]).default("cod"),
   customerName: z.string().min(1).max(100),
   customerEmail: z.string().email(),
   phone: z.string().min(3).max(40).optional().default(""),
@@ -43,9 +43,9 @@ export const createOrderSchema = z.object({
     .array(
       z.object({
         productId: z.string(),
-        productName: z.string(),
-        shopId: z.string(),
-        price: z.number().positive(),
+        productName: z.string().optional(),
+        shopId: z.string().optional(),
+        price: z.number().positive().optional(),
         quantity: z.number().int().positive(),
         category: z.string().optional(),
         family: z.string().optional(),
@@ -148,6 +148,25 @@ const initialSeedOrders = structuredClone(seedRepository.getState().orders);
 
 // In-memory idempotency map for seed mode: idempotencyKey → orderId
 const seedIdempotencyKeys = new Map();
+
+const CHECKOUT_ITEM_UNAVAILABLE_MESSAGE = "One of your selected items is no longer available.";
+const CARD_CHECKOUT_UNAVAILABLE_MESSAGE = "Card checkout is not available yet. Please use cash on delivery.";
+
+function makeCheckoutError(message, status = 422) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+}
+
+function normalizeCheckoutPaymentMethod(payload) {
+  if (Object.prototype.hasOwnProperty.call(payload, "paymentMethod")) return { ...payload };
+  return { ...payload, paymentMethod: "cod" };
+}
+
+function assertCheckoutPaymentMethodAvailable(payload) {
+  if (payload.paymentMethod === "cod") return;
+  throw makeCheckoutError(CARD_CHECKOUT_UNAVAILABLE_MESSAGE, 422);
+}
 
 async function notifyOrderCreated(order) {
   const shopIds = [...new Set(order.shopIds || [])];
@@ -262,12 +281,72 @@ async function notifyDisputeCaseUpdated(order, nextStatus) {
   await Promise.all(tasks);
 }
 
+function stableValue(value) {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .sort()
+      .reduce((acc, key) => {
+        if (value[key] !== undefined) acc[key] = stableValue(value[key]);
+        return acc;
+      }, {});
+  }
+  return value;
+}
+
+function stableStringify(value) {
+  return JSON.stringify(stableValue(value));
+}
+
+function isBuildYourBoxItem(item) {
+  return item?.configuration?.type === "build_your_box";
+}
+
+function fingerprintItem(item) {
+  if (isBuildYourBoxItem(item)) {
+    const configuration = item.configuration || {};
+    return {
+      type: "build_your_box",
+      productId: item.productId,
+      quantity: item.quantity,
+      version: configuration.version ?? null,
+      selectedPerfumeProductId: configuration.selectedPerfume?.productId || "",
+      selectedTreatProductId: configuration.selectedTreat?.productId || "",
+      giftWrap: Boolean(configuration.giftWrap),
+      cardMessage: configuration.cardMessage || "",
+      allergyNote: configuration.allergyNote || "",
+      metadata: item.metadata || null,
+    };
+  }
+
+  return {
+    type: "product",
+    productId: item.productId,
+    quantity: item.quantity,
+    metadata: item.metadata || null,
+  };
+}
+
 function computeFingerprint(payload) {
   const items = [...(payload.items || [])]
-    .sort((a, b) => String(a.productId).localeCompare(String(b.productId)))
-    .map((i) => `${i.productId}:${i.quantity}`)
-    .join(",");
-  return createHash("sha256").update(`${payload.customerEmail}|${items}`).digest("hex").slice(0, 32);
+    .map(fingerprintItem)
+    .sort((a, b) => stableStringify(a).localeCompare(stableStringify(b)));
+
+  const source = {
+    checkoutMode: payload.checkoutMode || "guest",
+    paymentMethod: payload.paymentMethod || "card",
+    customerName: payload.customerName || "",
+    customerEmail: String(payload.customerEmail || "").toLowerCase(),
+    phone: payload.phone || "",
+    deliveryAddress: payload.deliveryAddress || "",
+    deliveryDate: payload.deliveryDate || "",
+    deliveryTime: payload.deliveryTime || "",
+    giftMessage: payload.giftMessage || "",
+    notes: payload.notes || "",
+    items,
+  };
+
+  return createHash("sha256").update(stableStringify(source)).digest("hex").slice(0, 32);
 }
 
 function toCustomerSafeError(err) {
@@ -288,23 +367,138 @@ function toCustomerSafeError(err) {
   return err;
 }
 
-async function resolveBuildYourBoxProducts(items) {
-  const productIds = getBuildYourBoxProductIds(items);
+function getStandardCheckoutProductIds(items) {
+  return items
+    .filter((item) => !isBuildYourBoxItem(item))
+    .map((item) => item.productId)
+    .filter(Boolean);
+}
+
+async function loadCheckoutProducts(items) {
+  const productIds = [...new Set([
+    ...getStandardCheckoutProductIds(items),
+    ...getBuildYourBoxProductIds(items),
+  ])];
   if (!productIds.length) return [];
   if (env.mongoUri) return Product.find({ id: { $in: productIds } }).lean();
   return seedRepository.getState().products.filter((product) => productIds.includes(product.id));
+}
+
+function productMapFrom(products) {
+  return new Map(products.map((product) => [product.id, product]));
+}
+
+function getCheckoutProduct(productMap, productId) {
+  const product = productMap.get(productId);
+  if (!product) throw makeCheckoutError(CHECKOUT_ITEM_UNAVAILABLE_MESSAGE, 422);
+  if (product.status !== "Live") throw makeCheckoutError(CHECKOUT_ITEM_UNAVAILABLE_MESSAGE, 422);
+  return product;
+}
+
+function cloneArray(value) {
+  return Array.isArray(value) ? [...value] : [];
+}
+
+function compactConfiguredProduct(product) {
+  return {
+    productId: product.id,
+    name: product.name,
+    shopId: product.shopId,
+    category: product.category || "perfume",
+    price: Number(product.price || 0),
+    family: product.family,
+    gender: product.gender,
+    size: product.size,
+    cakeType: product.cakeType,
+    flavors: cloneArray(product.flavors),
+    servings: product.servings,
+    allergens: cloneArray(product.allergens),
+    leadTimeDays: product.leadTimeDays,
+  };
+}
+
+function removeUndefinedFields(value) {
+  return Object.entries(value).reduce((acc, [key, next]) => {
+    if (next !== undefined) acc[key] = next;
+    return acc;
+  }, {});
+}
+
+function canonicalProductOrderItem(item, product) {
+  return removeUndefinedFields({
+    productId: product.id,
+    productName: product.name,
+    shopId: product.shopId,
+    price: Number(product.price || 0),
+    quantity: item.quantity,
+    category: product.category || "perfume",
+    family: product.family || "",
+    gender: product.gender || "",
+    size: product.size || "",
+    cakeType: product.cakeType || "",
+    flavors: cloneArray(product.flavors),
+    servings: product.servings || "",
+    allergens: cloneArray(product.allergens),
+    leadTimeDays: product.leadTimeDays,
+    bundledProductIds: cloneArray(product.bundledProductIds),
+    includes: cloneArray(product.includes),
+    occasionTags: cloneArray(product.occasionTags),
+    metadata: item.metadata,
+  });
+}
+
+function canonicalBuildYourBoxOrderItem(item, productMap) {
+  const configuration = item.configuration || {};
+  const perfume = getCheckoutProduct(productMap, configuration.selectedPerfume?.productId);
+  const treat = getCheckoutProduct(productMap, configuration.selectedTreat?.productId);
+  const totalPrice = Number(perfume.price || 0) + Number(treat.price || 0);
+  const leadTimeDays = Math.max(Number(perfume.leadTimeDays || 0), Number(treat.leadTimeDays || 0));
+
+  return removeUndefinedFields({
+    productId: "build-box",
+    productName: "Build Your Box",
+    shopId: perfume.shopId,
+    price: totalPrice,
+    quantity: 1,
+    category: "bundle",
+    bundledProductIds: [perfume.id, treat.id],
+    includes: [perfume.name, treat.name],
+    allergens: cloneArray(treat.allergens),
+    leadTimeDays,
+    metadata: item.metadata,
+    configuration: {
+      ...configuration,
+      selectedPerfume: compactConfiguredProduct(perfume),
+      selectedTreat: compactConfiguredProduct(treat),
+      totalPrice,
+    },
+  });
+}
+
+async function normalizeCheckoutPayload(payload) {
+  const products = await loadCheckoutProducts(payload.items || []);
+  validateBuildYourBoxItems(payload.items || [], products);
+  const productMap = productMapFrom(products);
+
+  const items = (payload.items || []).map((item) => {
+    if (isBuildYourBoxItem(item)) return canonicalBuildYourBoxOrderItem(item, productMap);
+    return canonicalProductOrderItem(item, getCheckoutProduct(productMap, item.productId));
+  });
+
+  return { ...payload, items };
 }
 
 function makeOrderFromPayload(payload, userId, idempotencyKey, fingerprint, guestTokenHash) {
   const subtotal = payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const platformFee = Math.round(subtotal * 0.14);
   const shopIds = [...new Set(payload.items.map((i) => i.shopId))];
+  const paymentMethod = payload.paymentMethod || "cod";
 
   return {
     orderId: `ORD-${randomUUID().slice(0, 8).toUpperCase()}`,
     customerId: userId || null,
     checkoutMode: userId ? "account" : payload.checkoutMode,
-    paymentMethod: payload.paymentMethod,
+    paymentMethod,
     customerName: payload.customerName,
     customerEmail: payload.customerEmail,
     phone: payload.phone,
@@ -313,7 +507,7 @@ function makeOrderFromPayload(payload, userId, idempotencyKey, fingerprint, gues
     platformFee,
     vendorNet: subtotal - platformFee,
     status: "Pending",
-    paymentStatus: payload.paymentMethod === "cod" ? "COD pending" : "Authorization",
+    paymentStatus: paymentMethod === "cod" ? "COD pending" : "Authorization",
     deliveryAddress: payload.deliveryAddress,
     deliveryDate: payload.deliveryDate,
     deliveryTime: payload.deliveryTime,
@@ -335,8 +529,11 @@ function stripInternalOrderFields(order) {
 }
 
 export async function createOrder(payload, userId, idempotencyKey = null) {
+  const checkoutPayload = normalizeCheckoutPaymentMethod(payload);
+  assertCheckoutPaymentMethodAvailable(checkoutPayload);
+
   const validatedKey = idempotencyKey && /^[0-9a-f-]{8,128}$/i.test(idempotencyKey) ? idempotencyKey : null;
-  const fingerprint = computeFingerprint(payload);
+  const fingerprint = computeFingerprint(checkoutPayload);
 
   // Guest orders get a one-time access token returned to caller
   const isGuest = !userId;
@@ -361,12 +558,13 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
       }
     }
 
+    let normalizedPayload;
     try {
-      validateBuildYourBoxItems(payload.items, await resolveBuildYourBoxProducts(payload.items));
+      normalizedPayload = await normalizeCheckoutPayload(checkoutPayload);
     } catch (err) { throw toCustomerSafeError(err); }
 
-    const stockLines = resolveOrderStockLines(payload.items);
-    const order = makeOrderFromPayload(payload, userId, validatedKey, fingerprint, guestTokenHash);
+    const stockLines = resolveOrderStockLines(normalizedPayload.items);
+    const order = makeOrderFromPayload(normalizedPayload, userId, validatedKey, fingerprint, guestTokenHash);
 
     let appliedStockLines;
     try {
@@ -414,16 +612,17 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
     }
   }
 
+  let normalizedPayload;
   try {
-    validateBuildYourBoxItems(payload.items, await resolveBuildYourBoxProducts(payload.items));
+    normalizedPayload = await normalizeCheckoutPayload(checkoutPayload);
   } catch (err) { throw toCustomerSafeError(err); }
 
-  const stockLines = resolveOrderStockLines(payload.items);
+  const stockLines = resolveOrderStockLines(normalizedPayload.items);
   try {
     deductSeedStock(seedRepository.getState().products, stockLines);
   } catch (err) { throw toCustomerSafeError(err); }
 
-  const order = makeOrderFromPayload(payload, userId, validatedKey, fingerprint, guestTokenHash);
+  const order = makeOrderFromPayload(normalizedPayload, userId, validatedKey, fingerprint, guestTokenHash);
   seedOrders.set(order.orderId, order);
   if (validatedKey) seedIdempotencyKeys.set(validatedKey, order.orderId);
   seedRepository.getState().orders.unshift(order);
