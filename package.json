@@ -31,7 +31,8 @@
     "seed:showcase:reset": "echo 'Seed-mode placements live in server memory and reset on server restart. Restart the backend then run: npm run seed:showcase'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:backend": "node --test $(find backend/src -name '*.test.js' | tr '\\n' ' ')"
+    "test:backend": "node --test $(find backend/src -name '*.test.js' | tr '\\n' ' ')",
+    "test:critical-smoke": "node --test test/critical-launch-smoke.test.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0"
