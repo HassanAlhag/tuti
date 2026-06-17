@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
+import { sendOrderConfirmation } from "../../shared/email.js";
 import {
   createOrder,
   createOrderSchema,
@@ -28,6 +29,9 @@ ordersRouter.post("/", optionalAuth, validate(createOrderSchema), async (req, re
     const idempotencyKey = rawKey && /^[0-9a-f-]{8,128}$/i.test(rawKey) ? rawKey : null;
     const order = await createOrder(req.body, req.user?.sub, idempotencyKey);
     res.status(201).json({ data: order });
+    // Fire-and-forget confirmation email
+    const toEmail = req.body.customerEmail || req.body.email || req.user?.email;
+    if (toEmail) sendOrderConfirmation(order, toEmail).catch(() => {});
   } catch (err) { next(err); }
 });
 

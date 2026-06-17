@@ -2,13 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, "feature/**"]
   pull_request:
     branches: [main]
 
 jobs:
   backend:
-    name: Backend
+    name: Backend tests
     runs-on: ubuntu-latest
 
     steps:
@@ -20,25 +20,39 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --workspace backend
+        run: npm ci
 
-      - name: Check syntax
-        run: node --input-type=module < /dev/null
-        working-directory: backend
-
-      - name: Verify server starts
-        run: |
-          timeout 10 node src/server.js &
-          sleep 3
-          curl -f http://localhost:5055/api/health || exit 1
-        working-directory: backend
+      - name: Run backend tests
+        run: node --test $(find backend/src -name "*.test.js" | tr '\n' ' ')
         env:
           NODE_ENV: test
-          PORT: 5055
 
-  frontend:
-    name: Frontend
+  build-apps:
+    name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - app: web
+            pkg: "@tuti/web"
+            env_extra: |
+              VITE_SELLER_URL=http://localhost:5174
+              VITE_DRIVER_URL=http://localhost:5176
+              VITE_SR_URL=http://localhost:5177
+              VITE_ADMIN_URL=http://localhost:5175
+          - app: seller
+            pkg: "@tuti/seller"
+            env_extra: ""
+          - app: admin
+            pkg: "@tuti/admin"
+            env_extra: ""
+          - app: driver
+            pkg: "@tuti/driver"
+            env_extra: ""
+          - app: sr
+            pkg: "@tuti/sr"
+            env_extra: ""
 
     steps:
       - uses: actions/checkout@v4
@@ -49,24 +63,21 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --workspace frontend
+        run: npm ci
 
-      - name: Build
-        run: npm run build --workspace frontend
+      - name: Build ${{ matrix.app }}
+        run: npm run build -w ${{ matrix.pkg }}
         env:
           VITE_API_URL: http://localhost:5055/api
 
-  docker:
-    name: Docker build
+  docker-backend:
+    name: Docker backend image
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend, build-apps]
     if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build backend image
+      - name: Build backend Docker image
         run: docker build -t tuti-backend ./backend
-
-      - name: Build frontend image
-        run: docker build -t tuti-frontend ./frontend

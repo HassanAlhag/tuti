@@ -2,6 +2,7 @@ import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
 import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
+import { sendSellerApproved } from "../../shared/email.js";
 import {
   addNote,
   addNoteSchema,
@@ -137,6 +138,9 @@ sellerApplicationsRouter.post(
     try {
       const result = await convertToSeller(req.params.id, req.user);
       res.status(201).json({ data: result });
+      if (result.email && result.shopName) {
+        sendSellerApproved(result.email, result.shopName).catch(() => {});
+      }
     } catch (err) { next(err); }
   }
 );

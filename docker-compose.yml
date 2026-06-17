@@ -22,23 +22,79 @@ services:
       NODE_ENV: production
       PORT: 5055
       MONGO_URI: mongodb://mongo:27017/tuti
-      CLIENT_ORIGIN: http://localhost:5173
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-refresh-in-production}
+      CLIENT_ORIGINS: ${CLIENT_ORIGINS:-http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Tuti <noreply@tuti.ae>}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_S3_ENDPOINT: ${AWS_S3_ENDPOINT:-}
     volumes:
       - uploads:/app/uploads
 
-  frontend:
+  # Customer web app — built as static files, served by nginx
+  web:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
       - backend
-    environment:
-      VITE_API_URL: http://localhost:5055/api
+
+  # Seller portal
+  seller:
+    build:
+      context: .
+      dockerfile: apps/seller/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+
+  # Admin console
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5175:80"
+    depends_on:
+      - backend
+
+  # Driver portal
+  driver:
+    build:
+      context: .
+      dockerfile: apps/driver/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5176:80"
+    depends_on:
+      - backend
+
+  # SR portal
+  sr:
+    build:
+      context: .
+      dockerfile: apps/sr/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5177:80"
+    depends_on:
+      - backend
 
 volumes:
   mongo_data:

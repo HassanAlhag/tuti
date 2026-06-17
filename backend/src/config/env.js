@@ -14,66 +14,140 @@ const defaultOrigins = [
   "http://localhost:5175",
 ];
 
-function parseOrigins() {
-  const configured = process.env.CORS_ORIGINS
-    || process.env.CORS_ORIGIN
-    || process.env.CLIENT_ORIGINS
-    || process.env.CLIENT_ORIGIN
+const placeholderSecrets = new Set([
+  "dev-jwt-secret-change-in-production",
+  "dev-refresh-secret-change-in-production",
+  "change-me-in-production-minimum-32-chars",
+  "change-refresh-secret-in-production",
+  "change-me",
+  "changeme",
+  "secret",
+  "jwt-secret",
+  "refresh-secret",
+  "password",
+]);
+
+function configuredOriginValue(rawEnv = process.env) {
+  return rawEnv.CORS_ORIGINS
+    || rawEnv.CORS_ORIGIN
+    || rawEnv.CLIENT_ORIGINS
+    || rawEnv.CLIENT_ORIGIN
     || "";
+}
+
+function normalizeCorsOrigin(origin) {
+  try {
+    return new URL(origin).origin;
+  } catch {
+    return origin;
+  }
+}
+
+function parseOrigins(rawEnv = process.env) {
+  const configured = configuredOriginValue(rawEnv);
   const origins = configured
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  if ((process.env.NODE_ENV || "development") === "development") {
+  if ((rawEnv.NODE_ENV || "development") === "development") {
     return [...new Set([...defaultOrigins, ...origins])];
   }
 
-  return origins.length ? origins : defaultOrigins;
+  return [...new Set(origins.map(normalizeCorsOrigin))];
 }
 
-export const env = {
-  port: Number(process.env.PORT || 5055),
-  clientOrigin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-  clientOrigins: parseOrigins(),
-  mongoUri: process.env.MONGO_URI || "",
-  jwtSecret: process.env.JWT_SECRET || "dev-jwt-secret-change-in-production",
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "dev-refresh-secret-change-in-production",
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "15m",
-  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
-  nodeEnv: process.env.NODE_ENV || "development",
-  uploadDir: process.env.UPLOAD_DIR || "",
-};
+export function buildEnv(rawEnv = process.env) {
+  return {
+    port: Number(rawEnv.PORT || 5055),
+    clientOrigin: rawEnv.CLIENT_ORIGIN || "http://localhost:5173",
+    clientOrigins: parseOrigins(rawEnv),
+    mongoUri: rawEnv.MONGO_URI || "",
+    jwtSecret: rawEnv.JWT_SECRET || "dev-jwt-secret-change-in-production",
+    jwtRefreshSecret: rawEnv.JWT_REFRESH_SECRET || "dev-refresh-secret-change-in-production",
+    jwtExpiresIn: rawEnv.JWT_EXPIRES_IN || "15m",
+    jwtRefreshExpiresIn: rawEnv.JWT_REFRESH_EXPIRES_IN || "7d",
+    nodeEnv: rawEnv.NODE_ENV || "development",
+    uploadDir: rawEnv.UPLOAD_DIR || "",
+    // Email (SMTP) — leave empty to use console logging in dev
+    emailHost: rawEnv.EMAIL_HOST || "",
+    emailPort: Number(rawEnv.EMAIL_PORT || 587),
+    emailUser: rawEnv.EMAIL_USER || "",
+    emailPass: rawEnv.EMAIL_PASS || "",
+    emailFrom: rawEnv.EMAIL_FROM || "Tuti <noreply@tuti.ae>",
+  };
+}
 
-export function validateEnv() {
-  const isProd = env.nodeEnv === "production";
+export const env = buildEnv();
+
+function isLocalCorsOrigin(origin) {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost"
+      || hostname.startsWith("127.")
+      || hostname === "::1"
+      || hostname === "[::1]"
+      || hostname === "0.0.0.0"
+      || hostname.endsWith(".localhost");
+  } catch {
+    return true;
+  }
+}
+
+function isPlaceholderSecret(secret) {
+  const normalized = String(secret || "").trim().toLowerCase();
+  return placeholderSecrets.has(normalized);
+}
+
+function isStrongProductionSecret(secret) {
+  const value = String(secret || "").trim();
+  return value.length >= 32 && !isPlaceholderSecret(value);
+}
+
+export function validateEnv(config = env, rawEnv = process.env) {
+  const isProd = config.nodeEnv === "production";
   const errors = [];
 
-  if (!Number.isFinite(env.port) || env.port <= 0) {
+  if (!Number.isFinite(config.port) || config.port <= 0) {
     errors.push("PORT must be a valid positive number.");
   }
 
   if (isProd) {
-    if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "dev-jwt-secret-change-in-production") {
-      errors.push("JWT_SECRET is required in production.");
+    if (!config.mongoUri) {
+      errors.push("MONGO_URI is required in production.");
     }
-    if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === "dev-refresh-secret-change-in-production") {
-      errors.push("JWT_REFRESH_SECRET is required in production.");
+    if (!isStrongProductionSecret(config.jwtSecret)) {
+      errors.push("JWT_SECRET must be a strong production secret of at least 32 characters and not a placeholder.");
     }
-    if (!env.clientOrigins.length) {
+    if (!isStrongProductionSecret(config.jwtRefreshSecret)) {
+      errors.push("JWT_REFRESH_SECRET must be a strong production secret of at least 32 characters and not a placeholder.");
+    }
+    if (!configuredOriginValue(rawEnv).trim() || !config.clientOrigins.length) {
       errors.push("CORS_ORIGINS (or CLIENT_ORIGINS) is required in production.");
     }
+    const localOrigins = config.clientOrigins.filter(isLocalCorsOrigin);
+    if (localOrigins.length) {
+      errors.push("CORS_ORIGINS must not include localhost, loopback, or default development origins in production.");
+    }
   } else {
-    if (!process.env.JWT_SECRET || env.jwtSecret === "dev-jwt-secret-change-in-production") {
+    if (!rawEnv.JWT_SECRET || config.jwtSecret === "dev-jwt-secret-change-in-production") {
       console.warn("[env] Using development JWT_SECRET fallback. Set JWT_SECRET for safer local/dev usage.");
     }
-    if (!process.env.JWT_REFRESH_SECRET || env.jwtRefreshSecret === "dev-refresh-secret-change-in-production") {
+    if (!rawEnv.JWT_REFRESH_SECRET || config.jwtRefreshSecret === "dev-refresh-secret-change-in-production") {
       console.warn("[env] Using development JWT_REFRESH_SECRET fallback. Set JWT_REFRESH_SECRET for safer local/dev usage.");
     }
   }
 
   if (errors.length) {
     const error = new Error(`Environment validation failed: ${errors.join(" ")}`);
+    error.status = 500;
+    throw error;
+  }
+}
+
+export function assertProductionSeedModeDisabled(config = env, context = "seed/demo mode") {
+  if (config.nodeEnv === "production" && !config.mongoUri) {
+    const error = new Error(`${context} is disabled in production. Set MONGO_URI.`);
     error.status = 500;
     throw error;
   }

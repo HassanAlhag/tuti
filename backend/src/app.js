@@ -1,11 +1,15 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
+import hpp from "hpp";
 import { rateLimit } from "express-rate-limit";
+import pinoHttp from "pino-http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
+import { logger } from "./shared/logger.js";
 import { createStorageProvider } from "./shared/storage.js";
 import { authenticate, requireRole } from "./middleware/auth.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
@@ -58,9 +62,13 @@ export function createApp() {
   const app = express();
   const isDev = env.nodeEnv === "development";
 
+  app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === "/api/health" } }));
   app.use(helmet({
     crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: env.nodeEnv === "production" ? undefined : false,
   }));
+  app.use(mongoSanitize());
+  app.use(hpp());
   app.use(cors({
     origin(origin, callback) {
       if (isDev && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || "")) {
@@ -141,10 +149,10 @@ export function createApp() {
     res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
   });
 
-  app.use((error, _req, res, _next) => {
+  app.use((error, req, res, _next) => {
     const status = error.status || 500;
     const message = status < 500 ? error.message : "Unexpected server error.";
-    if (status >= 500) console.error("[error]", error);
+    if (status >= 500) (req.log || logger).error({ err: error }, "Unhandled server error");
     res.status(status).json({ error: message });
   });
 

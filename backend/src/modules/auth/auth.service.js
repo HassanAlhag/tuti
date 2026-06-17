@@ -1,7 +1,8 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { env } from "../../config/env.js";
+import { assertProductionSeedModeDisabled, env } from "../../config/env.js";
+import { sendPasswordReset } from "../../shared/email.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { Shop } from "../../models/Shop.js";
 import { User } from "../../models/User.js";
@@ -154,6 +155,10 @@ async function resolveRepAttribution(repCode) {
 // In-memory user store for seed (no MongoDB) mode
 const seedUsers = new Map();
 
+function assertSeedAuthModeAllowed() {
+  assertProductionSeedModeDisabled(env, "Seed/demo auth mode");
+}
+
 export async function createDriverLoginAccount({ name, loginEmail, shopId, driverId }) {
   const normalizedEmail = String(loginEmail || "").trim().toLowerCase();
   if (!normalizedEmail) {
@@ -189,6 +194,8 @@ export async function createDriverLoginAccount({ name, loginEmail, shopId, drive
       loginEmail: normalizedEmail,
     };
   }
+
+  assertSeedAuthModeAllowed();
 
   for (const existing of seedUsers.values()) {
     if (String(existing.email || "").toLowerCase() === normalizedEmail) {
@@ -227,6 +234,7 @@ export async function deleteDriverLoginAccount(userId) {
     await User.findByIdAndDelete(userId);
     return;
   }
+  assertSeedAuthModeAllowed();
   seedUsers.delete(userId);
 }
 
@@ -276,6 +284,8 @@ export async function register(payload) {
     await user.save();
     return { user: safeUser(user), ...tokens };
   }
+
+  assertSeedAuthModeAllowed();
 
   // Seed mode
   for (const u of seedUsers.values()) {
@@ -340,6 +350,8 @@ export async function login({ email, password }) {
     return { user: safeUser(user), ...tokens };
   }
 
+  assertSeedAuthModeAllowed();
+
   // Seed mode — accept any registered user or create a demo session
   for (const u of seedUsers.values()) {
     if (u.email === email) {
@@ -383,6 +395,8 @@ export async function refresh(token) {
     return tokens;
   }
 
+  assertSeedAuthModeAllowed();
+
   const base = {
     sub: payload.sub,
     role: payload.role,
@@ -399,6 +413,7 @@ export async function getMe(userId) {
     if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
     return safeUser(user);
   }
+  assertSeedAuthModeAllowed();
   return seedUsers.get(userId) || null;
 }
 
@@ -414,6 +429,7 @@ export async function updateMe(userId, payload) {
     if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
     return safeUser(user);
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   if (parsed.name !== undefined) user.name = parsed.name;
@@ -441,6 +457,7 @@ export async function addAddress(userId, payload) {
     await user.save();
     return safeUser(user).addresses;
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   if (!user.addresses) user.addresses = [];
@@ -461,6 +478,7 @@ export async function updateAddress(userId, addressId, payload) {
     await user.save();
     return safeUser(user).addresses;
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   const address = (user.addresses || []).find((a) => a.id === addressId);
@@ -478,6 +496,7 @@ export async function deleteAddress(userId, addressId) {
     await user.save();
     return safeUser(user).addresses;
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   user.addresses = (user.addresses || []).filter((a) => a.id !== addressId);
@@ -499,6 +518,7 @@ export async function toggleWishlist(userId, productId, productName = "") {
     await user.save();
     return { wishlist: safeUser(user).wishlist, saved: idx === -1 };
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   if (!user.wishlist) user.wishlist = [];
@@ -529,6 +549,7 @@ export async function updateSettings(userId, payload) {
     if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
     return safeUser(user).settings;
   }
+  assertSeedAuthModeAllowed();
   const user = seedUsers.get(userId);
   if (!user) { const err = new Error("User not found."); err.status = 404; throw err; }
   if (!user.settings) user.settings = { emailNotifications: true, whatsappNotifications: false, marketingEmails: true };
@@ -555,11 +576,11 @@ export async function requestPasswordReset(email) {
       { email: email.toLowerCase().trim() },
       { $set: { passwordResetToken: tokenHash, passwordResetExpiresAt: expiresAt } }
     );
-    // In production: send email with reset link here
-    // For now: log token to console so dev can use it
-    console.info(`[password-reset] token for ${email}: ${rawToken}`);
+    sendPasswordReset(email, rawToken).catch(() => {}); // fire-and-forget
     return { ok: true };
   }
+
+  assertSeedAuthModeAllowed();
 
   // Seed mode: find user by email
   for (const u of seedUsers.values()) {
@@ -592,6 +613,8 @@ export async function confirmPasswordReset(rawToken, newPassword) {
     await user.save();
     return { ok: true };
   }
+
+  assertSeedAuthModeAllowed();
 
   const entry = resetTokens.get(tokenHash);
   if (!entry || new Date() > entry.expiresAt) {

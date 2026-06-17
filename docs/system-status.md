@@ -1,6 +1,6 @@
 # Tuti System Status
 
-Last updated: 2026-06-12 (Phase 9 Financial and Operational Completion complete)
+Last updated: 2026-06-17 (Phase 10 Production Readiness — in progress)
 
 ---
 
@@ -16,7 +16,7 @@ Last updated: 2026-06-12 (Phase 9 Financial and Operational Completion complete)
 | Driver portal | ~90% |
 | Sales Rep portal | ~90% |
 | Backend / API | ~75% |
-| Production readiness | ~20% |
+| Production readiness | ~45% |
 | **Overall platform** | **~75%** |
 
 **Top five technical risks before soft launch:**
@@ -348,11 +348,11 @@ node --test backend/src/modules/orders/*.test.js backend/src/shared/workflows/*.
 
 ### Current Build Status
 
-All five apps: **PASS** (verified 2026-06-12, Phase 9 complete)
+All five apps: **PASS** (verified 2026-06-17, Phase 10 in progress)
 
 ### Current Test Status
 
-216/216 backend tests: **PASS** (verified 2026-06-12, Phase 9 complete)
+244/244 backend tests: **PASS** (verified 2026-06-17, Phase 10 in progress)
 
 ### Automated Test Coverage
 
@@ -523,7 +523,13 @@ Lead/prospect pipeline: `Lead` MongoDB model (`backend/src/models/Lead.js`) with
 
 Commission automation: `backend/src/modules/finance/commissionCalc.js` — `runCommissionCalculation({ dryRun })` scans active SR referrals, finds delivered orders with no existing GMV commission entry, and creates `CommissionEntry` records; dry-run mode returns preview without writing. Financial reconciliation: `backend/src/modules/finance/reconciliation.js` — `getReconciliationSummary()` returns unsettled COD, pending payouts, active disputes, and pending commissions in one parallel query. New admin routes: `GET /api/admin/reports/reconciliation`, `POST /api/admin/reports/commissions/run`. Refund endpoint: `POST /api/marketplace/admin/orders/:orderId/refund` — validates refundable status, calls `debitForRefund` to reverse seller balance buckets, transitions order to Refunded, emits audit event. Seller invoice: `GET /api/marketplace/seller/invoice?period=YYYY-MM` — structured CSV with orders table, transactions table, and summary. AdminFinance component: three-tab Finance section in admin console (Reconciliation, COD Settlement, Commission run) with MetricTile grid, driver lookup + batch settle table, dry-run preview table. Refund button added to admin order detail for Delivered/Customer Accepted orders. Seller invoice download panel added to Seller Payouts tab (month picker + Download button). 216/216 backend tests pass; all 5 apps build clean.
 
-**Next milestone:** Phase 10
+**Phase 10 — Production Readiness** — IN PROGRESS (2026-06-17)
+
+Structured logging: Pino + pino-http added to backend; request-level logging with auto-ignore on `/api/health`; pretty-print in dev, JSON in production. Security hardening: `express-mongo-sanitize` (NoSQL injection protection on all request body/query params) and `hpp` (HTTP parameter pollution prevention) added as middleware. CSP headers enabled in production via helmet. Transactional email: `backend/src/shared/email.js` using nodemailer SMTP; dev-mode falls back to console logging; `sendPasswordReset`, `sendOrderConfirmation`, `sendSellerApproved`, `sendSellerRejected` wired into auth service, orders routes, and seller-applications routes. EMAIL_* env vars added to env.js and documented in `.env.example`. CI: updated `.github/workflows/ci.yml` to run 244 backend tests + matrix build for all 5 apps; Docker backend image build on main. Docker: updated `docker-compose.yml` with all 5 frontend apps (nginx SPA containers) + full env var pass-through; Dockerfiles and `nginx.conf` added per app. E2E: `playwright.config.js` added; `e2e/` directory with 4 test files covering homepage, shop, auth, and Build a Box flows; `npm run test:e2e` script. 244/244 backend tests pass; all 5 apps build clean.
+
+**Remaining for Phase 10:** Full Playwright browser QA run (requires installed browser binaries), accessibility audit, load testing, error monitoring (Sentry), UAT sign-off, production deploy.
+
+**Next milestone:** Launch
 
 ---
 
