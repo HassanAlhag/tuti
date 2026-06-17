@@ -26,3 +26,8 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 .idea/
+
+# Local BMAD/AI agent tooling
+.agents/
+.claude/
+_bmad/
