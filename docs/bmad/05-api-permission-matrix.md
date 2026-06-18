@@ -112,14 +112,14 @@ This document is a documentation snapshot, not an enforcement mechanism. Route-l
 | Seller applications | `POST /api/seller-applications` | Public with optional auth | `optionalAuth` plus rate limit | Public seller application submission. |
 | Seller applications review | `GET/PATCH /api/seller-applications[...]`, `POST /:id/notes`, `PATCH /:id/checklist` | Private | `admin`, `support` | Support can view/update applications and notes/checklist. |
 | Seller applications admin | `DELETE /api/seller-applications/:id/notes/:noteId`, `POST /:id/convert-to-seller` | Private | `admin` | Admin-only note deletion and seller conversion. |
-| Users read | `GET /api/users/roles`, `GET /api/users` | Private | `users.read` permission, admin bypass | Support default permissions include `users.read`. |
-| Users manage | `POST /api/users`, `PATCH /api/users/:userId`, `PATCH /api/users/:userId/password` | Private | `users.manage` permission, admin bypass | User creation, updates, password resets. |
+| Users read | `GET /api/users/roles`, `GET /api/users` | Private | `users.read` permission, admin bypass | Support default permissions include `users.read`; this is read-only account visibility. |
+| Users manage | `POST /api/users`, `PATCH /api/users/:userId`, `PATCH /api/users/:userId/password` | Private | `admin` role | MVP mutation gate is fail-closed/admin-only. `users.manage` remains a known permission id for admin/future workflows, but does not grant non-admin user mutation. |
 | Sales rep profile | `GET /api/sr/me` | Private | `sales_rep` | Resolves user to sales rep record. |
 | Sales rep referrals/commissions | `GET /api/sr/referrals`, `/commissions`, `/commission-plans` | Private | `sales_rep` | Scoped by rep code in service. |
 | Sales rep leads | `GET/POST/PATCH/DELETE /api/sr/leads[...]` | Private | `sales_rep` | Scoped by rep code in service. |
-| Sales rep targets | `GET/PUT /api/sr/targets` | Private | `sales_rep` | Needs follow-up review: reps can update targets; confirm whether target ownership should be admin/manager controlled. |
+| Sales rep targets | `GET /api/sr/targets`; `PUT /api/sr/targets` | Private | `sales_rep` for read; mutation fail-closed | Sales reps can read their scoped targets. Sales rep target mutation returns `403` pending an admin-owned target workflow. |
 | Sales rep report | `GET /api/sr/report` | Private | `sales_rep` | CSV report scoped by rep code. |
-| Admin audit | `GET /api/admin/audit`, `GET /api/admin/audit/export.csv` | Private | `admin` | Role-only admin route; does not use `audit.read` permission. |
+| Admin audit | `GET /api/admin/audit`, `GET /api/admin/audit/export.csv` | Private | `admin` | Admin-only role gate. `audit.read` remains available for admin/future permission workflows, but support defaults no longer include it. |
 | Admin reports | `GET /api/admin/reports/orders`, `/payouts`, `/commissions`, `/reconciliation`, `/summary`; `POST /commissions/run` | Private | `admin` | Admin-only reporting and commission calculation. |
 | Admin merchandising read | `GET /api/admin/merchandising/featured-sellers`, `/featured-products`, `/collections`, `/collections/:id`, `/seller-brand-profiles` | Private | `admin`, `support` | Support has read access. |
 | Admin merchandising mutate | `POST/PATCH/DELETE /api/admin/merchandising/featured-sellers[...]`, `/featured-products[...]`, `/collections[...]` | Private | `admin` | Admin-only merchandising mutations. |
@@ -144,15 +144,15 @@ Can access `/api/driver/*` self-service routes for profile, deliveries, pickup, 
 
 ### Sales Rep
 
-Can access `/api/sr/*` profile, referrals, commissions, commission plans, leads, targets, and CSV report. Most data is scoped by rep code in service logic. Target update ownership needs follow-up review.
+Can access `/api/sr/*` profile, referrals, commissions, commission plans, leads, target reads, and CSV report. Most data is scoped by rep code in service logic. Sales rep target mutation is disabled/fail-closed pending an admin-owned target workflow.
 
 ### Support/Admin
 
-Support can access CRM reads, support desk routes, seller application review/update, admin operational/analytics reads, admin customer lists, driver read views, merchandising read views, and user read routes through default `users.read` permission. Admin can do all admin-only routes and bypasses `requirePermission`.
+Support can access CRM reads, support desk routes, seller application review/update, admin operational/analytics reads, admin customer lists, driver read views, merchandising read views, and user read routes through default `users.read` permission. Support defaults no longer include `audit.read`; persisted support users may still carry stale `audit.read`, but audit routes remain harmlessly blocked by the admin-only role gate. User creation, user updates, and password resets are admin-role-only for MVP even if a support or other non-admin token has stale `users.manage`. Admin can do all admin-only routes and bypasses `requirePermission`.
 
 ### Admin-Only
 
-Admin-only areas include user management with `users.manage`, audit routes, reports, product approvals, payouts, COD settlement, shop payment/contract/profile controls, refunds, driver creation/update/assignment/COD remittance, sales rep administration, seller conversion, and merchandising mutations.
+Admin-only areas include user mutation routes, audit routes, reports, product approvals, payouts, COD settlement, shop payment/contract/profile controls, refunds, driver creation/update/assignment/COD remittance, sales rep administration, seller conversion, and merchandising mutations. `users.manage` remains a permission id for admin/future workflows, but MVP user mutations require the `admin` role.
 
 ## Follow-Up Review Items
 
@@ -161,8 +161,9 @@ Admin-only areas include user management with `users.manage`, audit routes, repo
 | `/api/drivers/:driverId/orders/:orderId/delivery` driver path ownership | Route allows `admin` and `driver`, but uses `:driverId` from the URL. Do not claim safe until ownership enforcement is confirmed for driver callers. | Add/verify API test where driver A attempts delivery for driver B through this route. |
 | `POST /api/marketplace/reviews` uses `optionalAuth` | Guest review creation is allowed at route level. Verified-purchase review enforcement is not guaranteed by the route. | Decide whether reviews must require customer auth and verified delivered order. |
 | `GET /api/orders/:orderId` uses `optionalAuth` and guest token | Public-with-secret-token behavior is intentional, but this is sensitive order data. | Verify guest token hashing, response redaction, token expiry/revocation expectations, and brute-force resistance. |
-| `GET/PUT /api/sr/targets` is sales-rep owned | Sales reps can update targets through the route. This may conflict with manager/admin-owned target governance. | Confirm target ownership model and whether `PUT /api/sr/targets` should become admin-only or manager-only. |
-| Support `audit.read` permission vs audit route role | Support default permissions include `audit.read`, but `/api/admin/audit` uses `requireRole("admin")`, so support cannot use that permission there. | Align permission names with route enforcement or document that audit is admin-only despite support defaults. |
+| Admin-owned sales rep target workflow | Sales rep target reads remain available, but `PUT /api/sr/targets` is fail-closed for reps and does not provide admin mutation. | Design an explicit admin/manager route for setting `SRTarget` values, with audit history and target ownership rules. |
+| Historical support `audit.read` values | Support defaults no longer include `audit.read`, and `/api/admin/audit` remains role-gated to `admin`. Existing persisted support users may still have stale `audit.read`, but it does not grant audit access. | Optionally clean persisted support permission arrays during a user-maintenance pass. |
+| Historical non-admin `users.manage` values | User mutation routes are now admin-role-only, so stale `users.manage` does not grant create/update/password-reset access. The permission id remains known for admin/future workflows. | Optionally clean persisted non-admin permission arrays during a user-maintenance pass. |
 | `GET /api/orders` with non-customer/seller/admin/support roles | Route permits any authenticated user; service filters customer/seller specially and otherwise may return broader data. | Verify behavior for `driver` and `sales_rep` tokens and add role-specific tests. |
 | `POST /api/auth/logout` | Route returns success for any authenticated user, but route-level behavior does not prove refresh token revocation. | Confirm service/token revocation expectations and add test if logout should invalidate refresh tokens. |
 | Public `/uploads/*` | Static media is public. | Confirm upload validation, file naming, malware scanning expectations, and whether any private media will ever be stored there. |

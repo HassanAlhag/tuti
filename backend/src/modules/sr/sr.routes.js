@@ -15,8 +15,6 @@ import {
   exportSRReport,
   getTargets,
   listLeads,
-  setTargets,
-  srTargetsSchema,
   updateLead,
   updateLeadSchema,
 } from "./leads.service.js";
@@ -171,12 +169,8 @@ srRouter.get("/targets", authenticate, requireRole("sales_rep"), async (req, res
 });
 
 // PUT /api/sr/targets
-srRouter.put("/targets", authenticate, requireRole("sales_rep"), validate(srTargetsSchema), async (req, res, next) => {
-  try {
-    const { rep } = await findUserAndRep(req.user.sub);
-    if (!rep?.code) return res.status(403).json({ error: "Rep code not assigned." });
-    res.json({ data: await setTargets(rep.code, req.body) });
-  } catch (err) { next(err); }
+srRouter.put("/targets", authenticate, requireRole("sales_rep"), (_req, res) => {
+  res.status(403).json({ error: "Sales rep target updates are disabled pending an admin-owned target workflow." });
 });
 
 // ── CSV report ────────────────────────────────────────────────────────────────

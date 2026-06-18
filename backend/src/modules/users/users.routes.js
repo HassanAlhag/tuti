@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requirePermission } from "../../middleware/auth.js";
+import { authenticate, requirePermission, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
   createUser,
@@ -35,19 +35,19 @@ usersRouter.get("/", requirePermission("users.read"), async (req, res, next) => 
   } catch (err) { next(err); }
 });
 
-usersRouter.post("/", requirePermission("users.manage"), validate(createUserSchema), async (req, res, next) => {
+usersRouter.post("/", requireRole("admin"), validate(createUserSchema), async (req, res, next) => {
   try {
     res.status(201).json({ data: await createUser(req.body) });
   } catch (err) { next(err); }
 });
 
-usersRouter.patch("/:userId", requirePermission("users.manage"), validate(updateUserSchema), async (req, res, next) => {
+usersRouter.patch("/:userId", requireRole("admin"), validate(updateUserSchema), async (req, res, next) => {
   try {
     res.json({ data: await updateUser(req.params.userId, req.body, req.user.sub) });
   } catch (err) { next(err); }
 });
 
-usersRouter.patch("/:userId/password", requirePermission("users.manage"), validate(resetPasswordSchema), async (req, res, next) => {
+usersRouter.patch("/:userId/password", requireRole("admin"), validate(resetPasswordSchema), async (req, res, next) => {
   try {
     res.json({ data: await resetUserPassword(req.params.userId, req.body.password) });
   } catch (err) { next(err); }

@@ -45,6 +45,33 @@ function makePayload(emailOverride = "test@example.com") {
   };
 }
 
+function injectAccessOrder(overrides = {}) {
+  __injectSeedOrderForTests({
+    orderId: "ORD-TEST-ACCESS",
+    customerId: "user-cust-access",
+    shopIds: ["shop-oud-lane"],
+    customerName: "Test Access",
+    customerEmail: "access@example.com",
+    phone: "",
+    items: [],
+    subtotal: 100,
+    platformFee: 14,
+    vendorNet: 86,
+    status: "Pending",
+    paymentStatus: "COD pending",
+    paymentMethod: "cod",
+    checkoutMode: "account",
+    deliveryAddress: "",
+    deliveryDate: "",
+    deliveryTime: "",
+    giftMessage: "",
+    notes: "",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  });
+}
+
 test("access: authenticated customer can read their own order", async () => {
   const userId = "user-access-001";
   const order = await createOrder(makePayload(), userId, null);
@@ -92,6 +119,33 @@ test("access: guest order is denied with incorrect token", async () => {
 
   await assert.rejects(
     () => getOrder(order.orderId, null, "wrong-token-12345"),
+    (err) => {
+      assert.equal(err.status, 403);
+      return true;
+    }
+  );
+});
+
+test("access: guest token is scoped to the matching guest order only", async () => {
+  const first = await createOrder(makePayload("guest-one@example.com"), null, null);
+  const second = await createOrder(makePayload("guest-two@example.com"), null, null);
+
+  await assert.rejects(
+    () => getOrder(second.orderId, null, first.guestToken),
+    (err) => {
+      assert.equal(err.status, 403);
+      return true;
+    }
+  );
+});
+
+test("access: guest token cannot open an authenticated customer order", async () => {
+  const userId = "user-access-account-token-001";
+  const order = await createOrder(makePayload("account-token@example.com"), userId, null);
+  assert.equal(order.guestToken, undefined, "account orders must not return guestToken");
+
+  await assert.rejects(
+    () => getOrder(order.orderId, null, "guest-token-cannot-open-account-order"),
     (err) => {
       assert.equal(err.status, 403);
       return true;
@@ -208,6 +262,19 @@ test("access: admin can read any order", async () => {
   const adminUser = makeAuthUser("admin-001", "admin");
   const fetched = await getOrder("ORD-TEST-ADMIN01", adminUser);
   assert.equal(fetched.orderId, "ORD-TEST-ADMIN01");
+});
+
+test("access: support can read any order", async () => {
+  injectAccessOrder({
+    orderId: "ORD-TEST-SUPPORT01",
+    customerId: "user-cust-support",
+    shopIds: ["shop-citrus-atelier"],
+    status: "Confirmed",
+  });
+
+  const supportUser = makeAuthUser("support-001", "support");
+  const fetched = await getOrder("ORD-TEST-SUPPORT01", supportUser);
+  assert.equal(fetched.orderId, "ORD-TEST-SUPPORT01");
 });
 
 test("access: order not found returns 404", async () => {

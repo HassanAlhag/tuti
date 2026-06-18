@@ -43,7 +43,6 @@ const DEFAULT_PERMISSIONS = {
     "reviews.moderate",
     "disputes.manage",
     "users.read",
-    "audit.read",
   ],
   driver: [
     "catalog.browse",

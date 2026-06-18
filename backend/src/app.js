@@ -63,11 +63,33 @@ const authLimiter = rateLimit({
   message: { error: "Too many auth attempts, please wait." },
 });
 
+export function redactSensitiveRequestUrl(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl.includes("?")) return rawUrl;
+
+  try {
+    const url = new URL(rawUrl, "http://tuti.local");
+    if (!url.searchParams.has("token")) return rawUrl;
+    url.searchParams.set("token", "REDACTED");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return rawUrl.replace(/([?&]token=)[^&#]*/gi, "$1REDACTED");
+  }
+}
+
+export function redactHttpRequestForLogs(req) {
+  if (!req || typeof req !== "object") return req;
+  return { ...req, url: redactSensitiveRequestUrl(req.url) };
+}
+
 export function createApp() {
   const app = express();
   const isDev = env.nodeEnv === "development";
 
-  app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === "/api/health" } }));
+  app.use(pinoHttp({
+    logger,
+    serializers: { req: redactHttpRequestForLogs },
+    autoLogging: { ignore: (req) => req.url === "/api/health" },
+  }));
   app.use(helmet({
     crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: env.nodeEnv === "production" ? undefined : false,
