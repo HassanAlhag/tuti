@@ -27,7 +27,6 @@ const submitLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many application submissions. Please try again later." },
-  keyGenerator: (req) => req.ip || "unknown",
 });
 
 // ── Public: submit a seller application ──────────────────────────────
