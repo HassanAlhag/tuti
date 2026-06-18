@@ -18,7 +18,7 @@ function ImmersiveDesktop({ activeIndex, progress, setChapterRef, onBuildGift })
   const current  = chapters[activeIndex] || chapters[0];
 
   return (
-    <div className="is-outer" ref={outerRef}>
+    <div className="is-outer" ref={outerRef} style={{ "--chapter-count": chapters.length }}>
 
       {/* Sticky visual stage */}
       <div className="is-stage" aria-labelledby="is-ch-title" role="region" aria-label="Gifting story">
@@ -39,6 +39,11 @@ function ImmersiveDesktop({ activeIndex, progress, setChapterRef, onBuildGift })
           {/* h1: primary page heading — only the desktop sticky stage renders this */}
           <h1 id="is-ch-title" className="is-headline">{current.title}</h1>
           <p>{current.body}</p>
+          {activeIndex === 0 && (
+            <button className="is-invite" type="button" onClick={onBuildGift}>
+              Build your gift <ArrowRight size={13} aria-hidden="true" />
+            </button>
+          )}
           {activeIndex === chapters.length - 1 && (
             <button className="is-cta primary-action" type="button" onClick={onBuildGift}>
               Build Your Gift <ArrowRight size={16} aria-hidden="true" />
@@ -90,6 +95,9 @@ function ImmersiveDesktop({ activeIndex, progress, setChapterRef, onBuildGift })
 function ImmersiveMobile({ onBuildGift }) {
   return (
     <div className="is-mobile">
+      {/* S1 fix: visually-hidden h1 provides document heading structure on mobile
+          (desktop renders an h1 inside ImmersiveDesktop; mobile had none) */}
+      <h1 className="is-sr-only">Tuti — Thoughtful gifting, made personal</h1>
       {chapters.map((ch, i) => (
         <section key={ch.id} className="is-mobile-ch" aria-label={ch.title}>
           <img className="is-mobile-img" src={ch.image} alt={ch.alt} />
@@ -98,6 +106,11 @@ function ImmersiveMobile({ onBuildGift }) {
             <span className="is-kicker">{ch.kicker}</span>
             <h2>{ch.title}</h2>
             <p>{ch.body}</p>
+            {i === 0 && (
+              <button className="is-invite" type="button" onClick={onBuildGift}>
+                Build your gift <ArrowRight size={13} aria-hidden="true" />
+              </button>
+            )}
             {i === chapters.length - 1 && (
               <button className="is-cta primary-action" type="button" onClick={onBuildGift}>
                 Build Your Gift <ArrowRight size={16} aria-hidden="true" />
