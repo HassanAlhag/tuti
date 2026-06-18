@@ -24,6 +24,14 @@ import {
 export const driversRouter = Router();
 export const driverRouter = Router();
 
+function requireDriverRouteOwnership(req, res, next) {
+  if (req.user?.role !== "driver") return next();
+  if (!req.user.driverId || req.user.driverId !== req.params.driverId) {
+    return res.status(403).json({ error: "Driver is not authorized for this delivery." });
+  }
+  next();
+}
+
 // List drivers — admin only
 driversRouter.get("/", authenticate, requireRole("admin", "support"), async (req, res, next) => {
   try {
@@ -82,6 +90,7 @@ driversRouter.patch(
   "/:driverId/orders/:orderId/delivery",
   authenticate,
   requireRole("admin", "driver"),
+  requireDriverRouteOwnership,
   validate(driverDeliverySchema),
   async (req, res, next) => {
     try {

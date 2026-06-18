@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { env } from "../../config/env.js";
 import { Order } from "../../models/Order.js";
@@ -57,6 +58,49 @@ export const createReviewSchema = z.object({
 export const updateStatusSchema = z.object({
   status: z.string().min(1),
 });
+
+const VERIFIED_REVIEW_ORDER_STATUSES = new Set(["Delivered", "Customer Accepted"]);
+
+function isAuthenticatedCustomer(user) {
+  return Boolean(user?.sub && user.role === "customer");
+}
+
+function orderItemContainsProduct(item, productId) {
+  return item?.productId === productId || (Array.isArray(item?.bundledProductIds) && item.bundledProductIds.includes(productId));
+}
+
+function orderQualifiesForVerifiedReview(order, userId, productId) {
+  return (
+    order?.customerId?.toString() === userId &&
+    VERIFIED_REVIEW_ORDER_STATUSES.has(order.status) &&
+    Array.isArray(order.items) &&
+    order.items.some((item) => orderItemContainsProduct(item, productId))
+  );
+}
+
+async function hasVerifiedPurchaseForReview(productId, user) {
+  if (!isAuthenticatedCustomer(user)) return false;
+
+  if (env.mongoUri) {
+    const order = await Order.exists({
+      customerId: user.sub,
+      status: { $in: [...VERIFIED_REVIEW_ORDER_STATUSES] },
+      $or: [
+        { "items.productId": productId },
+        { "items.bundledProductIds": productId },
+      ],
+    });
+    return Boolean(order);
+  }
+
+  return getSeedOrders().some((order) => orderQualifiesForVerifiedReview(order, user.sub, productId));
+}
+
+function customerIdForReview(user) {
+  if (!isAuthenticatedCustomer(user)) return null;
+  if (env.mongoUri && !mongoose.Types.ObjectId.isValid(user.sub)) return null;
+  return user.sub;
+}
 
 /* ── Seller product edit schema ──────────────────────────────────── */
 export const updateSellerProductSchema = z.object({
@@ -504,7 +548,7 @@ export async function createSellerProduct(payload) {
   return created;
 }
 
-export async function createReview(payload) {
+export async function createReview(payload, user = null) {
   const rating = Number(payload.rating || 0);
   if (!payload.productId || rating < 1 || rating > 5) {
     const error = new Error("A productId and rating from 1 to 5 are required.");
@@ -512,14 +556,16 @@ export async function createReview(payload) {
     throw error;
   }
 
+  const verified = await hasVerifiedPurchaseForReview(payload.productId, user);
   const review = {
     id: `rev-${randomUUID()}`,
     productId: payload.productId,
+    customerId: customerIdForReview(user),
     customer: payload.customer || "Demo customer",
     rating,
     title: payload.title || "Customer rating",
     body: payload.body || "I tested this perfume and added my rating to help other customers choose.",
-    verified: Boolean(payload.verified),
+    verified,
     helpful: 0,
     date: new Date().toISOString().slice(0, 10),
     aspects: {

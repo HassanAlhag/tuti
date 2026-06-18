@@ -5,9 +5,14 @@ import { seedRepository } from "../../repositories/seedRepository.js";
 process.env.MONGO_URI = "";
 
 const {
+  createReview,
   getStorefrontData,
   searchProducts,
 } = await import("./marketplace.service.js");
+const {
+  __injectSeedOrderForTests,
+  __resetSeedOrdersForTests,
+} = await import("../orders/orders.service.js");
 
 const SHOP_APPROVED = {
   id: "shop-public-approved",
@@ -232,6 +237,7 @@ const INTERNAL_PRODUCT_FIELDS = [
 ];
 
 function resetState() {
+  __resetSeedOrdersForTests();
   const state = seedRepository.getState();
   state.shops = [SHOP_APPROVED, SHOP_PENDING, SHOP_SUSPENDED].map((item) => structuredClone(item));
   state.products = [
@@ -310,6 +316,28 @@ function assertNoHiddenProductIds(value) {
 }
 
 beforeEach(resetState);
+
+function customerUser(sub = "customer-review-001") {
+  return { sub, role: "customer", name: "Verified Customer" };
+}
+
+function injectReviewOrder(overrides = {}) {
+  __injectSeedOrderForTests({
+    orderId: `ORD-REVIEW-${Math.random().toString(16).slice(2)}`,
+    customerId: "customer-review-001",
+    status: "Delivered",
+    items: [{ productId: LIVE_APPROVED_PRODUCT.id, bundledProductIds: [] }],
+    ...overrides,
+  });
+}
+
+function reviewProduct() {
+  return seedRepository.getState().products.find((product) => product.id === LIVE_APPROVED_PRODUCT.id);
+}
+
+function expectedRatingAfter(product, rating) {
+  return Number(((product.rating * product.reviews + rating) / (product.reviews + 1)).toFixed(2));
+}
 
 test("public storefront returns only live products from approved shops and only approved shops", async () => {
   const storefront = await getStorefrontData();
@@ -391,4 +419,96 @@ test("search returns only sanitized live products from approved shops", async ()
   const hiddenByShop = await searchProducts({ q: "Pending Shop", page: 1, limit: 10 });
   assert.equal(hiddenByShop.total, 0);
   assert.deepEqual(hiddenByShop.results, []);
+});
+
+test("review creation ignores client-supplied verified for guests while preserving rating aggregation", async () => {
+  const productBefore = structuredClone(reviewProduct());
+
+  const result = await createReview({
+    productId: LIVE_APPROVED_PRODUCT.id,
+    customer: "Guest reviewer",
+    rating: 5,
+    title: "Loved it",
+    body: "A polished scent.",
+    verified: true,
+  });
+
+  assert.equal(result.review.verified, false);
+  assert.equal(result.review.customerId, null);
+  assert.equal(result.product.reviews, productBefore.reviews + 1);
+  assert.equal(result.product.rating, expectedRatingAfter(productBefore, 5));
+  assert.equal(result.product.verifiedReviews, productBefore.verifiedReviews);
+});
+
+test("review creation verifies authenticated customer with delivered matching order", async () => {
+  const productBefore = structuredClone(reviewProduct());
+  const user = customerUser();
+  injectReviewOrder({ customerId: user.sub, status: "Delivered" });
+
+  const result = await createReview({
+    productId: LIVE_APPROVED_PRODUCT.id,
+    rating: 4,
+    verified: false,
+  }, user);
+
+  assert.equal(result.review.verified, true);
+  assert.equal(result.review.customerId, user.sub);
+  assert.equal(result.product.reviews, productBefore.reviews + 1);
+  assert.equal(result.product.rating, expectedRatingAfter(productBefore, 4));
+  assert.equal(result.product.verifiedReviews, productBefore.verifiedReviews + 1);
+});
+
+test("review creation verifies customer accepted orders containing reviewed bundled product", async () => {
+  const productBefore = structuredClone(seedRepository.getState().products.find((product) => product.id === LIVE_APPROVED_GIFT_PRODUCT.id));
+  const user = customerUser("customer-review-bundle-001");
+  injectReviewOrder({
+    customerId: user.sub,
+    status: "Customer Accepted",
+    items: [{ productId: "gift-box-parent", bundledProductIds: [LIVE_APPROVED_GIFT_PRODUCT.id] }],
+  });
+
+  const result = await createReview({
+    productId: LIVE_APPROVED_GIFT_PRODUCT.id,
+    rating: 5,
+  }, user);
+
+  assert.equal(result.review.verified, true);
+  assert.equal(result.review.customerId, user.sub);
+  assert.equal(result.product.verifiedReviews, productBefore.verifiedReviews + 1);
+});
+
+test("review creation does not verify pending or non-delivered orders", async () => {
+  const productBefore = structuredClone(reviewProduct());
+  const user = customerUser("customer-review-pending-001");
+  injectReviewOrder({ customerId: user.sub, status: "Pending" });
+
+  const result = await createReview({
+    productId: LIVE_APPROVED_PRODUCT.id,
+    rating: 3,
+    verified: true,
+  }, user);
+
+  assert.equal(result.review.verified, false);
+  assert.equal(result.review.customerId, user.sub);
+  assert.equal(result.product.verifiedReviews, productBefore.verifiedReviews);
+});
+
+test("review creation does not verify another customer's delivered order", async () => {
+  const productBefore = structuredClone(reviewProduct());
+  const user = customerUser("customer-review-owner-001");
+  injectReviewOrder({
+    customerId: "customer-review-other-001",
+    status: "Delivered",
+    items: [{ productId: LIVE_APPROVED_PRODUCT.id, bundledProductIds: [] }],
+  });
+
+  const result = await createReview({
+    productId: LIVE_APPROVED_PRODUCT.id,
+    rating: 5,
+    verified: true,
+  }, user);
+
+  assert.equal(result.review.verified, false);
+  assert.equal(result.review.customerId, user.sub);
+  assert.equal(result.product.verifiedReviews, productBefore.verifiedReviews);
 });

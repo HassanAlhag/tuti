@@ -344,7 +344,7 @@ marketplaceRouter.patch("/seller/delivery-offers/:offerId/cancel", authenticate,
 marketplaceRouter.post("/reviews", optionalAuth, validate(createReviewSchema), async (req, res, next) => {
   try {
     const customer = req.user ? req.user.name || req.user.sub : req.body.customer || "Guest";
-    res.status(201).json({ data: await createReview({ ...req.body, customer }) });
+    res.status(201).json({ data: await createReview({ ...req.body, customer }, req.user) });
   } catch (err) { next(err); }
 });
 
