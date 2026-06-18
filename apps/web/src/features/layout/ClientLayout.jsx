@@ -140,7 +140,7 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
     }
 
     function syncImmersiveHeader() {
-      const storyRoot = document.querySelector(".is-outer, .is-mobile");
+      const storyRoot = document.querySelector(".is-story");
       const header = document.querySelector(".cl-topbar");
       if (!storyRoot || !header) {
         setImmersivePassed(false);
