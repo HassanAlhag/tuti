@@ -1,142 +1,10 @@
 import { ArrowRight, Gift, ShieldCheck, Store } from "lucide-react";
 import completeGiftImage from "../../assets/home-ch4-complete.png";
 import { ImmersiveStory } from "../immersive/ImmersiveStory.jsx";
+import { PathSelector } from "../homepage/PathSelector.jsx";
 import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
 import { AdaptiveProductEdit } from "../homepage/AdaptiveProductEdit.jsx";
 import "../homepage/homepage.css";
-import cakeCategoryImage from "../../assets/category-cakes.jpg";
-import perfumeImage from "../../assets/category-perfumes.jpg";
-import giftSetImage from "../../assets/category-gift-sets.jpg";
-
-const CATEGORY_ENTRY_POINTS = [
-  {
-    key: "perfume",
-    title: "Perfumes",
-    eyebrow: "Boutique fragrances",
-    description: "Oud, amber, musk, floral and fresh signatures from independent houses.",
-    cta: "Explore",
-    image: perfumeImage,
-    feature: true,
-  },
-  {
-    key: "cake",
-    title: "Cakes & Desserts",
-    eyebrow: "Made for the moment",
-    description: "Artisan cakes, sweets and desserts prepared for every celebration.",
-    cta: "Explore",
-    image: cakeCategoryImage,
-  },
-  {
-    key: "gift_box",
-    title: "Gift Sets",
-    eyebrow: "Curated together",
-    description: "Thoughtful combinations, ready to give.",
-    cta: "Explore",
-    image: giftSetImage,
-  },
-  {
-    key: "build_box",
-    title: "Build a Box",
-    eyebrow: "Make it personal",
-    description: "Choose a scent, add something sweet and write your message.",
-    cta: "Explore",
-    image: completeGiftImage,
-    feature: true,
-  },
-];
-
-const DISCOVERY_LINKS = [
-  {
-    key: "collections",
-    label: "Browse collections",
-    description: "Curated edits for scent families, gifting moods, and seasonal discovery.",
-  },
-  {
-    key: "finder",
-    label: "Find a scent",
-    description: "Use the guided finder when you want a quicker path to the right fragrance.",
-  },
-  {
-    key: "journal",
-    label: "Read the journal",
-    description: "Explore gifting ideas, fragrance notes, and inspiration from the Tuti world.",
-  },
-];
-
-function CategoryShowcase({ entries, onSelectCategory, onBuildGift, onGoToCollections, onGoToFragranceFinder, onGoToJournal }) {
-  function handleDiscoveryLink(linkKey) {
-    if (linkKey === "collections") {
-      onGoToCollections?.();
-      return;
-    }
-    if (linkKey === "finder") {
-      onGoToFragranceFinder?.();
-      return;
-    }
-    if (linkKey === "journal") {
-      onGoToJournal?.();
-    }
-  }
-
-  return (
-    <section className="home-section home-categories-section" aria-label="Shop by category">
-      <div className="category-showcase-head">
-        <div className="category-showcase-copy">
-          <span className="eyebrow">Choose how you want to shop</span>
-          <h2>Start with the path that suits the gift.</h2>
-          <p>
-            Shop by fragrance, celebration, or ready-made gift. The homepage should guide the decision, not make it harder.
-          </p>
-        </div>
-
-        <div className="category-showcase-links" aria-label="Additional discovery paths">
-          {DISCOVERY_LINKS.map((link) => (
-            <button
-              key={link.key}
-              className="category-discovery-link"
-              type="button"
-              onClick={() => handleDiscoveryLink(link.key)}
-            >
-              <span className="category-discovery-link-label">
-                {link.label} <ArrowRight size={13} />
-              </span>
-              <span className="category-discovery-link-desc">{link.description}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="category-showcase">
-        {entries.map((entry) => (
-          <button
-            key={entry.key}
-            className={[
-              "category-card-link",
-              `category-card-link--${entry.key.replace(/_/g, "-")}`,
-              entry.feature ? "category-card-link--feature" : "",
-              entry.key === "cake" ? "category-card-link--warm" : "",
-              entry.key === "gift_box" ? "category-card-link--gift" : "",
-              entry.key === "build_box" ? "category-card-link--build" : "",
-            ].filter(Boolean).join(" ")}
-            onClick={() => {
-              if (entry.key === "build_box") onBuildGift?.();
-              else onSelectCategory?.(entry.key);
-            }}
-            style={{ "--category-image": `url(${entry.image})` }}
-            type="button"
-          >
-            <span className="category-card-kicker">{entry.eyebrow}</span>
-            <h3>{entry.title}</h3>
-            <p>{entry.description}</p>
-            <span className="category-card-cta">
-              {entry.cta} <ArrowRight size={14} />
-            </span>
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function BuildBoxFeature({ onBuildGift, onExploreGiftSets }) {
   return (
@@ -249,15 +117,8 @@ export function HomePage({
           <p className="home-transition-intro-ar" lang="ar" dir="auto">هدايا مدروسة، مصممة بطريقتك.</p>
         </section>
 
-        {/* Act 2 — Category Worlds */}
-        <CategoryShowcase
-          entries={CATEGORY_ENTRY_POINTS}
-          onBuildGift={goToBuildBox || goToGifting}
-          onGoToCollections={goToCollections}
-          onGoToFragranceFinder={goToFragranceFinder}
-          onGoToJournal={goToJournal}
-          onSelectCategory={goToShop}
-        />
+        {/* Act 2 — Path Selector */}
+        <PathSelector goToShop={goToShop} goToBuildBox={goToBuildBox} />
 
         {/* Act 3 — Featured Boutique (adaptive by count) */}
         <AdaptiveBoutique
