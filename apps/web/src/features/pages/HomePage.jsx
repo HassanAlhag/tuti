@@ -1,41 +1,10 @@
-import { ArrowRight, Gift, ShieldCheck, Store } from "lucide-react";
-import completeGiftImage from "../../assets/home-ch4-complete.png";
+import { Gift, ShieldCheck, Store } from "lucide-react";
 import { ImmersiveStory } from "../immersive/ImmersiveStory.jsx";
 import { PathSelector } from "../homepage/PathSelector.jsx";
+import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
 import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
 import { AdaptiveProductEdit } from "../homepage/AdaptiveProductEdit.jsx";
 import "../homepage/homepage.css";
-
-function BuildBoxFeature({ onBuildGift, onExploreGiftSets }) {
-  return (
-    <section className="home-section build-feature" aria-labelledby="build-feature-title">
-      <div className="build-feature-copy">
-        <span className="eyebrow">Only at Tuti</span>
-        <h2 id="build-feature-title">Build a gift they will remember.</h2>
-        <p>
-          Choose a perfume. Add a cake or dessert. Include your message. We bring it together in one considered gift.
-        </p>
-        <div className="build-feature-actions">
-          <button className="primary-action" type="button" onClick={onBuildGift}>
-            Start building <ArrowRight size={16} />
-          </button>
-          <button className="ghost-action build-feature-secondary" onClick={onExploreGiftSets} type="button">
-            Explore gift sets
-          </button>
-        </div>
-        <div className="build-feature-points" aria-label="Build a box benefits">
-          <span>One boutique</span>
-          <span>One delivery</span>
-          <span>One memorable gift</span>
-        </div>
-      </div>
-
-      <div className="build-feature-media" aria-hidden="true">
-        <img alt="" src={completeGiftImage} />
-      </div>
-    </section>
-  );
-}
 
 function TrustClosing() {
   return (
@@ -120,13 +89,19 @@ export function HomePage({
         {/* Act 2 — Path Selector */}
         <PathSelector goToShop={goToShop} goToBuildBox={goToBuildBox} />
 
-        {/* Act 3 — Featured Boutique (adaptive by count) */}
+        {/* Act 3 — Gift Builder Preview */}
+        <GiftBuilderPreview
+          onBuildGift={goToBuildBox}
+          onExploreGiftSets={() => goToShop("gift_box")}
+        />
+
+        {/* Act 4 — Featured Boutique (adaptive by count) */}
         <AdaptiveBoutique
           onViewSeller={goToSellerBrand}
           onExploreShops={goToShops}
         />
 
-        {/* Act 4 — Tuti Edit (Luxury Picks, adaptive by count) */}
+        {/* Act 5 — Tuti Edit (Luxury Picks, adaptive by count) */}
         <AdaptiveProductEdit
           placementKey="luxury_picks"
           eyebrow="Selected by Tuti"
@@ -134,12 +109,6 @@ export function HomePage({
           subtitle="A considered edit of fragrance, gifting and celebration essentials."
           sectionClassName="featured-product-rail--luxury-picks"
           onViewProduct={goToProduct}
-        />
-
-        {/* Act 5 — Build Something Personal */}
-        <BuildBoxFeature
-          onBuildGift={goToBuildBox}
-          onExploreGiftSets={() => goToShop("gift_box")}
         />
 
         {/* Act 6 — New at Tuti (New Arrivals, adaptive by count) */}

@@ -10357,91 +10357,125 @@ th {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(18, 47, 37, 0.28));
 }
 
-.build-feature {
+/* ══ D1.3 — Gift Builder Preview ══ */
+.gift-preview {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
-  min-height: 37.5rem;
-  background: linear-gradient(135deg, #11130e, #16372f 56%, #21352d);
+  background: linear-gradient(160deg, #111510, #16372f 60%, #1a2e28);
   color: #f7f1e8;
-  overflow: hidden;
+  padding: clamp(4rem, 7vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+  display: grid;
+  gap: clamp(2.5rem, 4vw, 3.5rem);
 }
 
-.build-feature-copy {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1.35rem;
-  padding: clamp(3.5rem, 7vw, 6rem) clamp(1.25rem, 5vw, 4rem);
+.gift-preview-head {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44rem;
 }
 
-.build-feature .eyebrow,
-.build-feature h2,
-.build-feature p {
-  color: inherit;
+.gift-preview-head .eyebrow {
+  color: rgba(247, 241, 232, 0.55);
 }
 
-.build-feature h2 {
+.gift-preview-head h2 {
   margin: 0;
-  max-width: 10ch;
-  font-size: clamp(3rem, 5.3vw, 4.8rem);
-  line-height: 0.94;
+  font-size: clamp(2.6rem, 4.5vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fff;
 }
 
-.build-feature p {
-  max-width: 34rem;
+.gift-preview-head p {
   margin: 0;
-  color: rgba(247, 241, 232, 0.8);
-  font-size: clamp(1rem, 1.3vw, 1.14rem);
+  font-size: clamp(1rem, 1.3vw, 1.1rem);
   line-height: 1.7;
+  color: rgba(247, 241, 232, 0.72);
+  max-width: 36rem;
 }
 
-.build-feature-actions {
-  display: flex;
-  flex-wrap: wrap;
+.gift-preview-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gift-preview-step {
+  display: grid;
   gap: 0.8rem;
+  padding: clamp(1.5rem, 2.5vw, 2rem);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  align-content: start;
+}
+
+.gift-preview-step-num {
+  display: block;
+  font-size: var(--text-xs, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(247, 241, 232, 0.58);
+}
+
+.gift-preview-step h3 {
+  margin: 0;
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  line-height: 1.1;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.gift-preview-step p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(247, 241, 232, 0.65);
+}
+
+.gift-preview .primary-action,
+.gift-preview .ghost-action {
+  min-height: 2.75rem;
+}
+
+.gift-preview-primary-action {
+  margin-top: 0.75rem;
+}
+
+.gift-preview-secondary-action {
+  display: flex;
   align-items: center;
 }
 
-.build-feature-secondary {
+.gift-preview-secondary {
   color: rgba(247, 241, 232, 0.92);
   border-color: rgba(247, 241, 232, 0.22);
 }
 
-.build-feature-secondary:hover {
+.gift-preview-secondary:hover {
   background: rgba(247, 241, 232, 0.06);
 }
 
-.build-feature-points {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.85rem;
-  margin-top: 0.5rem;
+.gift-preview-secondary:focus-visible {
+  outline: 3px solid rgba(215, 168, 74, 0.85);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
 }
 
-.build-feature-points span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.1rem;
-  padding: 0 0.85rem;
-  color: rgba(247, 241, 232, 0.78);
-  border: 1px solid rgba(247, 241, 232, 0.12);
-  border-radius: 999px;
-  font-size: 0.86rem;
+.gift-preview-secondary:active {
+  background: rgba(247, 241, 232, 0.04);
+  transform: translateY(1px);
 }
 
-.build-feature-media {
-  min-height: 100%;
-}
-
-.build-feature-media img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center center;
+.gift-preview .primary-action:active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-xs);
 }
 
 /* ── Trust closing — editorial strip, not ecommerce cards ─────── */
@@ -10550,15 +10584,9 @@ th {
   }
 }
 
-@media (max-width: 900px) {
-  .build-feature {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
-
-  .build-feature-media {
-    order: -1;
-    min-height: 20rem;
+@media (max-width: 980px) {
+  .gift-preview-steps {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -10612,28 +10640,19 @@ th {
     font-size: clamp(2rem, 9vw, 2.6rem);
   }
 
-  .build-feature-copy {
-    padding: 2rem 1rem 3rem;
+  .gift-preview-steps {
+    grid-template-columns: 1fr;
   }
 
-  .build-feature h2 {
-    max-width: 10ch;
-    font-size: clamp(2.6rem, 10vw, 3.4rem);
+  .gift-preview-step {
+    padding: 1rem;
+    gap: 0.5rem;
   }
 
-  .build-feature-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .build-feature-actions .primary-action,
-  .build-feature-actions .ghost-action {
+  .gift-preview-primary-action .primary-action,
+  .gift-preview-secondary-action .ghost-action {
+    width: 100%;
     justify-content: center;
-  }
-
-  .build-feature-points {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .trust-closing-head h2 {
@@ -10698,7 +10717,7 @@ th {
 .boutique-campaign-cta:focus-visible,
 .product-editorial-btn:focus-visible,
 .is-cta:focus-visible,
-.build-feature .primary-action:focus-visible {
+.gift-preview .primary-action:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 3px;
 }
@@ -10753,11 +10772,6 @@ th {
 .featured-seller-copy p {
   font-size: 0.9rem;
   line-height: 1.6;
-}
-
-/* ── Build feature image object-position ────────────────────── */
-.build-feature-media img {
-  object-position: center 30%;
 }
 
 /* ── Section transition: editorial discovery → trust ─────────── */
