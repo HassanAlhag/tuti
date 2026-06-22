@@ -2401,20 +2401,30 @@ body {
 .featured-product-card {
   width: min(20rem, 100%);
   flex: 0 0 auto;
-  border-radius: 12px;
-  box-shadow: none;
+  border-radius: 14px;
+  background: rgba(255, 252, 247, 0.96);
+  box-shadow: 0 1px 3px rgba(16, 30, 26, 0.07), 0 4px 12px rgba(16, 30, 26, 0.05);
 }
 
 .featured-product-card:hover {
-  box-shadow: none;
+  box-shadow: 0 3px 16px rgba(16, 30, 26, 0.10), 0 1px 4px rgba(16, 30, 26, 0.07);
+  border-color: rgba(0, 92, 70, 0.20);
 }
 
 .featured-product-media {
-  min-height: 18rem;
+  aspect-ratio: 4/5;
+  min-height: 0;
+  border-bottom: 1px solid rgba(16, 30, 26, 0.06);
+}
+
+.featured-product-copy {
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4) var(--sp-5);
 }
 
 .featured-product-rail--luxury-picks {
   padding-top: clamp(0.5rem, 1vw, 1rem);
+  background: linear-gradient(180deg, rgba(251, 247, 239, 0.9), rgba(246, 239, 227, 0.9));
 }
 
 .featured-product-rail--new-arrivals {
@@ -2490,6 +2500,12 @@ body {
 
   .featured-product-grid {
     gap: 1rem;
+    padding-right: 1.5rem;
+  }
+
+  .featured-product-strip {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 3rem), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 3rem), transparent 100%);
   }
 
   .featured-product-card {

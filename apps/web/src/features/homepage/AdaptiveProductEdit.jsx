@@ -73,6 +73,13 @@ function buildProductTags(product) {
   return [...new Set(source.filter(Boolean).map((tag) => String(tag).trim()).filter(Boolean))].slice(0, 3);
 }
 
+function getImageObjectPosition(product) {
+  const category = normalizeText(product?.category);
+  if (category === "cake" || category === "dessert") return "center";
+  if (category === "gift_box" || category === "bundle") return "center";
+  return "center 15%";
+}
+
 function makeProductTrackingPayload(placement, placementKey, index) {
   const product = placement?.product || {};
   const shop = placement?.shop || {};
@@ -91,6 +98,31 @@ function makeProductTrackingPayload(placement, placementKey, index) {
   };
 }
 
+/* Loading placeholder — preserves section height during API fetch */
+function ProductLoadingPlaceholder({ eyebrow, placementKey }) {
+  return (
+    <section
+      className={`home-section featured-product-rail featured-product-rail--${placementKey.replace(/_/g, "-")}`}
+    >
+      <p role="status" className="featured-product-sr-only">Loading featured products</p>
+      <div className="featured-product-shell--split" aria-hidden="true">
+        <div className="featured-product-intro">
+          <span className="eyebrow" style={{ opacity: 0.4 }}>{eyebrow}</span>
+          <div className="featured-product-loading-bar featured-product-loading-bar--title" />
+          <div className="featured-product-loading-bar featured-product-loading-bar--sub" />
+        </div>
+        <div className="featured-product-strip">
+          <div className="featured-product-grid">
+            <div className="featured-product-card--ghost" />
+            <div className="featured-product-card--ghost" />
+            <div className="featured-product-card--ghost" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* 1 product — full editorial feature */
 function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
   const product = placement?.product || {};
@@ -107,30 +139,22 @@ function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
 
   return (
     <div className="product-editorial" ref={impressionRef}>
-      <button
-        className="product-editorial-media"
-        type="button"
-        style={{ background: "none", padding: 0, border: 0, cursor: "pointer" }}
-        onClick={() => {
-          void trackPlacementClick(makeProductTrackingPayload(placement, placementKey, 0));
-          if (productId && onViewProduct) onViewProduct(productId);
-        }}
-      >
+      <div className="product-editorial-media">
         {image ? (
-          <img src={image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", borderRadius: "16px" }} />
+          <img src={image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: getImageObjectPosition(product), borderRadius: "16px" }} />
         ) : (
           <BottleArt product={product} />
         )}
         {badge ? (
           <span className="product-editorial-badge">
-            <Sparkles size={12} /> {badge}
+            <Sparkles size={12} aria-hidden="true" /> {badge}
           </span>
         ) : null}
-      </button>
+      </div>
 
       <div className="product-editorial-story">
         <span className="eyebrow">{eyebrow}</span>
-        <h2 className="product-editorial-title">{title}</h2>
+        <h2 id={`${placementKey}-title`} className="product-editorial-title">{title}</h2>
         <p className="product-editorial-seller">{getProductShopName(shop)}</p>
         <p className="product-editorial-desc">{subtitle}</p>
 
@@ -138,7 +162,7 @@ function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
           <div className="product-editorial-tags">
             {tags.map((tag) => (
               <span className="product-editorial-tag" key={tag}>
-                <Tag size={11} /> {tag}
+                <Tag size={11} aria-hidden="true" /> {tag}
               </span>
             ))}
           </div>
@@ -157,7 +181,7 @@ function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
               if (productId && onViewProduct) onViewProduct(productId);
             }}
           >
-            View product <ArrowRight size={15} />
+            View product <ArrowRight size={15} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -191,13 +215,13 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
     >
       <div className="product-split-card-media">
         {image ? (
-          <img src={image} alt="" />
+          <img src={image} alt="" style={{ objectPosition: getImageObjectPosition(product) }} />
         ) : (
           <BottleArt product={product} />
         )}
         {badge ? (
           <span className="product-split-card-badge">
-            <Sparkles size={11} /> {badge}
+            <Sparkles size={11} aria-hidden="true" /> {badge}
           </span>
         ) : null}
       </div>
@@ -208,7 +232,7 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
           <div className="product-split-card-tags">
             {tags.map((tag) => (
               <span className="product-split-card-tag" key={tag}>
-                <Tag size={10} /> {tag}
+                <Tag size={10} aria-hidden="true" /> {tag}
               </span>
             ))}
           </div>
@@ -219,7 +243,7 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
             {originalPrice ? <del>{formatCurrency(originalPrice)}</del> : null}
           </div>
           <span className="product-split-card-link">
-            View <ArrowRight size={13} />
+            View <ArrowRight size={13} aria-hidden="true" />
           </span>
         </div>
       </div>
@@ -227,12 +251,12 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
   );
 }
 
-function ProductSplit({ placements, placementKey, eyebrow, sectionTitle, subtitle }) {
+function ProductSplit({ placements, placementKey, eyebrow, sectionTitle, subtitle, onViewProduct }) {
   return (
     <div className="product-split">
       <div className="product-split-heading">
         <span className="eyebrow">{eyebrow}</span>
-        <h2>{sectionTitle}</h2>
+        <h2 id={`${placementKey}-title`}>{sectionTitle}</h2>
         {subtitle ? <p>{subtitle}</p> : null}
       </div>
       <div className="product-split-grid">
@@ -242,6 +266,7 @@ function ProductSplit({ placements, placementKey, eyebrow, sectionTitle, subtitl
             placement={placement}
             placementKey={placementKey}
             index={index}
+            onViewProduct={onViewProduct}
           />
         ))}
       </div>
@@ -257,7 +282,7 @@ function ProductTrio({ placements, placementKey, eyebrow, sectionTitle, subtitle
     <div className="product-trio">
       <div className="product-trio-heading">
         <span className="eyebrow">{eyebrow}</span>
-        <h2>{sectionTitle}</h2>
+        <h2 id={`${placementKey}-title`}>{sectionTitle}</h2>
         {subtitle ? <p>{subtitle}</p> : null}
       </div>
       <div className="product-trio-grid">
@@ -314,7 +339,7 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
             >
               <div className={image ? "featured-product-media featured-product-media--image" : "featured-product-media"}>
                 {image ? (
-                  <img alt="" src={image} />
+                  <img alt="" src={image} style={{ objectPosition: getImageObjectPosition(product) }} />
                 ) : (
                   <div className="featured-product-art">
                     <BottleArt product={product} />
@@ -322,7 +347,7 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
                 )}
                 {badge ? (
                   <span className="featured-product-pill featured-product-pill--badge">
-                    <Sparkles size={12} /> {badge}
+                    <Sparkles size={12} aria-hidden="true" /> {badge}
                   </span>
                 ) : null}
               </div>
@@ -330,16 +355,15 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
                 <div className="featured-product-heading">
                   <strong>{title}</strong>
                 </div>
-                <p>{subtitle}</p>
                 <div className="featured-product-shop-line">
                   <span>{getProductShopName(shop)}</span>
                   <span>{normalizeText(product?.family) || normalizeText(product?.category) || "perfume"}</span>
                 </div>
                 {tags.length ? (
                   <div className="featured-product-tags">
-                    {tags.map((tag) => (
+                    {tags.slice(0, 2).map((tag) => (
                       <span className="featured-product-pill" key={tag}>
-                        <Tag size={12} /> {tag}
+                        <Tag size={12} aria-hidden="true" /> {tag}
                       </span>
                     ))}
                   </div>
@@ -350,7 +374,7 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
                     {originalPrice ? <del>{formatCurrency(originalPrice)}</del> : null}
                   </div>
                   <span className="featured-product-link">
-                    View product <ArrowRight size={14} />
+                    View product <ArrowRight size={14} aria-hidden="true" />
                   </span>
                 </div>
               </div>
@@ -371,7 +395,7 @@ export function AdaptiveProductEdit({
   sectionClassName,
   onViewProduct,
 }) {
-  const { data, isError } = useQuery({
+  const { data, isError, isLoading } = useQuery({
     queryKey: ["homepage-featured-products", placementKey],
     queryFn: () => publicMerchandisingApi.getFeaturedProducts({ placementKey }),
     staleTime: 5 * 60 * 1000,
@@ -382,6 +406,10 @@ export function AdaptiveProductEdit({
     if (!data || !Array.isArray(data)) return [];
     return data.filter((p) => p?.product?.id && p?.shop?.id);
   }, [data]);
+
+  if (isLoading) {
+    return <ProductLoadingPlaceholder eyebrow={eyebrow} placementKey={placementKey} />;
+  }
 
   if (isError || products.length === 0) return null;
 

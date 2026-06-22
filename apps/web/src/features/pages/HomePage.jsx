@@ -95,13 +95,7 @@ export function HomePage({
           onExploreGiftSets={() => goToShop("gift_box")}
         />
 
-        {/* Act 4 — Featured Boutique (adaptive by count) */}
-        <AdaptiveBoutique
-          onViewSeller={goToSellerBrand}
-          onExploreShops={goToShops}
-        />
-
-        {/* Act 5 — Tuti Edit (Luxury Picks, adaptive by count) */}
+        {/* Act 4 — Tuti Edit (Luxury Picks, adaptive by count) */}
         <AdaptiveProductEdit
           placementKey="luxury_picks"
           eyebrow="Selected by Tuti"
@@ -111,7 +105,7 @@ export function HomePage({
           onViewProduct={goToProduct}
         />
 
-        {/* Act 6 — New at Tuti (New Arrivals, adaptive by count) */}
+        {/* Act 5 — New at Tuti (New Arrivals, adaptive by count) */}
         <AdaptiveProductEdit
           placementKey="new_arrivals"
           eyebrow="Just landed"
@@ -119,6 +113,12 @@ export function HomePage({
           subtitle="Fresh discoveries, new gift ideas and recently added favourites."
           sectionClassName="featured-product-rail--new-arrivals"
           onViewProduct={goToProduct}
+        />
+
+        {/* Act 6 — Featured Boutique (adaptive by count) */}
+        <AdaptiveBoutique
+          onViewSeller={goToSellerBrand}
+          onExploreShops={goToShops}
         />
 
         {/* Act 7 — Trust and Footer */}

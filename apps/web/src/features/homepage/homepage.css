@@ -995,3 +995,47 @@
     font-size: clamp(2rem, 9vw, 2.6rem);
   }
 }
+
+/* ── D1.4 — Featured Product Rails: states + loading ────────────── */
+.product-editorial-media { cursor: default; }
+
+.product-editorial-btn:active { background: var(--brand-dark); transform: translateY(1px); }
+.product-split-card:active { transform: translateY(1px); }
+.featured-product-card:active { transform: translateY(1px); }
+
+.featured-product-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.featured-product-loading-bar {
+  background: rgba(0, 0, 0, 0.07);
+  border-radius: 6px;
+}
+
+.featured-product-loading-bar--title {
+  height: 2.25rem;
+  max-width: 28rem;
+}
+
+.featured-product-loading-bar--sub {
+  height: 0.9rem;
+  max-width: 20rem;
+  margin-top: 0.5rem;
+}
+
+.featured-product-card--ghost {
+  width: min(20rem, 100%);
+  flex: 0 0 auto;
+  min-height: 22rem;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
