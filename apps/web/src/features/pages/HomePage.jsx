@@ -5,6 +5,7 @@ import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
 import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
 import { AdaptiveProductEdit } from "../homepage/AdaptiveProductEdit.jsx";
 import { OccasionJourney } from "../homepage/OccasionJourney.jsx";
+import { EditorialDiscovery } from "../homepage/EditorialDiscovery.jsx";
 import "../homepage/homepage.css";
 
 function TrustClosing() {
@@ -130,7 +131,16 @@ export function HomePage({
           }}
         />
 
-        {/* Act 8 — Trust and Footer */}
+        {/* Act 8 — Editorial Discovery (journal, gifting, boutiques, fragrance finder, sell) */}
+        <EditorialDiscovery
+          onGoToGifting={goToGifting}
+          onGoToFragranceFinder={goToFragranceFinder}
+          onGoToShops={goToShops}
+          onGoToJournal={goToJournal}
+          onGoToSell={goToSell}
+        />
+
+        {/* Act 9 — Trust and Footer */}
         <TrustClosing />
       </div>
     </main>

@@ -75,7 +75,7 @@ export function EditorialDiscovery({
                 <span className="editorial-link-label">{link.label}</span>
                 <span className="editorial-link-desc">{link.desc}</span>
                 <span className="editorial-link-arrow">
-                  Explore <ArrowRight size={12} />
+                  Explore <ArrowRight size={12} aria-hidden="true" />
                 </span>
               </div>
             </button>
