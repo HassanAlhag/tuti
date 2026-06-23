@@ -4,6 +4,7 @@ import { PathSelector } from "../homepage/PathSelector.jsx";
 import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
 import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
 import { AdaptiveProductEdit } from "../homepage/AdaptiveProductEdit.jsx";
+import { OccasionJourney } from "../homepage/OccasionJourney.jsx";
 import "../homepage/homepage.css";
 
 function TrustClosing() {
@@ -121,7 +122,15 @@ export function HomePage({
           onExploreShops={goToShops}
         />
 
-        {/* Act 7 — Trust and Footer */}
+        {/* Act 7 — Occasion Discovery (birthday → cake, eid → perfume, wedding → gift_box) */}
+        <OccasionJourney
+          onShopOccasion={(slug) => {
+            const cats = { birthday: "cake", eid: "perfume", wedding: "gift_box" };
+            goToShop(cats[slug] || "all");
+          }}
+        />
+
+        {/* Act 8 — Trust and Footer */}
         <TrustClosing />
       </div>
     </main>

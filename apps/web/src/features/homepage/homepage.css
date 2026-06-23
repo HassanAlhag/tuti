@@ -189,6 +189,7 @@
 
 /* 2 sellers — balanced split */
 .boutique-split {
+  position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   display: grid;
@@ -203,8 +204,9 @@
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 25%, rgba(215, 168, 74, 0.2), transparent 30%),
+    radial-gradient(circle at 20% 25%, rgba(215, 168, 74, 0.25), transparent 30%),
     linear-gradient(160deg, #27473d, #112924 60%, #0b1f1c);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -268,6 +270,7 @@
 
 /* 3 sellers — one large + two supporting */
 .boutique-trio {
+  position: relative;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   display: grid;
@@ -631,6 +634,9 @@
 .occasion-stage {
   width: min(92rem, calc(100% - 1.5rem));
   margin: 0 auto;
+  background: #faf6f0;
+  border-radius: 20px;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
 }
 
 .occasion-heading {
@@ -693,12 +699,17 @@
 }
 
 .occasion-panel-bg img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .occasion-panel-bg-fallback {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
@@ -732,7 +743,7 @@
 }
 
 .occasion-title {
-  margin: 0;
+  display: block;
   color: #fff;
   font-size: clamp(1.65rem, 2.5vw, 2.2rem);
   line-height: 0.97;
@@ -933,6 +944,11 @@
 }
 
 @media (max-width: 820px) {
+  .occasion-stage {
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
   .occasion-panels {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -1038,4 +1054,123 @@
   background: rgba(0, 0, 0, 0.04);
   border: 1px solid var(--line);
   border-radius: 12px;
+}
+
+/* ── D1.5 — Boutique / Seller Discovery ─────────────────────── */
+
+/* Section overlay header — split and trio modes */
+.boutique-section-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: clamp(1.75rem, 3.5vw, 2.75rem) clamp(2rem, 5vw, 4rem);
+  pointer-events: none;
+}
+
+.boutique-section-header .eyebrow {
+  color: rgba(247, 241, 232, 0.6);
+}
+
+.boutique-section-header h2 {
+  margin: 0.35rem 0 0;
+  color: #fff;
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* boutique-split-name used as <span> — enforce block display */
+.boutique-split-name {
+  display: block;
+}
+
+/* BoutiqueTrio: section-scoped name sizes (replaces inline fontSize) */
+.boutique-trio-primary .boutique-split-name {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+.boutique-trio-secondary .boutique-split-name {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+}
+
+/* Boutique loading skeleton */
+.boutique-loading-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.boutique-loading-intro {
+  display: grid;
+  gap: 0;
+  margin-bottom: var(--sp-4);
+}
+
+.boutique-loading-bar {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+}
+
+.boutique-loading-bar--eyebrow { height: 0.75rem; max-width: 8rem; }
+.boutique-loading-bar--title   { height: 2.25rem; max-width: 28rem; margin-top: 0.5rem; }
+.boutique-loading-bar--sub     { height: 0.9rem;  max-width: 22rem; margin-top: 0.5rem; }
+
+.boutique-loading-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(17rem, 19rem);
+  gap: var(--sp-4);
+  justify-content: start;
+  overflow: hidden;
+}
+
+.boutique-card--ghost {
+  flex: 0 0 auto;
+  min-height: 26rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* ── D1.6 — Occasion Discovery ──────────────────────────────── */
+
+/* Active press state */
+.occasion-panel:active {
+  transform: translateY(1px);
+}
+
+/* Eid seasonal distinction — restrained warm top tint, slightly deeper base scrim */
+.occasion-panel--seasonal::after {
+  background: linear-gradient(
+    180deg,
+    rgba(80, 40, 0, 0.06) 0%,
+    transparent 32%,
+    rgba(6, 16, 14, 0.90) 100%
+  );
+}
+
+/* Seasonal edit pill — top-right corner overlay */
+.occasion-seasonal-label {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 3;
+  background: rgba(215, 168, 74, 0.14);
+  border: 1px solid rgba(215, 168, 74, 0.32);
+  border-radius: 100px;
+  padding: 0.28rem 0.6rem;
+  color: #f7e8bc;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
