@@ -1,4 +1,4 @@
-import { Gift, ShieldCheck, Store } from "lucide-react";
+import { Gift, Lock, ShieldCheck, Store } from "lucide-react";
 import { ImmersiveStory } from "../immersive/ImmersiveStory.jsx";
 import { PathSelector } from "../homepage/PathSelector.jsx";
 import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
@@ -6,15 +6,16 @@ import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
 import { AdaptiveProductEdit } from "../homepage/AdaptiveProductEdit.jsx";
 import { OccasionJourney } from "../homepage/OccasionJourney.jsx";
 import { EditorialDiscovery } from "../homepage/EditorialDiscovery.jsx";
+import { FinalCTA } from "../homepage/FinalCTA.jsx";
 import "../homepage/homepage.css";
 
 function TrustClosing() {
   return (
-    <section className="trust-closing" aria-labelledby="trust-title">
+    <section className="trust-closing" aria-labelledby="trust-closing-heading">
       <div className="trust-closing-inner">
         <div className="trust-closing-head">
-          <p className="trust-closing-label" id="trust-title">Why Tuti</p>
-          <h2>Gifting with confidence.</h2>
+          <p className="trust-closing-label">Why Tuti</p>
+          <h2 id="trust-closing-heading">Gifting with confidence.</h2>
           <p>
             Thoughtful curation, reliable boutiques, and customer-safe gifting language all the way through the experience.
           </p>
@@ -41,6 +42,14 @@ function TrustClosing() {
             <div>
               <strong>UAE-first delivery</strong>
               <span>Local sellers and delivery options across the UAE.</span>
+            </div>
+          </article>
+          <div className="trust-divider" aria-hidden="true" />
+          <article className="trust-fact">
+            <Lock size={20} aria-hidden="true" />
+            <div>
+              <strong>Secure checkout</strong>
+              <span>Pay safely with cards or cash on delivery.</span>
             </div>
           </article>
         </div>
@@ -140,8 +149,14 @@ export function HomePage({
           onGoToSell={goToSell}
         />
 
-        {/* Act 9 — Trust and Footer */}
+        {/* Act 9 — Trust / Service Promise */}
         <TrustClosing />
+
+        {/* Act 10 — Final CTA / Closing */}
+        <FinalCTA
+          onBuildGift={goToBuildBox}
+          onExploreGifts={() => goToShop("gift_box")}
+        />
       </div>
     </main>
   );

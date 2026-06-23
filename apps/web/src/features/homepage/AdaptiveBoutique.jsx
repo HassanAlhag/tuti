@@ -54,7 +54,28 @@ function makeTrackingPayload(placement, index) {
   };
 }
 
-/* 0 sellers — discovery CTA */
+/* Loading skeleton — shown while seller data is fetching on first load */
+function BoutiqueLoadingPlaceholder() {
+  return (
+    <section className="featured-seller-rail" aria-label="Boutique discovery">
+      <p role="status" className="boutique-loading-sr-only">Loading featured boutiques</p>
+      <div aria-hidden="true">
+        <div className="boutique-loading-intro">
+          <div className="boutique-loading-bar boutique-loading-bar--eyebrow" />
+          <div className="boutique-loading-bar boutique-loading-bar--title" />
+          <div className="boutique-loading-bar boutique-loading-bar--sub" />
+        </div>
+        <div className="boutique-loading-grid">
+          <div className="boutique-card--ghost" />
+          <div className="boutique-card--ghost" />
+          <div className="boutique-card--ghost" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* 0 sellers — discovery CTA (only shown on confirmed successful empty response) */
 function BoutiqueDiscovery({ onExplore }) {
   return (
     <section className="boutique-discovery" aria-labelledby="boutique-discovery-title">
@@ -63,7 +84,7 @@ function BoutiqueDiscovery({ onExplore }) {
         <h2 id="boutique-discovery-title">Meet the houses behind the gifts.</h2>
         <p>Independent fragrance houses, bakers and gifting specialists from across the UAE.</p>
         <button className="boutique-campaign-cta" type="button" onClick={onExplore}>
-          Explore boutiques <ArrowRight size={15} />
+          Explore boutiques <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -125,7 +146,7 @@ function BoutiqueCampaign({ placement, onViewSeller }) {
           type="button"
           onClick={handleClick}
         >
-          Visit boutique <ArrowRight size={15} />
+          Visit boutique <ArrowRight size={15} aria-hidden="true" />
         </button>
       </div>
     </section>
@@ -135,7 +156,11 @@ function BoutiqueCampaign({ placement, onViewSeller }) {
 /* 2 sellers — balanced split */
 function BoutiqueSplit({ placements, onViewSeller }) {
   return (
-    <section className="boutique-split" aria-label="Featured boutiques">
+    <section className="boutique-split" aria-labelledby="boutique-split-title">
+      <div className="boutique-section-header">
+        <span className="eyebrow">Boutique makers</span>
+        <h2 id="boutique-split-title">Meet the houses behind the gifts.</h2>
+      </div>
       {placements.map((placement, index) => {
         const seller = placement.seller || {};
         const title = placement.title || getSellerTitle(seller);
@@ -157,10 +182,10 @@ function BoutiqueSplit({ placements, onViewSeller }) {
           >
             {image ? <img src={image} alt="" /> : null}
             <div className="boutique-split-copy">
-              <h3 className="boutique-split-name">{title}</h3>
+              <span className="boutique-split-name">{title}</span>
               <span className="boutique-split-tag">{subtitle}</span>
               <span className="boutique-split-link">
-                Visit boutique <ArrowRight size={13} />
+                Visit boutique <ArrowRight size={13} aria-hidden="true" />
               </span>
             </div>
           </button>
@@ -181,7 +206,11 @@ function BoutiqueTrio({ placements, onViewSeller }) {
   const primaryRef = usePlacementImpressionTracker(makeTrackingPayload(primary, 0));
 
   return (
-    <section className="boutique-trio" aria-label="Featured boutiques">
+    <section className="boutique-trio" aria-labelledby="boutique-trio-title">
+      <div className="boutique-section-header">
+        <span className="eyebrow">Boutique makers</span>
+        <h2 id="boutique-trio-title">Meet the houses behind the gifts.</h2>
+      </div>
       <button
         className="boutique-split-panel boutique-trio-primary"
         type="button"
@@ -193,12 +222,10 @@ function BoutiqueTrio({ placements, onViewSeller }) {
       >
         {primaryImage ? <img src={primaryImage} alt="" /> : null}
         <div className="boutique-split-copy">
-          <h3 className="boutique-split-name" style={{ fontSize: "clamp(2rem, 3vw, 2.8rem)" }}>
-            {primaryTitle}
-          </h3>
+          <span className="boutique-split-name">{primaryTitle}</span>
           <span className="boutique-split-tag">{primary.subtitle || getSellerSubtitle(primarySeller)}</span>
           <span className="boutique-split-link">
-            Visit boutique <ArrowRight size={13} />
+            Visit boutique <ArrowRight size={13} aria-hidden="true" />
           </span>
         </div>
       </button>
@@ -224,12 +251,10 @@ function BoutiqueTrio({ placements, onViewSeller }) {
             >
               {image ? <img src={image} alt="" /> : null}
               <div className="boutique-split-copy">
-                <h3 className="boutique-split-name" style={{ fontSize: "clamp(1.4rem, 2vw, 1.8rem)" }}>
-                  {title}
-                </h3>
+                <span className="boutique-split-name">{title}</span>
                 <span className="boutique-split-tag">{placement.subtitle || getSellerSubtitle(seller)}</span>
                 <span className="boutique-split-link">
-                  Visit <ArrowRight size={12} />
+                  Visit <ArrowRight size={12} aria-hidden="true" />
                 </span>
               </div>
             </button>
@@ -283,7 +308,7 @@ function SellerGalleryCard({ placement, index, onViewSeller }) {
           </div>
         ) : null}
         <span className="featured-seller-link">
-          Visit boutique <ArrowRight size={14} />
+          Visit boutique <ArrowRight size={14} aria-hidden="true" />
         </span>
       </div>
     </button>
@@ -318,7 +343,7 @@ function BoutiqueGallery({ placements, onViewSeller }) {
 
 /* Main adaptive component */
 export function AdaptiveBoutique({ onViewSeller, onExploreShops }) {
-  const { data, isError } = useQuery({
+  const { data, isError, isLoading } = useQuery({
     queryKey: ["homepage-featured-sellers"],
     queryFn: () => publicMerchandisingApi.getFeaturedSellers({ placementKey: "homepage_featured_sellers" }),
     staleTime: 5 * 60 * 1000,
@@ -333,6 +358,10 @@ export function AdaptiveBoutique({ onViewSeller, onExploreShops }) {
   }, [data]);
 
   if (isError) return null;
+
+  if (isLoading && !data) {
+    return <BoutiqueLoadingPlaceholder />;
+  }
 
   if (sellers.length === 0) {
     return <BoutiqueDiscovery onExplore={onExploreShops} />;

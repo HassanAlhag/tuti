@@ -1183,3 +1183,124 @@
 .editorial-link:active {
   transform: translateY(1px);
 }
+
+/* ── D1.9 — Final CTA / Closing ─────────────────────────────── */
+
+.final-cta {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  background: linear-gradient(180deg, #10312b 0%, #0c2420 100%);
+  color: #f7f1e8;
+  padding: clamp(4.5rem, 8vw, 7rem) 1rem;
+  text-align: center;
+}
+
+.final-cta-inner {
+  width: min(52rem, calc(100% - 2rem));
+  margin: 0 auto;
+  display: grid;
+  gap: 1.35rem;
+  justify-items: center;
+}
+
+.final-cta-eyebrow {
+  color: rgba(247, 241, 232, 0.5);
+}
+
+.final-cta h2 {
+  margin: 0;
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  line-height: 0.96;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.final-cta-sub {
+  margin: 0;
+  color: rgba(247, 241, 232, 0.68);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  max-width: 36rem;
+}
+
+.final-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 0.65rem;
+}
+
+/* Primary CTA — warm cream fill, dark text; cream is distinct from gold (#d7a84a) */
+.final-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f7f1e8;
+  color: #0c2420;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.9rem 2rem;
+  border: 0;
+  border-radius: 100px;
+  cursor: pointer;
+  min-height: 2.75rem;
+  transition: background 160ms ease, transform 120ms ease;
+}
+
+.final-cta-primary:hover {
+  background: #fff;
+}
+
+.final-cta-primary:focus-visible {
+  outline: 3px solid rgba(247, 241, 232, 0.9);
+  outline-offset: 3px;
+}
+
+.final-cta-primary:active {
+  transform: translateY(1px);
+}
+
+/* Secondary CTA — ghost style */
+.final-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  color: rgba(247, 241, 232, 0.75);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.9rem 1.5rem;
+  border: 1px solid rgba(247, 241, 232, 0.20);
+  border-radius: 100px;
+  cursor: pointer;
+  min-height: 2.75rem;
+  transition: border-color 160ms ease, color 160ms ease, transform 120ms ease;
+}
+
+.final-cta-secondary:hover {
+  border-color: rgba(247, 241, 232, 0.42);
+  color: #f7f1e8;
+}
+
+.final-cta-secondary:focus-visible {
+  outline: 2px solid rgba(247, 241, 232, 0.85);
+  outline-offset: 3px;
+}
+
+.final-cta-secondary:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 480px) {
+  .final-cta-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .final-cta-primary,
+  .final-cta-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}

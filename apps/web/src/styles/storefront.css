@@ -10480,9 +10480,18 @@ th {
 
 /* ── Trust closing — editorial strip, not ecommerce cards ─────── */
 .trust-closing {
+  position: relative;
   border-top: 1px solid var(--line-2);
-  background: var(--paper);
+  background: linear-gradient(180deg, rgba(247, 241, 232, 0.55) 0%, var(--paper) 44%);
   padding: clamp(2.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 2rem) clamp(3rem, 5vw, 4rem);
+}
+
+.trust-closing::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(215, 168, 74, 0.32) 0%, rgba(215, 168, 74, 0.10) 60%, transparent 100%);
 }
 
 .trust-closing-inner {
@@ -10741,6 +10750,16 @@ th {
 .product-split-card:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
+}
+
+/* Boutique split / trio panel buttons — light outline on dark background */
+.boutique-split-panel:focus-visible {
+  outline: 2px solid rgba(247, 241, 232, 0.9);
+  outline-offset: 2px;
+}
+
+.boutique-split-panel:active {
+  filter: brightness(0.92);
 }
 
 /* ── Image treatment: path selector cards ────────────────────── */

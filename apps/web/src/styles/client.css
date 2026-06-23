@@ -1116,6 +1116,7 @@ body {
 }
 
 .featured-seller-media {
+  position: relative;
   display: grid;
   align-items: end;
   min-height: 20rem;
