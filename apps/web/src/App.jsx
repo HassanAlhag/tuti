@@ -14,6 +14,7 @@ import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 
 // ── Page components (client-owned, no seller/admin code) ──────────
 import { ClientLayout }       from "./features/layout/ClientLayout.jsx";
+import { RouteErrorState, RouteLoading, RouteNotFound } from "./features/layout/RouteState.jsx";
 import { HomePage }           from "./features/pages/HomePage.jsx";
 import { ShopPage }           from "./features/pages/ShopPage.jsx";
 import { ProductPage }        from "./features/pages/ProductPage.jsx";
@@ -66,7 +67,8 @@ function getRoute() {
   if (p.startsWith("/reset-password"))   return "reset-password";
   if (p.startsWith("/store-locator"))    return "store-locator";
   if (p.startsWith("/legal"))            return "legal";
-  return "home";
+  if (p === "/" || p === "")             return "home";
+  return "not-found";
 }
 
 function getCategory() {
@@ -120,16 +122,37 @@ export default function App() {
   const [occasion,          setOccasion]          = useState(getOccasion);
   const [cartNotice,        setCartNotice]        = useState("");
   const [sellerBrandSlug,   setSellerBrandSlug]   = useState(getSellerBrandSlug);
+  // Tracks the exact requested path so LegalPage/JournalPage (which read
+  // their own slug from window.location.pathname rather than a prop) get a
+  // real state change to re-render on, even when navigating between two
+  // paths that share the same route key, e.g. /legal/a -> /legal/b (Phase 9,
+  // css-revamp-phase-9.md -- setRoute alone is a no-op re-render trigger
+  // when the route key doesn't change, so the URL updated but the view
+  // silently didn't until a full refresh). Must be kept in sync by BOTH
+  // navigate() and navigatePath() below -- header/footer/mobile-drawer
+  // links call navigate(id) directly (ClientLayout/ClientFooter's
+  // onNavigate prop is `navigate`, not `navigatePath`), so the same gap
+  // existed there too until Phase 10's follow-up fix (css-revamp-
+  // phase-10-followup.md): clicking "Legal" in the footer while already
+  // on a Legal detail page changed the URL but left the old detail
+  // content on screen, since only navigatePath() set this before.
+  const [contentPath,      setContentPath]        = useState(() => window.location.pathname);
 
   // ── Load storefront data ────────────────────────────────────────
-  useEffect(() => {
-    let mounted = true;
+  // Extracted so the route-error retry action (below) can re-run the same
+  // fetch without a full page reload (Phase 8, css-revamp-phase-8.md).
+  function loadStorefront(mountedRef) {
     setLoading(true);
+    setLoadError("");
+    return marketplaceApi.getStorefront()
+      .then((data) => { if (mountedRef.current) { setStorefront(data); setSelectedProductId((c) => getProductId() || c || data.products?.[0]?.id || ""); } })
+      .catch((e)   => { if (mountedRef.current) setLoadError(e.message); })
+      .finally(()  => { if (mountedRef.current) setLoading(false); });
+  }
 
-    marketplaceApi.getStorefront()
-      .then((data) => { if (mounted) { setStorefront(data); setSelectedProductId((c) => getProductId() || c || data.products?.[0]?.id || ""); } })
-      .catch((e)   => { if (mounted) setLoadError(e.message); })
-      .finally(()  => { if (mounted) setLoading(false); });
+  useEffect(() => {
+    const mountedRef = { current: true };
+    loadStorefront(mountedRef);
 
     function onPopState() {
       setRoute(getRoute());
@@ -138,10 +161,17 @@ export default function App() {
       setOccasion(getOccasion());
       setSellerBrandSlug(getSellerBrandSlug());
       setSelectedProductId((c) => getProductId() || c);
+      setContentPath(window.location.pathname);
     }
     window.addEventListener("popstate", onPopState);
-    return () => { mounted = false; window.removeEventListener("popstate", onPopState); };
-  }, [isAuthenticated()]);
+    return () => { mountedRef.current = false; window.removeEventListener("popstate", onPopState); };
+    // Runs once on mount only — the storefront catalog is public and does
+    // not depend on auth status. It previously listed `isAuthenticated()`
+    // as a dependency despite never reading its value, which silently
+    // re-fetched the whole catalog (and re-flashed the app-level loading
+    // state) on every login/logout (Phase 8, css-revamp-phase-8.md).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hydrate wishlist from persisted user data when auth changes
   useEffect(() => {
@@ -176,15 +206,20 @@ export default function App() {
       if (cat && cat !== "all") params.set("c", cat);
       if (occ) params.set("occasion", occ);
       const qs = params.toString();
-      push(qs ? `/shop?${qs}` : "/shop");
+      const shopPath = qs ? `/shop?${qs}` : "/shop";
+      push(shopPath);
+      setContentPath(shopPath);
       setRoute("shop"); setCategory(cat || "all"); setOccasion(occ || "");
     } else if (paths[id]) {
-      push(paths[id]); setRoute(id);
+      push(paths[id]);
+      setContentPath(paths[id]);
+      setRoute(id);
     }
   }
 
   function navigatePath(path) {
     if (!path) return;
+    setContentPath(path);
     if (path === "/" || path === "")                        return navigate("home");
     if (path === "/cart")                                   return navigate("cart");
     if (path === "/shop")                                   return navigate("shop");
@@ -201,6 +236,11 @@ export default function App() {
     if (path === "/about" || path.startsWith("/about#"))    return navigate("about");
     if (path === "/sell")                                   return navigate("sell");
     if (path === "/journal")                                return navigate("journal");
+    if (path.startsWith("/journal/")) {
+      push(path);
+      setRoute("journal");
+      return;
+    }
     if (path === "/contact")                                return navigate("contact");
     if (path === "/support" || path.startsWith("/support?")) {
       push(path);
@@ -225,7 +265,12 @@ export default function App() {
       return;
     }
     if (path === "/store-locator")                          return navigate("store-locator");
-    if (path.startsWith("/legal"))                          return navigate("legal");
+    if (path === "/legal")                                  return navigate("legal");
+    if (path.startsWith("/legal/")) {
+      push(path);
+      setRoute("legal");
+      return;
+    }
     if (path === "/build-a-box")                             return navigate("build-a-box");
     if (path === "/gifting" || path.startsWith("/gifting/")) return navigate("gifting");
     if (path === "/offers")                                 return navigate("offers");
@@ -302,14 +347,31 @@ export default function App() {
   }
 
   // ── Render ──────────────────────────────────────────────────────
-  if (loading) return <div className="cl-loading">Loading…</div>;
-  if (loadError) return (
-    <div className="cl-error">
-      <strong>Cannot connect</strong>
-      <span>{loadError}</span>
-      <button className="primary-action" onClick={() => window.location.reload()} type="button">Retry</button>
-    </div>
-  );
+  // The header/search/cart/account controls stay live during loading and
+  // recoverable load errors — only the page body swaps (Phase 8,
+  // css-revamp-phase-8.md). A truly fatal render crash anywhere below is
+  // instead caught by <AppErrorBoundary> in main.jsx, which deliberately
+  // does not assume this layout is safe to render.
+  if (loading || loadError) {
+    return (
+      <ClientLayout
+        route={route}
+        shopCategory={category}
+        onNavigate={navigate}
+        onGoToSeller={() => { window.location.href = import.meta.env.VITE_SELLER_URL || "/seller"; }}
+      >
+        {loading ? (
+          <RouteLoading label="Loading Tuti…" />
+        ) : (
+          <RouteErrorState
+            heading="Cannot connect"
+            message={loadError}
+            onRetry={() => loadStorefront({ current: true })}
+          />
+        )}
+      </ClientLayout>
+    );
+  }
 
   const shared = {
     cart: items, cartTotal: cartSubtotal, checkoutNote, collections, families, family,
@@ -328,6 +390,7 @@ export default function App() {
       <HomePage
         collections={collections} getProduct={shared.getProduct} getShop={shared.getShop}
         goToAbout={() => navigate("about")} goToGifting={() => navigate("gifting")}
+        goToAccount={() => navigate("account")}
         goToBuildBox={() => navigate("build-a-box")}
         goToCollections={() => navigate("collections")}
         goToFragranceFinder={() => navigate("fragrance-finder")}
@@ -426,7 +489,7 @@ export default function App() {
         onNavigate={navigatePath}
       />
     ),
-    journal:            <JournalPage onNavigate={navigatePath} />,
+    journal:            <JournalPage key={contentPath} onNavigate={navigatePath} />,
     contact:            <CustomerServicePage mode="contact" onNavigate={navigatePath} />,
     "customer-service": <CustomerServicePage onNavigate={navigatePath} />,
     support: (
@@ -434,11 +497,19 @@ export default function App() {
         onNavigate={navigatePath}
       />
     ),
-    account:            <AccountPage onNavigate={navigatePath} />,
+    account:            <AccountPage getShop={shared.getShop} onNavigate={navigatePath} products={products} />,
     "reset-password":   <ResetPasswordPage onNavigate={navigatePath} />,
-    "store-locator":    <StoreLocatorPage />,
-    legal:              <LegalPage onNavigate={navigatePath} />,
+    "store-locator":    <StoreLocatorPage onNavigate={navigatePath} />,
+    legal:              <LegalPage key={contentPath} onNavigate={navigatePath} />,
     login:              <LoginPage onNavigate={navigatePath} />,
+    "not-found": (
+      <main className="page-shell">
+        <RouteNotFound
+          onPrimary={() => navigate("shop")}
+          onSecondary={() => navigate("home")}
+        />
+      </main>
+    ),
   };
 
   return (

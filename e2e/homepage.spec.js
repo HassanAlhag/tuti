@@ -10,10 +10,16 @@ test.describe("Homepage", () => {
 
   test("navigates to the shop", async ({ page }) => {
     await page.goto("/");
-    // Find a link to /shop and click it
-    const shopLink = page.locator('a[href="/shop"], a[href*="shop"]').first();
-    await expect(shopLink).toBeVisible();
-    await shopLink.click();
+    // Shop navigation is a button (SPA history.pushState routing, not an
+    // <a href>), so assert on visible behaviour rather than markup shape.
+    // At narrow widths the category rail collapses into the hamburger
+    // drawer, so the button has to be reached differently per viewport.
+    const shopButton = page.getByRole("button", { name: "Shop", exact: true });
+    if (!(await shopButton.isVisible().catch(() => false))) {
+      await page.getByRole("button", { name: "Open navigation menu" }).click();
+    }
+    await expect(shopButton.first()).toBeVisible();
+    await shopButton.first().click();
     await expect(page).toHaveURL(/\/shop/);
   });
 
