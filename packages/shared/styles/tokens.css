@@ -1,36 +1,41 @@
 :root {
   /* ─── Brand colours ──────────────────────────────────────────── */
-  --brand:       #0f6f61;
-  --brand-dark:  #0b4e47;
-  --brand-light: #e4f2ef;
-  --brand-mid:   rgba(15, 111, 97, 0.12);
+  /* Canonical values reconciled 2026 — these match the values that
+     apps/web (storefront.css), apps/admin (admin-dashboard.css), and
+     apps/seller (seller.css) had each already converged on locally.
+     This file was the one stale source; it now leads. See
+     docs/design/css-revamp-phase-1.md for the reconciliation record. */
+  --brand:       #005c46;
+  --brand-dark:  #013d32;
+  --brand-light: #e7f2eb;
+  --brand-mid:   rgba(0, 92, 70, 0.12);
 
   /* ─── Neutral palette ────────────────────────────────────────── */
-  --ink:   #15201d;
-  --ink-2: #2a3c37;
-  --muted: #65726e;
-  --subtle:#93a39e;
-  --line:  #dbe3df;
-  --line-2:#ecf1ef;
-  --paper: #f7faf8;
-  --paper-2:#f0f4f2;
-  --panel: #ffffff;
+  --ink:   #171717;
+  --ink-2: #2d2d2d;
+  --muted: #66726d;
+  --subtle:#8b9892;
+  --line:  #d9ded7;
+  --line-2:#ece8df;
+  --paper: #fbf7ef;
+  --paper-2:#f4e8d2;
+  --panel: #fffdf8;
 
   /* ─── Semantic colours ───────────────────────────────────────── */
-  --danger:  #b42318;
-  --danger-bg: rgba(180,35,24,0.07);
-  --warning: #b54708;
-  --warning-bg: rgba(181,71,8,0.07);
-  --success: #087443;
-  --success-bg: rgba(8,116,67,0.07);
-  --info:    #2d6cdf;
-  --info-bg: rgba(45,108,223,0.07);
+  --danger:  #9f5139;
+  --danger-bg: rgba(159, 81, 57, 0.08);
+  --warning: #b86b45;
+  --warning-bg: rgba(184, 107, 69, 0.08);
+  --success: #0f7a5d;
+  --success-bg: rgba(15, 122, 93, 0.08);
+  --info:    #1b8a7a;
+  --info-bg: rgba(27, 138, 122, 0.08);
 
   /* ─── Accent colours ─────────────────────────────────────────── */
-  --rose:  #b94d68;
-  --amber: #c8842f;
-  --gold:  #d9a441;
-  --blue:  #2d6cdf;
+  --rose:  #b86b45;
+  --amber: #d7a84a;
+  --gold:  #d7a84a;
+  --blue:  #1b8a7a;
 
   /* ─── Typography scale ───────────────────────────────────────── */
   --text-xs:   0.6875rem; /* 11px */
@@ -76,11 +81,13 @@
   --radius-full:999px;
 
   /* ─── Shadows ────────────────────────────────────────────────── */
-  --shadow-xs:   0 1px 3px rgba(21,32,29,0.07);
-  --shadow-sm:   0 4px 12px rgba(21,32,29,0.08);
-  --shadow-soft: 0 8px 28px rgba(21,32,29,0.09);
-  --shadow-md:   0 12px 36px rgba(21,32,29,0.11);
-  --shadow-strong:0 24px 64px rgba(21,32,29,0.16);
+  /* Reconciled to match apps/web, apps/admin, apps/seller (all three
+     already shared this exact shadow shape+color locally). */
+  --shadow-xs:   0 1px 3px rgba(23,23,23,0.06);
+  --shadow-sm:   0 6px 16px rgba(23,23,23,0.08);
+  --shadow-soft: 0 10px 28px rgba(23,23,23,0.1);
+  --shadow-md:   0 14px 36px rgba(23,23,23,0.12);
+  --shadow-strong:0 20px 52px rgba(23,23,23,0.14);
 
   /* ─── Z-index layers ─────────────────────────────────────────── */
   --z-base:     0;
