@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import * as Sentry from "@sentry/react";
 import { QueryProvider } from "@tuti/shared/providers/QueryProvider.jsx";
 import App from "./App.jsx";
+import { AppErrorBoundary } from "./AppErrorBoundary.jsx";
 import "@tuti/shared/styles/tokens.css";
 import "@tuti/shared/styles/base.css";
 import "./styles/storefront.css";
@@ -19,8 +20,10 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <QueryProvider>
-      <App />
-    </QueryProvider>
+    <AppErrorBoundary>
+      <QueryProvider>
+        <App />
+      </QueryProvider>
+    </AppErrorBoundary>
   </React.StrictMode>
 );
