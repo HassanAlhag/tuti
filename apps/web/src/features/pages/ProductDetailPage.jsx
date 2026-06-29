@@ -5,9 +5,12 @@ import {
   CalendarClock,
   CheckCircle2,
   Gift,
+  Heart,
   MapPin,
   MessageSquare,
+  Minus,
   PackageCheck,
+  Plus,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -15,11 +18,14 @@ import {
   Store,
   Truck,
 } from "lucide-react";
+import { RouteNotFound } from "../layout/RouteState.jsx";
 import { ReviewContributionPanel } from "../reviews/ReviewContributionPanel.jsx";
 import { ProductCardRouter } from "../storefront/components/ProductCardRouter.jsx";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { bayesianScore } from "@tuti/shared/utils/rating.js";
+import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
 import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
@@ -102,7 +108,7 @@ function DetailArt({ product }) {
         <div className="detail-gift-body">
           <div className="detail-gift-ribbon-x" />
           <div className="detail-gift-ribbon-y" />
-          <Gift size={42} />
+          <Gift size={42} aria-hidden="true" />
         </div>
       </div>
     );
@@ -190,12 +196,18 @@ export function ProductDetailPage({
   setReviewDraft,
   submitCustomerReview,
   onAddToCart,
-  onRateProduct,
   onViewProduct,
 }) {
   const pageViewKeyRef = useRef("");
   const actionsRef = useRef(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const { isAuthenticated } = useAuthStore();
+  const { has: isWishlisted, toggle: toggleWishlist } = useWishlistStore();
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [product?.id]);
 
   useEffect(() => {
     if (!product?.id) return;
@@ -258,13 +270,12 @@ export function ProductDetailPage({
   if (!product) {
     return (
       <main className="page-shell">
-        <section className="not-found-panel">
-          <h1>Product not found</h1>
-          <button className="primary-action" onClick={() => goToShop("all")} type="button">
-            <ArrowLeft size={17} />
-            Back to shop
-          </button>
-        </section>
+        <RouteNotFound
+          heading="Product not found"
+          message="This product may have sold out, been removed, or the link may be incorrect."
+          onPrimary={() => goToShop("all")}
+          primaryLabel="Back to shop"
+        />
       </main>
     );
   }
@@ -307,18 +318,18 @@ export function ProductDetailPage({
     .slice(0, 4);
 
   function addAndCheckout() {
-    onAddToCart(product);
+    onAddToCart(product, quantity);
     goToCart();
   }
 
   return (
     <main className="page-shell">
       <button className="ghost-action compact page-back" onClick={() => goToShop(getCategoryForBack(product))} type="button">
-        <ArrowLeft size={16} />
+        <ArrowLeft size={16} aria-hidden="true" />
         {meta.backLabel}
       </button>
 
-      <section className="product-detail-layout product-detail-layout-wide">
+      <section className="product-detail-layout">
         <div className="product-gallery-panel">
           <DetailArt product={product} />
         </div>
@@ -344,23 +355,54 @@ export function ProductDetailPage({
             {product.originalPrice ? <del>{formatCurrency(product.originalPrice)}</del> : null}
           </div>
           <div className="detail-rating-row">
-            <Star size={18} fill="currentColor" />
+            <Star size={18} fill="currentColor" aria-hidden="true" />
             <strong>{score}</strong>
             <span>{product.reviews} reviews · {product.verifiedReviews} verified purchases</span>
           </div>
           <div className="detail-actions" ref={actionsRef}>
-            <button className="primary-action" onClick={() => onAddToCart(product)} type="button">
-              <ShoppingBag size={18} />
-              {meta.cta}
+            <div className="detail-quantity" role="group" aria-label="Quantity">
+              <button
+                aria-label="Decrease quantity"
+                className="detail-quantity-btn"
+                disabled={quantity <= 1}
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                type="button"
+              >
+                <Minus size={16} aria-hidden="true" />
+              </button>
+              <span aria-live="polite" className="detail-quantity-value">{quantity}</span>
+              <button
+                aria-label="Increase quantity"
+                className="detail-quantity-btn"
+                disabled={product.stock > 0 && quantity >= product.stock}
+                onClick={() => setQuantity((q) => (product.stock > 0 ? Math.min(product.stock, q + 1) : q + 1))}
+                type="button"
+              >
+                <Plus size={16} aria-hidden="true" />
+              </button>
+            </div>
+            <button
+              className="primary-action"
+              disabled={product.stock === 0}
+              onClick={() => onAddToCart(product, quantity)}
+              type="button"
+            >
+              <ShoppingBag size={18} aria-hidden="true" />
+              {product.stock === 0 ? "Out of stock" : meta.cta}
             </button>
-            <button className="secondary-action" onClick={addAndCheckout} type="button">
-              <PackageCheck size={18} />
+            <button className="secondary-action" disabled={product.stock === 0} onClick={addAndCheckout} type="button">
+              <PackageCheck size={18} aria-hidden="true" />
               Continue order
             </button>
-            {isPerfume ? (
-              <button className="ghost-action" onClick={() => onRateProduct(product.id)} type="button">
-                <MessageSquare size={18} />
-                Write a review
+            {isAuthenticated() ? (
+              <button
+                aria-label={isWishlisted(product.id) ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+                aria-pressed={isWishlisted(product.id)}
+                className={isWishlisted(product.id) ? "icon-button wishlist-btn saved" : "icon-button wishlist-btn"}
+                onClick={() => toggleWishlist(product.id, product.name)}
+                type="button"
+              >
+                <Heart size={18} fill={isWishlisted(product.id) ? "currentColor" : "none"} aria-hidden="true" />
               </button>
             ) : null}
           </div>
@@ -368,11 +410,11 @@ export function ProductDetailPage({
             {(product.tags || []).map((tag) => <span key={tag}>{tag}</span>)}
           </div>
           <div className="detail-trust-strip">
-            <span><Truck size={16} /> Cash on delivery</span>
-            <span><MapPin size={16} /> UAE boutique seller</span>
-            <span><PackageCheck size={16} /> Seller fulfilled</span>
-            <span><ShieldCheck size={16} /> Tuti buyer support</span>
-            {isGift ? <span><Gift size={16} /> Gift packaging included</span> : null}
+            <span><Truck size={16} aria-hidden="true" /> Cash on delivery</span>
+            <span><MapPin size={16} aria-hidden="true" /> UAE boutique seller</span>
+            <span><PackageCheck size={16} aria-hidden="true" /> Seller fulfilled</span>
+            <span><ShieldCheck size={16} aria-hidden="true" /> Tuti buyer support</span>
+            {isGift ? <span><Gift size={16} aria-hidden="true" /> Gift packaging included</span> : null}
           </div>
           <p>
             {isPerfume
@@ -387,15 +429,15 @@ export function ProductDetailPage({
           <div className="detail-seller-avatar">{sellerInitials}</div>
           <div className="detail-seller-name-row">
             <h2>{shop?.name || "Boutique seller"}</h2>
-            <span><MapPin size={14} /> {sellerLocation}</span>
+            <span><MapPin size={14} aria-hidden="true" /> {sellerLocation}</span>
           </div>
           {shop?.story ? <p className="detail-seller-story">{shop.story}</p> : null}
           <div className="detail-seller-trust">
-            <span><ShieldCheck size={16} /> Verified seller</span>
-            <span><MapPin size={16} /> {shop?.city ? `${shop.city} boutique` : "UAE boutique"}</span>
+            <span><ShieldCheck size={16} aria-hidden="true" /> Verified seller</span>
+            <span><MapPin size={16} aria-hidden="true" /> {shop?.city ? `${shop.city} boutique` : "UAE boutique"}</span>
           </div>
           <button className="ghost-action compact detail-seller-link" onClick={() => goToShop("all")} type="button">
-            <Store size={16} />
+            <Store size={16} aria-hidden="true" />
             Browse all sellers
           </button>
         </aside>
@@ -420,13 +462,13 @@ export function ProductDetailPage({
             </DetailBlock>
             <DetailBlock title="Perfume details">
               <div className="detail-spec-grid">
-                <span><Sparkles size={16} /> Scent family: {product.family}</span>
-                <span><Gift size={16} /> Gender: {product.gender || "Unisex"}</span>
-                <span><PackageCheck size={16} /> Size: {product.size || "Standard"}</span>
-                <span><ShieldCheck size={16} /> Intensity: {product.intensity}</span>
-                <span><CalendarClock size={16} /> Longevity: {product.longevity}</span>
-                <span><Gift size={16} /> Best occasion: {(product.occasion || []).join(", ")}</span>
-                <span><Truck size={16} /> Availability: {availabilityLabel}</span>
+                <span><Sparkles size={16} aria-hidden="true" /> Scent family: {product.family}</span>
+                <span><Gift size={16} aria-hidden="true" /> Gender: {product.gender || "Unisex"}</span>
+                <span><PackageCheck size={16} aria-hidden="true" /> Size: {product.size || "Standard"}</span>
+                <span><ShieldCheck size={16} aria-hidden="true" /> Intensity: {product.intensity}</span>
+                <span><CalendarClock size={16} aria-hidden="true" /> Longevity: {product.longevity}</span>
+                <span><Gift size={16} aria-hidden="true" /> Best occasion: {(product.occasion || []).join(", ")}</span>
+                <span><Truck size={16} aria-hidden="true" /> Availability: {availabilityLabel}</span>
               </div>
             </DetailBlock>
           </>
@@ -436,11 +478,11 @@ export function ProductDetailPage({
           <>
             <DetailBlock title="Cake & dessert details">
               <div className="detail-spec-grid">
-                <span><Cake size={16} /> Type: {product.cakeType}</span>
-                <span><PackageCheck size={16} /> Servings: {product.servings || "Box serving varies"}</span>
-                <span><CalendarClock size={16} /> Lead time: {product.leadTimeDays === 1 ? "Same-day available" : `${product.leadTimeDays || 1} day lead time`}</span>
-                <span><MessageSquare size={16} /> Custom message: {product.customMessageAvailable ? "Available" : "Not available"}</span>
-                <span><Truck size={16} /> Stock: {availabilityLabel}</span>
+                <span><Cake size={16} aria-hidden="true" /> Type: {product.cakeType}</span>
+                <span><PackageCheck size={16} aria-hidden="true" /> Servings: {product.servings || "Box serving varies"}</span>
+                <span><CalendarClock size={16} aria-hidden="true" /> Lead time: {product.leadTimeDays === 1 ? "Same-day available" : `${product.leadTimeDays || 1} day lead time`}</span>
+                <span><MessageSquare size={16} aria-hidden="true" /> Custom message: {product.customMessageAvailable ? "Available" : "Not available"}</span>
+                <span><Truck size={16} aria-hidden="true" /> Stock: {availabilityLabel}</span>
               </div>
             </DetailBlock>
             <DetailBlock title="Flavor, ingredients, and allergens">
@@ -456,17 +498,17 @@ export function ProductDetailPage({
             <DetailBlock title="Gift box includes">
               <ul className="detail-check-list">
                 {(product.includes || []).map((item) => (
-                  <li key={item}><CheckCircle2 size={16} /> {item}</li>
+                  <li key={item}><CheckCircle2 size={16} aria-hidden="true" /> {item}</li>
                 ))}
               </ul>
             </DetailBlock>
             <DetailBlock title="Gift options">
               <div className="detail-spec-grid">
-                <span><Gift size={16} /> Luxury packaging included</span>
-                <span><MessageSquare size={16} /> Personalised card: {product.customMessageAvailable ? "Available" : "Not available"}</span>
-                <span><CalendarClock size={16} /> Lead time: {product.leadTimeDays || 1} days</span>
-                <span><Truck size={16} /> Delivery scheduling supported</span>
-                <span><Sparkles size={16} /> Occasions: {(product.occasionTags || []).join(", ") || "All occasions"}</span>
+                <span><Gift size={16} aria-hidden="true" /> Luxury packaging included</span>
+                <span><MessageSquare size={16} aria-hidden="true" /> Personalised card: {product.customMessageAvailable ? "Available" : "Not available"}</span>
+                <span><CalendarClock size={16} aria-hidden="true" /> Lead time: {product.leadTimeDays || 1} days</span>
+                <span><Truck size={16} aria-hidden="true" /> Delivery scheduling supported</span>
+                <span><Sparkles size={16} aria-hidden="true" /> Occasions: {(product.occasionTags || []).join(", ") || "All occasions"}</span>
               </div>
             </DetailBlock>
           </>
@@ -546,10 +588,10 @@ export function ProductDetailPage({
           <button
             className="primary-action compact"
             disabled={product.stock === 0}
-            onClick={() => onAddToCart(product)}
+            onClick={() => onAddToCart(product, quantity)}
             type="button"
           >
-            <ShoppingBag size={16} />
+            <ShoppingBag size={16} aria-hidden="true" />
             {product.stock === 0 ? "Out of stock" : "Add to cart"}
           </button>
         </div>

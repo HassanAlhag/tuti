@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { CreditCard, ShoppingBag, User, WalletCards } from "lucide-react";
+import { CreditCard, Gift, Minus, Plus, ShoppingBag, Trash2, User, WalletCards } from "lucide-react";
 import { ordersApi } from "@tuti/shared/api/client.js";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
@@ -9,7 +9,6 @@ import {
   ItemFacts,
   PageHero,
   compactOrderItem,
-  formatPaymentMethod,
   getCartLineKey,
   isCakeLikeItem,
   isGiftLikeItem,
@@ -116,6 +115,27 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
       return "Your session has expired. Please sign in again and retry.";
     }
     return "We could not place your order. Please try again.";
+  }
+
+  if (!cart.length) {
+    return (
+      <main className="page-shell">
+        <PageHero
+          kicker="Cart & checkout"
+          title="Your cart is ready for something thoughtful."
+          text="Add a perfume, cake, dessert, or gift box to get started — or build a personal gift in a few steps."
+        >
+          <button className="primary-action" onClick={() => onNavigate?.("/shop")} type="button">
+            <ShoppingBag size={18} aria-hidden="true" />
+            Browse the shop
+          </button>
+          <button className="ghost-action" onClick={() => onNavigate?.("/build-a-box")} type="button">
+            <Gift size={18} aria-hidden="true" />
+            Build a box
+          </button>
+        </PageHero>
+      </main>
+    );
   }
 
   return (
@@ -273,7 +293,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
         <aside className="checkout-summary-card">
           <h2>Order summary</h2>
           <div className="cart-items">
-            {cart.length ? cart.map((item) => (
+            {cart.map((item) => (
               <div className="cart-item" key={getCartLineKey(item)}>
                 <BottleArt product={item} compact />
                 <div>
@@ -326,9 +346,37 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                     </div>
                   ) : null}
                 </div>
-                <button aria-label={`Remove one ${item.name} from cart`} className="icon-button" onClick={() => updateCartQuantity(getCartLineKey(item), -1)} type="button">-</button>
+                <div className="cart-item-actions">
+                  <div className="cart-quantity" role="group" aria-label={`Quantity for ${item.name}`}>
+                    <button
+                      aria-label={`Decrease quantity of ${item.name}`}
+                      className="cart-quantity-btn"
+                      onClick={() => updateCartQuantity(getCartLineKey(item), item.quantity - 1)}
+                      type="button"
+                    >
+                      <Minus size={14} aria-hidden="true" />
+                    </button>
+                    <span aria-live="polite" className="cart-quantity-value">{item.quantity}</span>
+                    <button
+                      aria-label={`Increase quantity of ${item.name}`}
+                      className="cart-quantity-btn"
+                      onClick={() => updateCartQuantity(getCartLineKey(item), item.quantity + 1)}
+                      type="button"
+                    >
+                      <Plus size={14} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <button
+                    aria-label={`Remove ${item.name} from cart`}
+                    className="icon-button danger cart-remove-btn"
+                    onClick={() => updateCartQuantity(getCartLineKey(item), 0)}
+                    type="button"
+                  >
+                    <Trash2 size={15} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
-            )) : <p className="muted-label">Your cart is empty.</p>}
+            ))}
           </div>
           <div className="checkout-box">
             <div className="summary-line"><span>Items</span><strong>{formatCurrency(cartTotal)}</strong></div>

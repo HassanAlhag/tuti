@@ -70,13 +70,16 @@ export function GiftingPage({ products, getShop, onAddToCart, onNavigate }) {
         </button>
       </section>
 
-      <section className="gifting-guide-grid">
-        {giftingGuides.map((item) => (
-          <article className="gifting-guide-card" key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-          </article>
-        ))}
+      <section className="gifting-guide-section">
+        <h2 className="gifting-guide-section-title">Shop by occasion</h2>
+        <div className="gifting-guide-grid">
+          {giftingGuides.map((item) => (
+            <article className="gifting-guide-card" key={item.title}>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="gifting-sections-grid">

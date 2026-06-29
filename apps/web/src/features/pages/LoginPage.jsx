@@ -118,13 +118,12 @@ export function LoginPage({ onNavigate }) {
             )}
 
             <button className="primary-action full-width" type="submit" disabled={loading}>
-              <LogIn size={15} />
+              <LogIn size={15} aria-hidden="true" />
               {loading ? "Signing in…" : "Sign in"}
             </button>
 
             <button
               className="ghost-action compact"
-              style={{ textAlign: "center" }}
               onClick={() => onNavigate?.("/reset-password")}
               type="button"
             >

@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CalendarClock,
   Clock,
-  HelpCircle,
   MessageSquare,
   PackageCheck,
   Search,
@@ -18,6 +17,7 @@ import { PageTitle } from "@tuti/shared/components/PageTitle.jsx";
 import { PanelHeader } from "@tuti/shared/components/PanelHeader.jsx";
 import { ordersApi, supportTicketsApi } from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { RouteAuthRequired } from "../layout/RouteState.jsx";
 
 const STATUS_OPTIONS = [
   "all",
@@ -150,19 +150,19 @@ function SupportTicketDetail({
           {orderId ? (
             <div className="support-ticket-order-link">
               <span>
-                <PackageCheck size={14} />
+                <PackageCheck size={14} aria-hidden="true" />
                 Linked order
               </span>
               <button className="ghost-action compact" type="button" onClick={() => onNavigate?.(`/account?order=${encodeURIComponent(orderId)}`)}>
                 Open order
-                <ArrowRight size={14} />
+                <ArrowRight size={14} aria-hidden="true" />
               </button>
             </div>
           ) : null}
 
           <section className="support-ticket-thread">
             <span className="support-ticket-thread-head">
-              <MessageSquare size={14} />
+              <MessageSquare size={14} aria-hidden="true" />
               Conversation
             </span>
             {messages.length ? (
@@ -191,7 +191,7 @@ function SupportTicketDetail({
 
           <section className="support-ticket-reply">
             <span className="support-ticket-thread-head">
-              <MessageSquare size={14} />
+              <MessageSquare size={14} aria-hidden="true" />
               Reply
             </span>
             <textarea
@@ -400,17 +400,13 @@ export function SupportTicketsPage({ onNavigate }) {
           title="Help & Support"
           description="Use Support for general help. For refund, delivery, or order outcome issues, open a dispute from your order details."
         />
-        <section className="support-entry-panel panel">
-          <EmptyState icon={HelpCircle} text="Please sign in to create or view your support tickets." />
-          <div className="support-entry-actions">
-            <button className="primary-action" type="button" onClick={() => window.dispatchEvent(new CustomEvent("tuti:open-auth", { detail: { mode: "login" } }))}>
-              Sign in
-            </button>
-            <button className="secondary-action" type="button" onClick={() => onNavigate?.("/customer-service")}>
-              View customer service
-            </button>
-          </div>
-        </section>
+        <RouteAuthRequired
+          heading="Sign in to contact support"
+          message="Sign in to create or view your support tickets, or browse customer service topics without an account."
+          onSignIn={() => window.dispatchEvent(new CustomEvent("tuti:open-auth", { detail: { mode: "login" } }))}
+          onContinue={() => onNavigate?.("/customer-service")}
+          continueLabel="View customer service"
+        />
       </main>
     );
   }
@@ -431,11 +427,11 @@ export function SupportTicketsPage({ onNavigate }) {
         </div>
         <div className="support-bridge-actions">
           <button className="secondary-action compact" type="button" onClick={() => onNavigate?.("/account")}>
-            <PackageCheck size={16} />
+            <PackageCheck size={16} aria-hidden="true" />
             Go to orders
           </button>
           <button className="ghost-action compact" type="button" onClick={() => onNavigate?.("/customer-service")}>
-            <ShieldCheck size={16} />
+            <ShieldCheck size={16} aria-hidden="true" />
             Customer service
           </button>
         </div>
@@ -537,7 +533,7 @@ export function SupportTicketsPage({ onNavigate }) {
             />
             <div className="support-ticket-toolbar">
               <label className="management-search support-ticket-search">
-                <Search size={16} />
+                <Search size={16} aria-hidden="true" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}

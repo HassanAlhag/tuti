@@ -1,10 +1,14 @@
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
+  Cake,
   Check,
   CheckCircle2,
+  Gem,
   Gift,
+  HeartHandshake,
   MessageSquare,
+  MoonStar,
   Package,
   PackageCheck,
   ShoppingBag,
@@ -20,31 +24,37 @@ const OCCASION_OPTIONS = [
   {
     id: "birthday",
     label: "Birthday",
+    icon: Cake,
     suggestion: "Happy Birthday. Wishing you a beautiful day and something sweet to celebrate.",
   },
   {
     id: "eid",
     label: "Eid",
+    icon: MoonStar,
     suggestion: "Eid Mubarak. Wishing you joy, peace, and sweetness in every moment.",
   },
   {
     id: "wedding",
     label: "Wedding",
+    icon: Gem,
     suggestion: "Congratulations on your special day. Wishing you a beautiful beginning together.",
   },
   {
     id: "anniversary",
     label: "Anniversary",
+    icon: HeartHandshake,
     suggestion: "Happy Anniversary. Wishing you love, warmth, and a beautiful celebration.",
   },
   {
     id: "thank-you",
     label: "Thank You",
+    icon: Sparkles,
     suggestion: "Thank you for your kindness. I hope this gift brings a little joy to your day.",
   },
   {
     id: "just-because",
     label: "Just Because",
+    icon: Gift,
     suggestion: "Thinking of you and sending something thoughtful, simply because you deserve it.",
   },
 ];
@@ -304,18 +314,26 @@ function OccasionSelector({ occasion, onSelect }) {
         ) : null}
       </div>
       <div className="build-box-occasion-grid" role="list" aria-label="Occasion options">
-        {OCCASION_OPTIONS.map((option) => (
-          <button
-            key={option.id}
-            className={occasion === option.id ? "build-box-occasion-chip active" : "build-box-occasion-chip"}
-            type="button"
-            aria-pressed={occasion === option.id}
-            onClick={() => onSelect(option.id)}
-          >
-            <strong>{option.label}</strong>
-            <span>{option.id === "thank-you" ? "Warm gratitude" : option.id === "just-because" ? "A thoughtful surprise" : "Suggested message available"}</span>
-          </button>
-        ))}
+        {OCCASION_OPTIONS.map((option) => {
+          const Icon = option.icon;
+          return (
+            <button
+              key={option.id}
+              className={occasion === option.id ? "build-box-occasion-chip active" : "build-box-occasion-chip"}
+              type="button"
+              aria-pressed={occasion === option.id}
+              onClick={() => onSelect(option.id)}
+            >
+              <span className="build-box-occasion-icon" aria-hidden="true">
+                <Icon size={18} strokeWidth={1.75} />
+              </span>
+              <span className="build-box-occasion-copy">
+                <strong>{option.label}</strong>
+                <span>{option.id === "thank-you" ? "Warm gratitude" : option.id === "just-because" ? "A thoughtful surprise" : "Suggested message available"}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

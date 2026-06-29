@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Bell, CheckCircle2, HelpCircle, Heart, MapPin, PackageCheck, Pencil, Plus, Settings, ShoppingBag, Star, Trash2, User } from "lucide-react";
 import { authApi, ordersApi } from "@tuti/shared/api/client.js";
 import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
+import { RouteAuthRequired } from "../../layout/RouteState.jsx";
+import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
@@ -19,9 +21,9 @@ import {
   getOrderItemCount,
 } from "./sitemapPageShared.jsx";
 
-export function AccountPage({ onNavigate }) {
+export function AccountPage({ getShop, onNavigate, products = [] }) {
   const { user, isAuthenticated, updateUser } = useAuthStore();
-  const { ids: wishlistIds } = useWishlistStore();
+  const { ids: wishlistIds, toggle: toggleWishlist } = useWishlistStore();
   const [accountTab, setAccountTab] = useState("orders");
   const [ordersState, setOrdersState] = useState({ loading: false, error: "", orders: [] });
   const [selectedOrderId, setSelectedOrderId] = useState("");
@@ -193,6 +195,7 @@ export function AccountPage({ onNavigate }) {
   }, [authenticated, ordersState.loading, ordersState.orders]);
 
   const selectedOrder = ordersState.orders.find((order) => order.orderId === selectedOrderId) || null;
+  const wishlistProducts = products.filter((product) => wishlistIds.has(product.id));
 
   return (
     <main className="page-shell">
@@ -202,21 +205,29 @@ export function AccountPage({ onNavigate }) {
         text={authenticated ? "Review recent orders, delivery details, and support actions from your customer account." : "Login to save orders, addresses, wishlist items, and rewards."}
       >
         <button className="secondary-action" onClick={() => onNavigate("/cart")} type="button">
-          <ShoppingBag size={18} />
+          <ShoppingBag size={18} aria-hidden="true" />
           View cart
         </button>
       </PageHero>
 
       {!authenticated ? (
-        <section className="account-grid">
-          {["Orders", "Wishlist", "Rewards", "Saved addresses"].map((section, index) => (
-            <article className={index < 2 ? "account-card highlighted" : "account-card"} key={section}>
-              <span className="sitemap-card-icon">{section.includes("Order") ? <PackageCheck size={19} /> : <User size={19} />}</span>
-              <h2>{section}</h2>
-              <p>{section === "Wishlist" ? "Saved perfumes and future gift ideas." : "Login to unlock saved account activity and order history."}</p>
-            </article>
-          ))}
-        </section>
+        <>
+          <RouteAuthRequired
+            heading="Sign in to view your account"
+            message="Create a free account or sign in to see your orders, addresses, wishlist, and rewards."
+            onContinue={() => onNavigate("/shop")}
+            onSignIn={() => window.dispatchEvent(new CustomEvent("tuti:open-auth", { detail: { mode: "login" } }))}
+          />
+          <section className="account-grid">
+            {["Orders", "Wishlist", "Rewards", "Saved addresses"].map((section, index) => (
+              <article className={index < 2 ? "account-card highlighted" : "account-card"} key={section}>
+                <span className="sitemap-card-icon">{section.includes("Order") ? <PackageCheck size={19} aria-hidden="true" /> : <User size={19} aria-hidden="true" />}</span>
+                <h2>{section}</h2>
+                <p>{section === "Wishlist" ? "Saved perfumes and future gift ideas." : "Login to unlock saved account activity and order history."}</p>
+              </article>
+            ))}
+          </section>
+        </>
       ) : (
         <>
           <nav className="account-tabs" aria-label="Account sections">
@@ -244,14 +255,14 @@ export function AccountPage({ onNavigate }) {
             <section className="account-form-section">
               <div className="checkout-form-card">
                 <div className="checkout-card-heading">
-                  <span className="sitemap-card-icon"><User size={19} /></span>
+                  <span className="sitemap-card-icon"><User size={19} aria-hidden="true" /></span>
                   <div>
                     <h2>Profile</h2>
                     <p>Your name and contact details.</p>
                   </div>
                   {!profileEdit ? (
                     <button className="ghost-action compact" onClick={openProfileEdit} type="button">
-                      <Pencil size={15} /> Edit
+                      <Pencil size={15} aria-hidden="true" /> Edit
                     </button>
                   ) : null}
                 </div>
@@ -272,8 +283,8 @@ export function AccountPage({ onNavigate }) {
                       Phone / WhatsApp
                       <input value={profileForm.phone} onChange={(e) => setProfileForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+971..." />
                     </label>
-                    {profileError ? <p className="error-state checkout-error" style={{ gridColumn: "1/-1" }}>{profileError}</p> : null}
-                    <div style={{ gridColumn: "1/-1", display: "flex", gap: "0.5rem" }}>
+                    {profileError ? <p className="error-state checkout-error checkout-field-wide">{profileError}</p> : null}
+                    <div className="account-form-actions">
                       <button className="primary-action compact" disabled={profileSaving} type="submit">
                         {profileSaving ? "Saving…" : "Save changes"}
                       </button>
@@ -289,14 +300,14 @@ export function AccountPage({ onNavigate }) {
             <section className="account-form-section">
               <div className="checkout-form-card">
                 <div className="checkout-card-heading">
-                  <span className="sitemap-card-icon"><MapPin size={19} /></span>
+                  <span className="sitemap-card-icon"><MapPin size={19} aria-hidden="true" /></span>
                   <div>
                     <h2>Saved addresses</h2>
                     <p>Delivery addresses for faster checkout.</p>
                   </div>
                   {addrEdit === null ? (
                     <button className="ghost-action compact" onClick={openNewAddress} type="button">
-                      <Plus size={15} /> Add
+                      <Plus size={15} aria-hidden="true" /> Add
                     </button>
                   ) : null}
                 </div>
@@ -327,8 +338,8 @@ export function AccountPage({ onNavigate }) {
                       />
                       Set as default address
                     </label>
-                    {addrError ? <p className="error-state checkout-error" style={{ gridColumn: "1/-1" }}>{addrError}</p> : null}
-                    <div style={{ gridColumn: "1/-1", display: "flex", gap: "0.5rem" }}>
+                    {addrError ? <p className="error-state checkout-error checkout-field-wide">{addrError}</p> : null}
+                    <div className="account-form-actions">
                       <button className="primary-action compact" disabled={addrSaving} type="submit">
                         {addrSaving ? "Saving…" : addrEdit === "new" ? "Add address" : "Save address"}
                       </button>
@@ -346,14 +357,14 @@ export function AccountPage({ onNavigate }) {
                         <div className="account-address-actions">
                           {!addr.isDefault ? (
                             <button className="ghost-action compact" onClick={() => setDefaultAddress(addr.id)} title="Set as default" type="button">
-                              <Star size={14} /> Default
+                              <Star size={14} aria-hidden="true" /> Default
                             </button>
                           ) : null}
                           <button className="ghost-action compact" onClick={() => openEditAddress(addr)} type="button">
-                            <Pencil size={14} /> Edit
+                            <Pencil size={14} aria-hidden="true" /> Edit
                           </button>
                           <button className="ghost-action compact" onClick={() => removeAddress(addr.id)} type="button">
-                            <Trash2 size={14} /> Remove
+                            <Trash2 size={14} aria-hidden="true" /> Remove
                           </button>
                         </div>
                       </div>
@@ -361,7 +372,7 @@ export function AccountPage({ onNavigate }) {
                   </div>
                 ) : (
                   <div className="account-empty-state">
-                    <MapPin size={22} />
+                    <MapPin size={22} aria-hidden="true" />
                     <h3>No addresses saved</h3>
                     <p>Add a delivery address for faster checkout.</p>
                   </div>
@@ -374,31 +385,55 @@ export function AccountPage({ onNavigate }) {
             <section className="account-form-section">
               <div className="checkout-form-card">
                 <div className="checkout-card-heading">
-                  <span className="sitemap-card-icon"><Heart size={19} /></span>
+                  <span className="sitemap-card-icon"><Heart size={19} aria-hidden="true" /></span>
                   <div>
                     <h2>Saved items</h2>
                     <p>Products you've saved for later.</p>
                   </div>
                 </div>
-                {wishlistIds.size > 0 ? (
-                  <div className="account-address-list">
-                    {[...wishlistIds].map((productId) => (
-                      <div className="account-address-row" key={productId}>
-                        <div>
-                          <strong>{productId}</strong>
-                          <span className="muted-label">Saved product</span>
-                        </div>
-                        <div className="account-address-actions">
-                          <button className="ghost-action compact" onClick={() => onNavigate?.(`/products/${productId}`)} type="button">
-                            View
+                {wishlistProducts.length > 0 ? (
+                  <div className="account-wishlist-grid">
+                    {wishlistProducts.map((product) => {
+                      const shop = getShop?.(product.shopId);
+                      return (
+                        <div className="account-wishlist-item" key={product.id}>
+                          <button
+                            aria-label={`View ${product.name}`}
+                            className="account-wishlist-media"
+                            onClick={() => onNavigate?.(`/products/${product.id}`)}
+                            type="button"
+                          >
+                            {product.imagePath ? (
+                              <img alt={product.name} loading="lazy" src={product.imagePath} />
+                            ) : (
+                              <BottleArt compact product={product} />
+                            )}
                           </button>
+                          <div className="account-wishlist-copy">
+                            <strong>{product.name}</strong>
+                            <span className="muted-label">{shop?.name || "Marketplace seller"}</span>
+                            <strong className="account-wishlist-price">{formatCurrency(product.price)}</strong>
+                          </div>
+                          <div className="account-address-actions">
+                            <button className="ghost-action compact" onClick={() => onNavigate?.(`/products/${product.id}`)} type="button">
+                              View
+                            </button>
+                            <button
+                              aria-label={`Remove ${product.name} from wishlist`}
+                              className="icon-button danger"
+                              onClick={() => toggleWishlist(product.id, product.name)}
+                              type="button"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="account-empty-state">
-                    <Heart size={22} />
+                    <Heart size={22} aria-hidden="true" />
                     <h3>No saved items</h3>
                     <p>Tap the heart on any product to save it here.</p>
                     <button className="primary-action compact" onClick={() => onNavigate?.("/shop")} type="button">
@@ -414,7 +449,7 @@ export function AccountPage({ onNavigate }) {
             <section className="account-form-section">
               <div className="checkout-form-card">
                 <div className="checkout-card-heading">
-                  <span className="sitemap-card-icon"><Settings size={19} /></span>
+                  <span className="sitemap-card-icon"><Settings size={19} aria-hidden="true" /></span>
                   <div>
                     <h2>Notification settings</h2>
                     <p>Choose how you hear from Tuti.</p>
@@ -439,11 +474,11 @@ export function AccountPage({ onNavigate }) {
                       />
                     </label>
                   ))}
-                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <div className="account-settings-actions">
                     <button className="primary-action compact" disabled={settingsSaving} type="submit">
                       {settingsSaving ? "Saving…" : "Save preferences"}
                     </button>
-                    {settingsOk ? <span style={{ color: "var(--success)", fontSize: "var(--text-sm)" }}>Saved ✓</span> : null}
+                    {settingsOk ? <span className="account-settings-saved">Saved ✓</span> : null}
                   </div>
                 </form>
               </div>
@@ -454,7 +489,7 @@ export function AccountPage({ onNavigate }) {
         <section className="account-orders-layout">
           <div className="account-orders-panel">
             <div className="account-section-heading">
-              <span className="sitemap-card-icon"><PackageCheck size={19} /></span>
+              <span className="sitemap-card-icon"><PackageCheck size={19} aria-hidden="true" /></span>
               <div>
                 <h2>Recent orders</h2>
                 <p>Latest account orders from the Tuti marketplace.</p>
@@ -466,7 +501,7 @@ export function AccountPage({ onNavigate }) {
             {deepLinkNotice ? <p className="checkout-error">We could not find that order in your history.</p> : null}
             {!ordersState.loading && !ordersState.error && !ordersState.orders.length ? (
               <div className="account-empty-state">
-                <ShoppingBag size={24} />
+                <ShoppingBag size={24} aria-hidden="true" />
                 <h3>No orders yet</h3>
                 <p>Your confirmed Tuti orders will appear here after checkout.</p>
                 <button className="primary-action compact" onClick={() => onNavigate("/shop")} type="button">
@@ -500,7 +535,7 @@ export function AccountPage({ onNavigate }) {
           {selectedOrder ? (
             <aside className="account-order-detail">
               <div className="account-section-heading">
-                <span className="sitemap-card-icon"><CheckCircle2 size={19} /></span>
+                <span className="sitemap-card-icon"><CheckCircle2 size={19} aria-hidden="true" /></span>
                 <div>
                   <h2>{selectedOrder.orderId}</h2>
                   <p>{formatPaymentMethod(selectedOrder.paymentMethod)} · {selectedOrder.paymentStatus}</p>
@@ -581,16 +616,16 @@ export function AccountPage({ onNavigate }) {
               </div>
               {selectedOrder.status === "Customer Accepted" ? (
                 <div className="account-order-note">
-                  <p style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <CheckCircle2 size={14} />
+                  <p className="account-order-note-row">
+                    <CheckCircle2 aria-hidden="true" size={14} />
                     <strong>Order accepted.</strong>&nbsp;Thanks for confirming delivery. This order is now closed from your side.
                   </p>
                 </div>
               ) : null}
               {selectedOrder.status === "Disputed" ? (
                 <div className="account-order-note">
-                  <p style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <HelpCircle size={14} />
+                  <p className="account-order-note-row">
+                    <HelpCircle size={14} aria-hidden="true" />
                     <strong>Dispute review opened.</strong>&nbsp;Your report was received. Tuti support will review the dispute and follow up.
                   </p>
                 </div>
@@ -598,18 +633,18 @@ export function AccountPage({ onNavigate }) {
               {selectedOrder.status === "Delivered" && (
                 <div className="account-order-note">
                   {orderFeedback[selectedOrder.orderId] === "accepted" ? (
-                    <p style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                      <CheckCircle2 size={14} />
+                    <p className="account-order-note-row">
+                      <CheckCircle2 size={14} aria-hidden="true" />
                       <strong>Delivery confirmed.</strong>&nbsp;Thank you. Your feedback has been recorded.
                     </p>
                   ) : orderFeedback[selectedOrder.orderId] === "reported" ? (
-                    <p style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                      <HelpCircle size={14} />
+                    <p className="account-order-note-row">
+                      <HelpCircle size={14} aria-hidden="true" />
                       <strong>Dispute reported.</strong>&nbsp;Our support team will follow up shortly on the dispute.
                     </p>
                   ) : orderFeedback[selectedOrder.orderId]?.startsWith("error:") ? (
                     <>
-                      <p style={{ color: "var(--danger, #b42318)", marginBottom: "0.5rem" }}>
+                      <p className="account-order-feedback-error">
                         {orderFeedback[selectedOrder.orderId].slice(6)}
                       </p>
                       <button
@@ -628,16 +663,16 @@ export function AccountPage({ onNavigate }) {
                         onChange={(e) => setDisputeNotes((prev) => ({ ...prev, [selectedOrder.orderId]: e.target.value }))}
                         placeholder="e.g. Order arrived damaged, wrong item, missing item…"
                         rows={3}
-                        style={{ width: "100%", marginTop: "0.5rem", padding: "0.5rem", borderRadius: "6px", border: "1px solid #cdd5d0", fontSize: "0.875rem", fontFamily: "inherit", resize: "vertical" }}
+                        className="account-dispute-textarea"
                       />
-                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                      <div className="account-order-feedback-actions">
                         <button
                           className="secondary-action compact"
                           type="button"
                           disabled={!disputeNotes[selectedOrder.orderId]?.trim() || feedbackLoading[selectedOrder.orderId]}
                           onClick={() => handleCustomerAction(selectedOrder.orderId, "dispute", disputeNotes[selectedOrder.orderId])}
                         >
-                          <HelpCircle size={15} />
+                          <HelpCircle size={15} aria-hidden="true" />
                           {feedbackLoading[selectedOrder.orderId] ? "Submitting…" : "Open dispute"}
                         </button>
                         <button
@@ -653,14 +688,14 @@ export function AccountPage({ onNavigate }) {
                   ) : (
                     <>
                       <p>Did everything arrive as expected?</p>
-                      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                      <div className="account-order-feedback-actions">
                         <button
                           className="secondary-action compact"
                           type="button"
                           disabled={feedbackLoading[selectedOrder.orderId]}
                           onClick={() => handleCustomerAction(selectedOrder.orderId, "accept", null)}
                         >
-                          <CheckCircle2 size={15} />
+                          <CheckCircle2 size={15} aria-hidden="true" />
                           {feedbackLoading[selectedOrder.orderId] ? "Confirming…" : "I received my order"}
                         </button>
                         <button
@@ -668,7 +703,7 @@ export function AccountPage({ onNavigate }) {
                           type="button"
                           onClick={() => setOrderFeedback((prev) => ({ ...prev, [selectedOrder.orderId]: "reporting" }))}
                         >
-                          <HelpCircle size={15} />
+                          <HelpCircle size={15} aria-hidden="true" />
                           Contact support
                         </button>
                       </div>
@@ -680,7 +715,7 @@ export function AccountPage({ onNavigate }) {
           ) : (
             <aside className="account-order-detail">
               <div className="account-empty-state">
-                <PackageCheck size={24} />
+                <PackageCheck size={24} aria-hidden="true" />
                 <h3>No order selected</h3>
                 <p>Select an order from the list to view delivery details and support options.</p>
               </div>

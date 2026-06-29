@@ -1,5 +1,6 @@
 import { Gift, Lock, ShieldCheck, Store } from "lucide-react";
 import { ImmersiveStory } from "../immersive/ImmersiveStory.jsx";
+import { GiftingShortcuts } from "../homepage/GiftingShortcuts.jsx";
 import { PathSelector } from "../homepage/PathSelector.jsx";
 import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
 import { AdaptiveBoutique } from "../homepage/AdaptiveBoutique.jsx";
@@ -20,38 +21,35 @@ function TrustClosing() {
             Thoughtful curation, reliable boutiques, and customer-safe gifting language all the way through the experience.
           </p>
         </div>
-        <div className="trust-strip">
-          <article className="trust-fact">
-            <ShieldCheck size={20} aria-hidden="true" />
+        <div className="trust-grid">
+          <div className="trust-item">
+            <span className="trust-icon-circle"><ShieldCheck size={18} aria-hidden="true" /></span>
             <div>
               <strong>Every seller is reviewed</strong>
               <span>Boutiques pass a quality check before going live.</span>
             </div>
-          </article>
-          <div className="trust-divider" aria-hidden="true" />
-          <article className="trust-fact">
-            <Gift size={20} aria-hidden="true" />
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon-circle"><Gift size={18} aria-hidden="true" /></span>
             <div>
               <strong>Made for gifting</strong>
               <span>Perfumes, cakes and messages, brought together with care.</span>
             </div>
-          </article>
-          <div className="trust-divider" aria-hidden="true" />
-          <article className="trust-fact">
-            <Store size={20} aria-hidden="true" />
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon-circle"><Store size={18} aria-hidden="true" /></span>
             <div>
               <strong>UAE-first delivery</strong>
               <span>Local sellers and delivery options across the UAE.</span>
             </div>
-          </article>
-          <div className="trust-divider" aria-hidden="true" />
-          <article className="trust-fact">
-            <Lock size={20} aria-hidden="true" />
+          </div>
+          <div className="trust-item">
+            <span className="trust-icon-circle"><Lock size={18} aria-hidden="true" /></span>
             <div>
               <strong>Secure checkout</strong>
               <span>Pay safely with cards or cash on delivery.</span>
             </div>
-          </article>
+          </div>
         </div>
       </div>
     </section>
@@ -63,6 +61,7 @@ export function HomePage({
   getProduct,
   getShop,
   goToAbout,
+  goToAccount,
   goToBuildBox,
   goToCollections,
   goToFragranceFinder,
@@ -87,26 +86,26 @@ export function HomePage({
 
       <div className="home-content">
 
-        {/* Transition — editorial chapter break */}
-        <section className="home-transition-intro home-section" aria-labelledby="discover-tuti-title">
-          <span className="eyebrow">Discover Tuti</span>
-          <h2 id="discover-tuti-title">Thoughtful gifting, made personal.</h2>
-          <p>
-            Explore boutique perfumes, artisan cakes and desserts, curated gift sets, and the Tuti Build a Box experience.
-          </p>
-          <p className="home-transition-intro-ar" lang="ar" dir="auto">هدايا مدروسة، مصممة بطريقتك.</p>
-        </section>
+        {/* Act 2 — Smart Gifting Shortcuts launcher */}
+        <GiftingShortcuts
+          onFindGift={goToGifting}
+          onFindScent={goToFragranceFinder}
+          onBuildBox={goToBuildBox}
+          onShopOccasion={() => goToShop("all")}
+          onExploreBoutiques={goToShops}
+          onTrackOrder={goToAccount}
+        />
 
-        {/* Act 2 — Path Selector */}
+        {/* Act 3 — Path Selector */}
         <PathSelector goToShop={goToShop} goToBuildBox={goToBuildBox} />
 
-        {/* Act 3 — Gift Builder Preview */}
+        {/* Act 4 — Gift Builder Preview */}
         <GiftBuilderPreview
           onBuildGift={goToBuildBox}
           onExploreGiftSets={() => goToShop("gift_box")}
         />
 
-        {/* Act 4 — Tuti Edit (Luxury Picks, adaptive by count) */}
+        {/* Act 5 — Tuti Edit (Luxury Picks, adaptive by count) */}
         <AdaptiveProductEdit
           placementKey="luxury_picks"
           eyebrow="Selected by Tuti"
@@ -116,7 +115,7 @@ export function HomePage({
           onViewProduct={goToProduct}
         />
 
-        {/* Act 5 — New at Tuti (New Arrivals, adaptive by count) */}
+        {/* Act 6 — New at Tuti (New Arrivals, adaptive by count) */}
         <AdaptiveProductEdit
           placementKey="new_arrivals"
           eyebrow="Just landed"
@@ -126,13 +125,13 @@ export function HomePage({
           onViewProduct={goToProduct}
         />
 
-        {/* Act 6 — Featured Boutique (adaptive by count) */}
+        {/* Act 7 — Featured Boutique (adaptive by count) */}
         <AdaptiveBoutique
           onViewSeller={goToSellerBrand}
           onExploreShops={goToShops}
         />
 
-        {/* Act 7 — Occasion Discovery (birthday → cake, eid → perfume, wedding → gift_box) */}
+        {/* Act 8 — Occasion Discovery (birthday → cake, eid → perfume, wedding → gift_box) */}
         <OccasionJourney
           onShopOccasion={(slug) => {
             const cats = { birthday: "cake", eid: "perfume", wedding: "gift_box" };
@@ -140,7 +139,7 @@ export function HomePage({
           }}
         />
 
-        {/* Act 8 — Editorial Discovery (journal, gifting, boutiques, fragrance finder, sell) */}
+        {/* Act 9 — Editorial Discovery (journal, gifting, boutiques, fragrance finder, sell) */}
         <EditorialDiscovery
           onGoToGifting={goToGifting}
           onGoToFragranceFinder={goToFragranceFinder}
@@ -149,10 +148,10 @@ export function HomePage({
           onGoToSell={goToSell}
         />
 
-        {/* Act 9 — Trust / Service Promise */}
+        {/* Act 10 — Trust / Service Promise */}
         <TrustClosing />
 
-        {/* Act 10 — Final CTA / Closing */}
+        {/* Act 11 — Final CTA / Closing */}
         <FinalCTA
           onBuildGift={goToBuildBox}
           onExploreGifts={() => goToShop("gift_box")}

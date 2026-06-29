@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Sparkles, Tag } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Tag } from "lucide-react";
 import { publicMerchandisingApi } from "@tuti/shared/api/client.js";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
@@ -308,11 +308,66 @@ function ProductTrio({ placements, placementKey, eyebrow, sectionTitle, subtitle
   );
 }
 
-/* 4+ products — original horizontal scroll (preserved exactly) */
+/* 4+ products — horizontal scroll with prev/next arrows */
 function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
+  const scrollRef = useRef(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
+
+  const syncArrows = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setAtStart(el.scrollLeft <= 4);
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    syncArrows();
+    const ro = new ResizeObserver(syncArrows);
+    ro.observe(el);
+    el.addEventListener("scroll", syncArrows, { passive: true });
+    return () => { el.removeEventListener("scroll", syncArrows); ro.disconnect(); };
+  }, [syncArrows]);
+
+  const scrollPrev = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector(".featured-product-card");
+    el.scrollBy({ left: -(card ? card.offsetWidth + 20 : 320), behavior: "smooth" });
+  }, []);
+
+  const scrollNext = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector(".featured-product-card");
+    el.scrollBy({ left: card ? card.offsetWidth + 20 : 320, behavior: "smooth" });
+  }, []);
+
   return (
     <div className="featured-product-strip">
-      <div className="featured-product-grid">
+      <div className="featured-product-strip-arrows">
+        <button
+          className={`featured-product-arrow${atStart ? " featured-product-arrow--disabled" : ""}`}
+          type="button"
+          onClick={scrollPrev}
+          disabled={atStart}
+          aria-label="Previous products"
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
+        <button
+          className={`featured-product-arrow${atEnd ? " featured-product-arrow--disabled" : ""}`}
+          type="button"
+          onClick={scrollNext}
+          disabled={atEnd}
+          aria-label="Next products"
+        >
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="featured-product-grid" ref={scrollRef}>
         {placements.map((placement, index) => {
           const product = placement?.product || {};
           const shop = placement?.shop || {};

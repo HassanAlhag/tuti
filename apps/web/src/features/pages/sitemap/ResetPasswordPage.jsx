@@ -61,8 +61,8 @@ export function ResetPasswordPage({ onNavigate }) {
         {step === "request" && (
           <form className="checkout-form-grid" onSubmit={handleRequest}>
             <label className="checkout-field-wide">
-              <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <Mail size={15} /> Email address
+              <span className="reset-password-label">
+                <Mail aria-hidden="true" size={15} /> Email address
               </span>
               <input
                 required
@@ -74,7 +74,7 @@ export function ResetPasswordPage({ onNavigate }) {
               />
             </label>
             {error ? <p className="error-state checkout-error checkout-field-wide">{error}</p> : null}
-            <div className="checkout-field-wide" style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div className="checkout-field-wide reset-password-actions">
               <button className="primary-action compact" disabled={loading} type="submit">
                 {loading ? "Sending…" : "Send reset link"}
               </button>
@@ -86,7 +86,7 @@ export function ResetPasswordPage({ onNavigate }) {
         )}
 
         {step === "sent" && (
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className="reset-password-step">
             <p>
               If <strong>{email}</strong> has a Tuti account, a password reset link has been sent.
               Check your inbox and follow the link to set a new password.
@@ -101,12 +101,12 @@ export function ResetPasswordPage({ onNavigate }) {
                 >
                   Continue to reset form
                 </button>
-                <code style={{ display: "block", marginTop: "0.4rem", wordBreak: "break-all", fontSize: "0.75rem" }}>
+                <code className="reset-password-dev-token">
                   {devToken}
                 </code>
               </div>
             ) : null}
-            <button className="secondary-action compact" style={{ width: "fit-content" }} onClick={() => onNavigate?.("/")} type="button">
+            <button className="secondary-action compact reset-password-fit-action" onClick={() => onNavigate?.("/")} type="button">
               Back to home
             </button>
           </div>
@@ -115,8 +115,8 @@ export function ResetPasswordPage({ onNavigate }) {
         {step === "new-password" && (
           <form className="checkout-form-grid" onSubmit={handleConfirm}>
             <label className="checkout-field-wide">
-              <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                <KeyRound size={15} /> New password
+              <span className="reset-password-label">
+                <KeyRound aria-hidden="true" size={15} /> New password
               </span>
               <input
                 required
@@ -141,7 +141,7 @@ export function ResetPasswordPage({ onNavigate }) {
               />
             </label>
             {error ? <p className="error-state checkout-error checkout-field-wide">{error}</p> : null}
-            <div className="checkout-field-wide" style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div className="checkout-field-wide reset-password-actions">
               <button className="primary-action compact" disabled={loading} type="submit">
                 {loading ? "Saving…" : "Set new password"}
               </button>
@@ -150,15 +150,14 @@ export function ResetPasswordPage({ onNavigate }) {
         )}
 
         {step === "done" && (
-          <div style={{ display: "grid", gap: "1rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--success)" }}>
-              <CheckCircle2 size={20} />
+          <div className="reset-password-step">
+            <div className="reset-password-success">
+              <CheckCircle2 aria-hidden="true" size={20} />
               <strong>Password updated successfully.</strong>
             </div>
             <p>You can now sign in with your new password.</p>
             <button
-              className="primary-action compact"
-              style={{ width: "fit-content" }}
+              className="primary-action compact reset-password-fit-action"
               onClick={() => {
                 window.dispatchEvent(new CustomEvent("tuti:open-auth"));
                 onNavigate?.("/");

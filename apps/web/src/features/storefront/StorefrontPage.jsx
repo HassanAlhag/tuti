@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Filter, Search, Sparkles, X } from "lucide-react";
-import categoryCakesImage from "../../assets/category-cakes.jpg";
-import categoryGiftSetsImage from "../../assets/category-gift-sets.jpg";
-import categoryPerfumesImage from "../../assets/category-perfumes.jpg";
+import { ArrowRight, Sparkles, Wand2 } from "lucide-react";
 import homeCompleteGiftImage from "../../assets/home-ch4-complete.png";
 import { ProductCardRouter } from "./components/ProductCardRouter.jsx";
+import { ShopToolbar } from "./components/ShopToolbar.jsx";
+import { ShopFilterDrawer } from "./components/ShopFilterDrawer.jsx";
 
 const CATEGORY_TABS = [
   { id: "all", label: "All" },
@@ -27,67 +26,36 @@ const FAMILY_TONES = {
 const CATEGORY_STORIES = {
   all: {
     eyebrow: "The Tuti shop",
-    title: "Gifts worth remembering.",
     description:
       "Explore boutique perfumes, artisan cakes and desserts, curated gift sets, and thoughtful combinations from Tuti sellers across the UAE.",
-    image: homeCompleteGiftImage,
-    imageAlt: "A finished Tuti gift box with perfume, cake, and a personal message card.",
   },
   perfume: {
     eyebrow: "Perfumes",
-    title: "Boutique fragrances",
-    description:
-      "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
-    image: categoryPerfumesImage,
-    imageAlt: "Editorial perfume bottles styled on a dark marble surface.",
+    description: "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
   },
   women: {
     eyebrow: "Perfumes",
-    title: "Boutique fragrances",
-    description:
-      "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
-    image: categoryPerfumesImage,
-    imageAlt: "Editorial perfume bottles styled on a dark marble surface.",
+    description: "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
   },
   men: {
     eyebrow: "Perfumes",
-    title: "Boutique fragrances",
-    description:
-      "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
-    image: categoryPerfumesImage,
-    imageAlt: "Editorial perfume bottles styled on a dark marble surface.",
+    description: "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
   },
   unisex: {
     eyebrow: "Perfumes",
-    title: "Boutique fragrances",
-    description:
-      "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
-    image: categoryPerfumesImage,
-    imageAlt: "Editorial perfume bottles styled on a dark marble surface.",
+    description: "Discover oud, musk, amber, floral and fresh scents from independent fragrance houses.",
   },
   cake: {
     eyebrow: "Cakes & Desserts",
-    title: "Made for the moment",
-    description:
-      "Artisan cakes, desserts and sweets prepared for celebrations, milestones and thoughtful surprises.",
-    image: categoryCakesImage,
-    imageAlt: "An artisan celebration cake and petits fours styled for gifting.",
+    description: "Artisan cakes, desserts and sweets prepared for celebrations, milestones and thoughtful surprises.",
   },
   dessert: {
     eyebrow: "Cakes & Desserts",
-    title: "Made for the moment",
-    description:
-      "Artisan cakes, desserts and sweets prepared for celebrations, milestones and thoughtful surprises.",
-    image: categoryCakesImage,
-    imageAlt: "An artisan celebration cake and petits fours styled for gifting.",
+    description: "Artisan cakes, desserts and sweets prepared for celebrations, milestones and thoughtful surprises.",
   },
   gift_box: {
     eyebrow: "Gift Sets",
-    title: "Curated and ready to give",
-    description:
-      "Considered combinations, premium presentation and gifts designed to make the moment easier.",
-    image: categoryGiftSetsImage,
-    imageAlt: "A luxury gift set with perfume and celebratory details.",
+    description: "Considered combinations, premium presentation and gifts designed to make the moment easier.",
   },
 };
 
@@ -110,6 +78,13 @@ function matchesCategory(product, category) {
   if (category === "men") return (!product.category || product.category === "perfume") && product.gender === "Men";
   if (category === "unisex") return (!product.category || product.category === "perfume") && product.gender === "Unisex";
   return product.category === category;
+}
+
+function sortProducts(products, sort) {
+  if (sort === "price-asc") return [...products].sort((a, b) => a.price - b.price);
+  if (sort === "price-desc") return [...products].sort((a, b) => b.price - a.price);
+  if (sort === "newest") return [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  return products;
 }
 
 function buildResultsLabel(category, count, hasFamilyFilter) {
@@ -156,7 +131,21 @@ function buildActiveFilterChips({ activeCategory, activeOccasion, family, hasFam
   return chips;
 }
 
-function getEmptyState({ activeCategory, hasActiveFilters, hasFamilyFilter, hasOccasion, hasSearch, query }) {
+function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, hasFamilyFilter, hasOccasion, hasSearch, query }) {
+  // hasAnyLiveProducts only means anything with no search/category/family/occasion
+  // filter applied — filteredProducts (and so liveProducts) is pre-reduced by
+  // App.jsx's own search/family matching, so this signal is only trustworthy
+  // when nothing upstream has already narrowed the set. With any filter active,
+  // a 0 count is a filter-empty result, not a marketplace-wide empty one.
+  if (!hasActiveFilters && !hasAnyLiveProducts) {
+    return {
+      title: "No products in the marketplace yet",
+      text: "Our boutique sellers are preparing their next drop. Check back soon, or build a personal gift instead.",
+      primaryAction: "Build your box",
+      secondaryAction: "Browse all products",
+    };
+  }
+
   if (hasSearch) {
     return {
       title: `No results for "${query.trim()}"`,
@@ -168,7 +157,7 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasFamilyFilter, hasO
 
   if (hasFamilyFilter || hasOccasion) {
     return {
-      title: "No products match those filters",
+      title: "No gifts match these filters yet",
       text: "Try another fragrance family or clear the current filters to widen the selection.",
       primaryAction: "Clear filters",
       secondaryAction: "Browse all products",
@@ -203,22 +192,29 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasFamilyFilter, hasO
   }
 
   return {
-    title: "No products available yet",
+    title: "No gifts match these filters yet",
     text: "Try another category or come back soon to discover the latest from Tuti boutiques.",
     primaryAction: hasActiveFilters ? "Clear filters" : "Browse perfumes",
     secondaryAction: "Build your box",
   };
 }
 
-function CategoryHero({ pageCopy, visualCategory }) {
+function ShopHeader({ totalCount, onFindScent }) {
   return (
-    <section className={`shop-hero shop-hero--${visualCategory}`}>
-      <img className="shop-hero-image" src={pageCopy.image} alt={pageCopy.imageAlt} />
-      <div className="shop-hero-wash" />
-      <div className="shop-hero-copy">
-        <span className="eyebrow">{pageCopy.eyebrow}</span>
-        <h1>{pageCopy.title}</h1>
-        <p>{pageCopy.description}</p>
+    <section className="shop-header" aria-labelledby="shop-header-title">
+      <div className="shop-header-copy">
+        <span className="eyebrow">Shop Tuti</span>
+        <h1 id="shop-header-title">Find the right gift for the moment.</h1>
+        <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
+      </div>
+      <div className="shop-header-meta">
+        <span className="shop-header-count">
+          {totalCount} live {totalCount === 1 ? "product" : "products"} available now
+        </span>
+        <button className="shop-ai-button shop-ai-button--header" type="button" onClick={onFindScent}>
+          <Wand2 size={16} aria-hidden="true" />
+          Help me choose
+        </button>
       </div>
     </section>
   );
@@ -234,7 +230,7 @@ function BuildBoxInsertion({ onNavigatePath }) {
           Choose a perfume, add a cake or dessert, and include your personal message in one considered gift.
         </p>
         <button className="secondary-action" type="button" onClick={() => onNavigatePath("/build-a-box")}>
-          Build your box <ArrowRight size={16} />
+          Build your box <ArrowRight size={16} aria-hidden="true" />
         </button>
       </div>
       <button
@@ -271,6 +267,8 @@ export function StorefrontPage({
 }) {
   const [activeCategory, setActiveCategory] = useState(normalizeCategory(initialCategory));
   const [activeOccasion, setActiveOccasion] = useState(initialOccasion);
+  const [sort, setSort] = useState("featured");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const nextCategory = normalizeCategory(initialCategory) || "all";
@@ -303,6 +301,8 @@ export function StorefrontPage({
     [activeCategory, activeOccasion, liveProducts]
   );
 
+  const sortedProducts = useMemo(() => sortProducts(categoryFiltered, sort), [categoryFiltered, sort]);
+
   const visualCategory = activeCategory === "dessert" ? "cake" : isPerfumeCategory(activeCategory) ? "perfume" : activeCategory;
   const pageCopy = CATEGORY_STORIES[activeCategory] || CATEGORY_STORIES[visualCategory] || CATEGORY_STORIES.all;
   const showFamilyFilters = activeCategory === "all" || isPerfumeCategory(activeCategory);
@@ -311,7 +311,8 @@ export function StorefrontPage({
   const hasFamilyFilter = showFamilyFilters && family && family !== "All";
   const hasCategoryFilter = activeCategory !== "all";
   const hasActiveFilters = hasSearch || hasOccasion || hasFamilyFilter || hasCategoryFilter;
-  const resultsLabel = buildResultsLabel(activeCategory, categoryFiltered.length, hasFamilyFilter);
+  const hasAnyLiveProducts = liveProducts.length > 0;
+  const resultsLabel = buildResultsLabel(activeCategory, sortedProducts.length, hasFamilyFilter);
   const resultsSubcopy = buildResultsSubcopy({
     activeCategory,
     family,
@@ -331,25 +332,27 @@ export function StorefrontPage({
   const emptyState = getEmptyState({
     activeCategory,
     hasActiveFilters,
+    hasAnyLiveProducts,
     hasFamilyFilter,
     hasOccasion,
     hasSearch,
     query,
   });
   const viewProduct = onViewProduct || setSelectedReviewProductId;
-  const shouldShowBuildInsert = categoryFiltered.length > 6 && ["all", "perfume", "women", "men", "unisex", "gift_box"].includes(activeCategory);
-  const gridMode = categoryFiltered.length <= 1 ? "single" : categoryFiltered.length === 2 ? "pair" : "grid";
+  const shouldShowBuildInsert = sortedProducts.length > 6 && ["all", "perfume", "women", "men", "unisex", "gift_box"].includes(activeCategory);
+  const gridMode = sortedProducts.length <= 1 ? "single" : sortedProducts.length === 2 ? "pair" : "grid";
+  const drawerFilterCount = hasFamilyFilter ? 1 : 0;
 
   const collectionItems = useMemo(() => {
     const items = [];
-    categoryFiltered.forEach((product, index) => {
+    sortedProducts.forEach((product, index) => {
       items.push({ type: "product", key: product.id, product });
       if (shouldShowBuildInsert && index === 5) {
         items.push({ type: "build-box", key: "shop-build-box-insert" });
       }
     });
     return items;
-  }, [categoryFiltered, shouldShowBuildInsert]);
+  }, [sortedProducts, shouldShowBuildInsert]);
 
   function navigateToPath(path) {
     window.history.pushState(null, "", path);
@@ -410,118 +413,46 @@ export function StorefrontPage({
 
   return (
     <main className="shop-page">
-      <CategoryHero pageCopy={pageCopy} visualCategory={visualCategory} />
+      <ShopHeader totalCount={liveProducts.length} onFindScent={() => navigateToPath("/fragrance-finder")} />
 
       <section className="shop-shell">
-        <nav className="shop-category-nav" aria-label="Shop categories">
-          {CATEGORY_TABS.map((tab) => {
-            const pressed = normalizeCategory(activeCategory) === tab.id || (isPerfumeCategory(activeCategory) && tab.id === "perfume");
-            return (
-              <button
-                key={tab.id}
-                className={pressed ? "shop-category-button active" : "shop-category-button"}
-                type="button"
-                aria-pressed={pressed}
-                onClick={() => selectCategory(tab.id)}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
+        <ShopToolbar
+          query={query}
+          setQuery={setQuery}
+          sort={sort}
+          setSort={setSort}
+          categoryTabs={CATEGORY_TABS}
+          activeCategory={normalizeCategory(activeCategory) === "perfume" || isPerfumeCategory(activeCategory) ? "perfume" : normalizeCategory(activeCategory)}
+          onSelectCategory={selectCategory}
+          showFamilyFilters={showFamilyFilters}
+          orderedFamilies={orderedFamilies}
+          family={family}
+          setFamily={setFamily}
+          familyTones={FAMILY_TONES}
+          hasFamilyFilter={hasFamilyFilter}
+          filterCount={drawerFilterCount}
+          onOpenDrawer={() => setDrawerOpen(true)}
+          resultsEyebrow={pageCopy.eyebrow}
+          resultsCount={sortedProducts.length}
+          resultsLabel={resultsLabel}
+          resultsSubcopy={resultsSubcopy}
+          activeFilterChips={activeFilterChips}
+          hasActiveFilters={hasActiveFilters}
+          onClearAll={clearAllFilters}
+        />
 
-        <section className="shop-filter-shell" aria-label="Search and filters">
-          <div className="shop-search-panel">
-            <label className="shop-search-field">
-              <Search size={18} />
-              <input
-                id="catalog-search-input"
-                type="search"
-                placeholder="Search products, boutiques or occasions"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                aria-label="Search products, boutiques or occasions"
-              />
-              {query ? (
-                <button
-                  className="shop-search-clear"
-                  type="button"
-                  onClick={() => setQuery("")}
-                  aria-label="Clear search"
-                >
-                  <X size={16} />
-                </button>
-              ) : null}
-            </label>
+        <ShopFilterDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          orderedFamilies={orderedFamilies}
+          family={family}
+          setFamily={setFamily}
+          familyTones={FAMILY_TONES}
+          hasFamilyFilter={hasFamilyFilter}
+          onClearAll={clearAllFilters}
+        />
 
-            {showFamilyFilters ? (
-              <div className="shop-family-filter">
-                <div className="shop-filter-heading">
-                  <span>Fragrance family</span>
-                  {hasFamilyFilter ? (
-                    <button className="shop-filter-reset" type="button" onClick={() => setFamily("All")}>
-                      Reset
-                    </button>
-                  ) : null}
-                </div>
-                <div className="shop-family-chips" aria-label="Perfume families">
-                  {orderedFamilies.map((item) => (
-                    <button
-                      key={item}
-                      className={family === item ? "shop-family-chip active" : "shop-family-chip"}
-                      type="button"
-                      onClick={() => setFamily(item)}
-                    >
-                      <span
-                        className="shop-family-dot"
-                        style={{ "--family-tone": FAMILY_TONES[item] || FAMILY_TONES.All }}
-                        aria-hidden="true"
-                      />
-                      {item === "All" ? (
-                        <>
-                          <Filter size={14} />
-                          {item}
-                        </>
-                      ) : (
-                        item
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <section className="shop-results-bar" aria-live="polite">
-            <div className="shop-results-copy">
-              <span className="eyebrow">{pageCopy.eyebrow}</span>
-              <h2>
-                {categoryFiltered.length} {resultsLabel}
-              </h2>
-              <p>{resultsSubcopy}</p>
-            </div>
-            <div className="shop-results-meta">
-              {activeFilterChips.length ? (
-                <div className="shop-active-filters">
-                  {activeFilterChips.map((chip) => (
-                    <span key={chip}>{chip}</span>
-                  ))}
-                </div>
-              ) : (
-                <div className="shop-active-filters shop-active-filters--quiet">
-                  <span>Live catalogue</span>
-                </div>
-              )}
-              {hasActiveFilters ? (
-                <button className="ghost-action compact" type="button" onClick={clearAllFilters}>
-                  Clear all
-                </button>
-              ) : null}
-            </div>
-          </section>
-        </section>
-
-        {categoryFiltered.length ? (
+        {sortedProducts.length ? (
           <>
             <section className={`product-grid shop-product-grid shop-product-grid--${gridMode}`} aria-label={`${pageCopy.eyebrow} product collection`}>
               {collectionItems.map((item) => {
@@ -565,7 +496,7 @@ export function StorefrontPage({
           </>
         ) : (
           <section className="shop-empty-state" role="status" aria-live="polite">
-            <Sparkles size={20} />
+            <Sparkles size={20} aria-hidden="true" />
             <h2>{emptyState.title}</h2>
             <p>{emptyState.text}</p>
             <div className="shop-empty-actions">

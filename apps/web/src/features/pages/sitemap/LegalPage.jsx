@@ -2,11 +2,16 @@ import { ShieldCheck, ChevronRight, ArrowLeft } from "lucide-react";
 import { brand } from "@tuti/shared/brand.js";
 import { legalPages, legalContent } from "../siteMap.js";
 import { PageHero } from "./sitemapPageShared.jsx";
+import { RouteNotFound } from "../../layout/RouteState.jsx";
 import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 function getLegalSlug() {
   const match = window.location.pathname.match(/^\/legal\/([^/]+)/);
   return match ? match[1] : null;
+}
+
+function headingId(heading) {
+  return heading.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function LegalIndex({ onNavigate }) {
@@ -55,14 +60,14 @@ function LegalDetail({ slug, onNavigate }) {
 
   if (!content) {
     return (
-      <>
-        <PageHero kicker="Legal" title="Policy not found" text="This policy page does not exist." />
-        <div style={{ padding: "var(--sp-8) var(--sp-4)" }}>
-          <button className="ghost-action compact" onClick={() => onNavigate("/legal")} type="button">
-            <ArrowLeft size={15} /> Back to legal
-          </button>
-        </div>
-      </>
+      <main className="page-shell">
+        <RouteNotFound
+          heading="Policy not found"
+          message="This policy page doesn't exist, or the link may be out of date."
+          onPrimary={() => onNavigate("/legal")}
+          primaryLabel="Back to legal"
+        />
+      </main>
     );
   }
 
@@ -75,8 +80,20 @@ function LegalDetail({ slug, onNavigate }) {
             <ArrowLeft size={15} /> All policies
           </button>
         </div>
+        {content.sections.length > 1 ? (
+          <nav className="legal-toc" aria-label="Policy sections">
+            <span className="legal-toc-label">On this page</span>
+            <ol>
+              {content.sections.map((section) => (
+                <li key={section.heading}>
+                  <a href={`#${headingId(section.heading)}`}>{section.heading}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        ) : null}
         {content.sections.map((section) => (
-          <section key={section.heading} className="legal-section">
+          <section key={section.heading} className="legal-section" id={headingId(section.heading)}>
             <h2 className="legal-section-heading">{section.heading}</h2>
             <p className="legal-section-body">{section.body}</p>
           </section>

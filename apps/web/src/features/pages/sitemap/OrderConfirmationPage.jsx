@@ -84,7 +84,7 @@ export function OrderConfirmationPage({ onNavigate }) {
               <p>The order reference may be incorrect or the order may have been removed.</p>
             </div>
           </div>
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="order-confirmation-actions">
             <button className="primary-action compact" onClick={() => onNavigate?.("/shop")} type="button">
               <ShoppingBag size={16} /> Continue shopping
             </button>
@@ -109,11 +109,11 @@ export function OrderConfirmationPage({ onNavigate }) {
             <div>
               <p>This order belongs to a different account, or the confirmation link has expired.</p>
               {isAuthenticated() ? null : (
-                <p style={{ marginTop: "0.5rem" }}>If you placed this order as a guest, please use the link from your checkout confirmation.</p>
+                <p className="order-confirmation-subnote">If you placed this order as a guest, please use the link from your checkout confirmation.</p>
               )}
             </div>
           </div>
-          <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="order-confirmation-actions">
             {isAuthenticated() ? (
               <button className="secondary-action compact" onClick={() => onNavigate?.("/account")} type="button">
                 <PackageCheck size={16} /> My orders
@@ -229,7 +229,7 @@ export function OrderConfirmationPage({ onNavigate }) {
           </p>
         </div>
 
-        <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+        <div className="order-confirmation-actions">
           {isAuthenticated() ? (
             <button className="secondary-action compact" onClick={() => onNavigate?.("/account")} type="button">
               <PackageCheck size={16} /> My orders

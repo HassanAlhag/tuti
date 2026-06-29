@@ -3,7 +3,7 @@
  * Seller registration is ONLY available at the seller portal (apps/seller).
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, X } from "lucide-react";
 import { authApi }      from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
@@ -14,6 +14,15 @@ export function AuthModal({ initialMode = "login", onClose }) {
   const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuthStore();
+
+  // Close on Escape, matching ClientLayout's mobile drawer (Phase 10,
+  // css-revamp-phase-10.md) -- this modal had no keyboard escape at all,
+  // a D0.1 hard-fail confirmed during the final regression pass.
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   function update(key, value) {
     setForm(f => ({ ...f, [key]: value }));
@@ -58,7 +67,7 @@ export function AuthModal({ initialMode = "login", onClose }) {
             </p>
           </div>
           <button className="icon-button" onClick={onClose} type="button" aria-label="Close">
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
@@ -115,14 +124,14 @@ export function AuthModal({ initialMode = "login", onClose }) {
           {error && <p className="error-note">{error}</p>}
 
           <button className="primary-action full-width" type="submit" disabled={loading}>
-            <User size={15} />
+            <User size={15} aria-hidden="true" />
             {loading
               ? "Please wait…"
               : mode === "login" ? "Sign in" : "Create my account"}
           </button>
 
           {mode === "register" && (
-            <p className="modal-hint" style={{ marginTop: 0 }}>
+            <p className="modal-hint">
               Want to sell on Tuti?{" "}
               <a href={import.meta.env.VITE_SELLER_URL || "http://localhost:5174"} target="_blank" rel="noreferrer">
                 Open Seller Central
@@ -135,8 +144,7 @@ export function AuthModal({ initialMode = "login", onClose }) {
           <>
             <p className="modal-hint">
               <button
-                className="ghost-action compact"
-                style={{ padding: 0, background: "none", border: "none", color: "var(--brand-dark)", textDecoration: "underline", cursor: "pointer", font: "inherit", fontSize: "0.8rem" }}
+                className="modal-link-button"
                 onClick={() => {
                   onClose();
                   window.history.pushState(null, "", "/reset-password");
@@ -150,8 +158,7 @@ export function AuthModal({ initialMode = "login", onClose }) {
             <p className="modal-hint">
               Seller, admin, or driver?{" "}
               <button
-                className="ghost-action compact"
-                style={{ padding: 0, background: "none", border: "none", color: "var(--brand-dark)", textDecoration: "underline", cursor: "pointer", font: "inherit", fontSize: "0.8rem" }}
+                className="modal-link-button"
                 onClick={() => {
                   onClose();
                   window.history.pushState(null, "", "/login");

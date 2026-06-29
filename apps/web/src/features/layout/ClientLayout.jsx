@@ -22,8 +22,10 @@ const SEARCH_CATEGORIES = [
   { value: "bundle",   label: "Bundles" },
 ];
 
-// Desktop primary navigation — six approved destinations only
+// Desktop primary navigation
 const CATEGORY_RAIL = [
+  { id: "home",                       label: "Home" },
+  { id: "shop",                       label: "Shop" },
   { id: "shop", category: "perfume",  label: "Perfumes" },
   { id: "shop", category: "cake",     label: "Cakes & Desserts" },
   { id: "shop", category: "gift_box", label: "Gift Sets" },
@@ -37,6 +39,8 @@ const DRAWER_GROUPS = [
   {
     group: "Shop",
     items: [
+      { label: "Home",             id: "home" },
+      { label: "Shop",             id: "shop" },
       { label: "Perfumes",         id: "shop",             category: "perfume" },
       { label: "Cakes & Desserts", id: "shop",             category: "cake" },
       { label: "Gift Sets",        id: "shop",             category: "gift_box" },

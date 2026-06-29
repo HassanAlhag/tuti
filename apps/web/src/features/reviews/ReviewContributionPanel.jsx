@@ -91,24 +91,28 @@ export function ReviewContributionPanel({
           />
         </label>
         <button className="primary-action full-width" type="submit">
-          <Send size={17} />
+          <Send size={17} aria-hidden="true" />
           Submit rating
         </button>
         {reviewNote ? <p className="success-note">{reviewNote}</p> : null}
       </form>
 
-      <div className="review-list">
-        {productReviews.slice(0, 2).map((review) => (
-          <article className="review-card" key={review.id}>
-            <div className="review-card-head">
-              <strong>{review.title}</strong>
-              <span><Star size={14} fill="currentColor" /> {review.rating}</span>
-            </div>
-            <p>{review.body}</p>
-            <small>{review.customer} · {review.verified ? "Verified purchase" : "Community review"}</small>
-          </article>
-        ))}
-      </div>
+      {productReviews.length ? (
+        <div className="review-list">
+          {productReviews.slice(0, 2).map((review) => (
+            <article className="review-card" key={review.id}>
+              <div className="review-card-head">
+                <strong>{review.title}</strong>
+                <span><Star size={14} fill="currentColor" aria-hidden="true" /> {review.rating}</span>
+              </div>
+              <p>{review.body}</p>
+              <small>{review.customer} · {review.verified ? "Verified purchase" : "Community review"}</small>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="review-list-empty">Be the first to share your experience with this product.</p>
+      )}
     </section>
   );
 }
