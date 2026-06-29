@@ -4,6 +4,7 @@ export function FinalCTA({ onBuildGift, onExploreGifts }) {
   return (
     <section className="final-cta" aria-labelledby="final-cta-heading">
       <div className="final-cta-inner">
+        <span className="final-cta-rule" aria-hidden="true" />
         <span className="eyebrow final-cta-eyebrow">Ready to gift?</span>
         <h2 id="final-cta-heading">Build something they'll remember.</h2>
         <p className="final-cta-sub">

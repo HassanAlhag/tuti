@@ -29,13 +29,37 @@ export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewP
   }
   return (
     <article className="product-card">
-      <button className="product-media-button catalog-card-media" onClick={viewProduct} type="button" aria-label={`View details for ${product.name}`}>
-        {product.imagePath ? (
-          <img className="catalog-card-image" src={product.imagePath} alt={imageAlt} loading="lazy" decoding="async" />
-        ) : (
-          <BottleArt product={product} />
-        )}
-      </button>
+      <div className="catalog-card-media-wrap">
+        <button className="product-media-button catalog-card-media" onClick={viewProduct} type="button" aria-label={`View details for ${product.name}`}>
+          {product.imagePath ? (
+            <img className="catalog-card-image" src={product.imagePath} alt={imageAlt} loading="lazy" decoding="async" />
+          ) : (
+            <BottleArt product={product} />
+          )}
+        </button>
+        <div className="catalog-card-media-actions">
+          {isAuthenticated() ? (
+            <button
+              aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+              aria-pressed={isWishlisted}
+              className={isWishlisted ? "catalog-card-float-btn wishlist-btn saved" : "catalog-card-float-btn wishlist-btn"}
+              onClick={() => toggle(product.id, product.name)}
+              type="button"
+            >
+              <Heart size={17} fill={isWishlisted ? "currentColor" : "none"} />
+            </button>
+          ) : null}
+          <button className="catalog-card-float-btn catalog-card-float-btn--primary" onClick={() => onAddToCart(product)} title="Add to cart" aria-label={`Add ${product.name} to cart`} type="button">
+            <Plus size={19} />
+          </button>
+        </div>
+        {hasReviews ? (
+          <div className="catalog-card-rating-badge">
+            <Star size={12} fill="currentColor" />
+            <strong>{score}</strong>
+          </div>
+        ) : null}
+      </div>
       <div className="product-body catalog-card-body">
         <div className="catalog-card-header">
           <span className="catalog-card-seller">{sellerName}</span>
@@ -52,37 +76,14 @@ export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewP
           {leadTimeLabel ? <span>{leadTimeLabel}</span> : null}
           {product.size ? <span>{product.size}</span> : null}
         </div>
-        {hasReviews ? (
-          <div className="catalog-card-rating">
-            <Star size={15} fill="currentColor" />
-            <strong>{score}</strong>
-            <span>{product.reviews} reviews</span>
-          </div>
-        ) : null}
         <div className="product-footer catalog-card-footer">
           <div className="catalog-card-price">
             <strong>{formatCurrency(product.price)}</strong>
             {product.originalPrice ? <del>{formatCurrency(product.originalPrice)}</del> : null}
           </div>
-          <div className="product-actions catalog-card-actions">
-            <button className="secondary-action compact catalog-card-view" onClick={viewProduct} type="button">
-              View details
-            </button>
-            {isAuthenticated() ? (
-              <button
-                aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
-                aria-pressed={isWishlisted}
-                className={isWishlisted ? "icon-button wishlist-btn saved" : "icon-button wishlist-btn"}
-                onClick={() => toggle(product.id, product.name)}
-                type="button"
-              >
-                <Heart size={18} fill={isWishlisted ? "currentColor" : "none"} />
-              </button>
-            ) : null}
-            <button className="icon-button primary" onClick={() => onAddToCart(product)} title="Add to cart" aria-label={`Add ${product.name} to cart`} type="button">
-              <Plus size={20} />
-            </button>
-          </div>
+          <button className="secondary-action compact catalog-card-view" onClick={viewProduct} type="button">
+            View details
+          </button>
         </div>
       </div>
     </article>

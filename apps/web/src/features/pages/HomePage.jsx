@@ -10,6 +10,29 @@ import { EditorialDiscovery } from "../homepage/EditorialDiscovery.jsx";
 import { FinalCTA } from "../homepage/FinalCTA.jsx";
 import "../homepage/homepage.css";
 
+const TRUST_ITEMS = [
+  {
+    icon: ShieldCheck,
+    title: "Every seller is reviewed",
+    text: "Boutiques pass a quality check before going live.",
+  },
+  {
+    icon: Gift,
+    title: "Made for gifting",
+    text: "Perfumes, cakes and messages, brought together with care.",
+  },
+  {
+    icon: Store,
+    title: "UAE-first delivery",
+    text: "Local sellers and delivery options across the UAE.",
+  },
+  {
+    icon: Lock,
+    title: "Secure checkout",
+    text: "COD checkout with transparent order confirmation.",
+  },
+];
+
 function TrustClosing() {
   return (
     <section className="trust-closing" aria-labelledby="trust-closing-heading">
@@ -22,34 +45,13 @@ function TrustClosing() {
           </p>
         </div>
         <div className="trust-grid">
-          <div className="trust-item">
-            <span className="trust-icon-circle"><ShieldCheck size={18} aria-hidden="true" /></span>
-            <div>
-              <strong>Every seller is reviewed</strong>
-              <span>Boutiques pass a quality check before going live.</span>
+          {TRUST_ITEMS.map(({ icon: Icon, title, text }) => (
+            <div className="trust-item" key={title}>
+              <span className="trust-icon-circle"><Icon size={20} aria-hidden="true" /></span>
+              <strong>{title}</strong>
+              <span>{text}</span>
             </div>
-          </div>
-          <div className="trust-item">
-            <span className="trust-icon-circle"><Gift size={18} aria-hidden="true" /></span>
-            <div>
-              <strong>Made for gifting</strong>
-              <span>Perfumes, cakes and messages, brought together with care.</span>
-            </div>
-          </div>
-          <div className="trust-item">
-            <span className="trust-icon-circle"><Store size={18} aria-hidden="true" /></span>
-            <div>
-              <strong>UAE-first delivery</strong>
-              <span>Local sellers and delivery options across the UAE.</span>
-            </div>
-          </div>
-          <div className="trust-item">
-            <span className="trust-icon-circle"><Lock size={18} aria-hidden="true" /></span>
-            <div>
-              <strong>Secure checkout</strong>
-              <span>Pay safely with cards or cash on delivery.</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

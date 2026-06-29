@@ -655,6 +655,86 @@ a {
   overflow: hidden;
 }
 
+/* Floating actions over the product image rather than a row of icon
+   buttons under the price -- the editorial-ecommerce pattern the brief
+   asks for instead of a generic stacked card (Phase 11B,
+   customer-visual-redesign-phase-11b.md). */
+.catalog-card-media-wrap {
+  position: relative;
+}
+
+.catalog-card-media-actions {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.catalog-card-float-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(23, 23, 23, 0.14);
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+}
+
+.catalog-card-float-btn:hover {
+  transform: scale(1.07);
+  box-shadow: 0 8px 20px rgba(23, 23, 23, 0.2);
+}
+
+.catalog-card-float-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.catalog-card-float-btn.wishlist-btn.saved {
+  color: #fff;
+  background: var(--danger);
+}
+
+.catalog-card-float-btn--primary {
+  color: #fff;
+  background: var(--brand-dark);
+}
+
+.catalog-card-float-btn--primary:hover {
+  background: var(--brand);
+}
+
+.catalog-card-rating-badge {
+  position: absolute;
+  bottom: 0.7rem;
+  left: 0.7rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(23, 23, 23, 0.1);
+}
+
+.catalog-card-rating-badge svg {
+  color: var(--amber);
+}
+
 .catalog-card-media {
   position: relative;
   overflow: hidden;
@@ -772,9 +852,16 @@ a {
   margin: 0;
 }
 
+/* min-height + flex centering raises the tap target to 44px without
+   changing the visible title text or wrapping behavior -- a scoped fix
+   for Codex's Phase 11B touch-target finding, not a base button
+   refactor (.product-title-button/.catalog-card-title-button are only
+   ever used for this one role across Product/Cake/Gift cards). */
 .product-title-button {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: 2.75rem;
   padding: 0;
   color: inherit;
   text-align: left;
@@ -884,7 +971,11 @@ a {
   gap: 0.5rem;
 }
 
+/* Overrides .compact's 2.15rem min-height -- same Codex touch-target
+   finding, scoped to this one card-footer button rather than the
+   shared .compact modifier used elsewhere in the app. */
 .catalog-card-view {
+  min-height: 2.75rem;
   white-space: nowrap;
 }
 
@@ -3921,14 +4012,30 @@ th {
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Shop shell ──────────────────────────────────────────────────── */
+/* The top-of-page dark tint this used to carry is now the real
+   .shop-header banner below -- a flat warm-cream fade is all the page
+   background needs underneath it (Phase 11B). */
 .shop-page {
-  background:
-    linear-gradient(180deg, rgba(17, 39, 34, 0.08), transparent 22rem),
-    linear-gradient(180deg, #f7f0e4 0%, #f7f3ea 18%, var(--paper) 38%);
+  background: linear-gradient(180deg, #f7f0e4 0%, #f7f3ea 18%, var(--paper) 38%);
 }
 
 /* ── Shop heading and discovery ──────────────────────────────────── */
+/* Full-bleed dark banner, not a light-background text block (Phase 11B,
+   customer-visual-redesign-phase-11b.md) -- gives Shop the same
+   branded, premium "first screen" weight the homepage hero has, instead
+   of opening straight into a plain catalogue header. */
 .shop-header {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 18%, rgba(215, 168, 74, 0.16), transparent 38%),
+    linear-gradient(160deg, #11302a 0%, #0c2420 64%, #0a1f1b 100%);
+  color: #f7f1e8;
+}
+
+.shop-header-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -3936,19 +4043,40 @@ th {
   gap: 1.5rem;
   width: min(92rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: clamp(2rem, 4vw, 2.75rem) 0 0;
+  padding: clamp(2.5rem, 5vw, 3.5rem) 0;
 }
 
 .shop-header-copy {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.65rem;
   max-width: 38rem;
+}
+
+.shop-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: fit-content;
+  margin-bottom: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  background: linear-gradient(135deg, rgba(47, 156, 137, 0.22), rgba(47, 156, 137, 0.1));
+  border: 1px solid rgba(47, 156, 137, 0.38);
+  border-radius: 999px;
+  color: #6fd9c3;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.shop-header-copy .eyebrow {
+  color: rgba(247, 241, 232, 0.6);
 }
 
 .shop-header-copy h1 {
   margin: 0;
-  color: var(--ink);
-  font-size: clamp(2rem, 3.2vw, 2.85rem);
+  color: #fff;
+  font-size: clamp(2.2rem, 3.6vw, 3.2rem);
   line-height: 1;
   letter-spacing: -0.02em;
 }
@@ -3956,7 +4084,7 @@ th {
 .shop-header-copy p {
   max-width: 34rem;
   margin: 0;
-  color: var(--muted);
+  color: rgba(247, 241, 232, 0.75);
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -3969,17 +4097,22 @@ th {
 }
 
 .shop-header-count {
-  color: var(--brand-dark);
+  color: rgba(247, 241, 232, 0.82);
   font-size: 0.86rem;
   font-weight: 800;
 }
 
+/* Pulled up to float over the dark .shop-header banner -- the same
+   "command panel overlapping the hero" language the homepage's Gifting
+   Shortcuts panel establishes (Phase 11B). */
 .shop-shell {
+  position: relative;
+  z-index: 2;
   display: grid;
   gap: clamp(2rem, 4vw, 3.5rem);
   width: min(92rem, calc(100% - 2rem));
-  padding: clamp(2rem, 4vw, 3rem) 0 clamp(5rem, 7vw, 7rem);
-  margin: 0 auto;
+  padding: 0 0 clamp(5rem, 7vw, 7rem);
+  margin: -2.75rem auto 0;
 }
 
 .shop-category-nav {
@@ -4169,6 +4302,20 @@ th {
   color: var(--info);
   background: linear-gradient(135deg, var(--info-bg), rgba(27, 138, 122, 0.04));
   border: 1px solid rgba(27, 138, 122, 0.28);
+}
+
+/* Sits on the dark shop-header banner -- needs its own light-on-dark
+   contrast rather than the default light-background teal treatment. */
+.shop-ai-button--header {
+  color: #eafff9;
+  background: linear-gradient(135deg, rgba(47, 156, 137, 0.32), rgba(47, 156, 137, 0.14));
+  border-color: rgba(111, 217, 195, 0.4);
+}
+
+.shop-ai-button--header:hover,
+.shop-ai-button--header:focus-visible {
+  background: rgba(47, 156, 137, 0.4);
+  border-color: rgba(111, 217, 195, 0.6);
 }
 
 .shop-ai-button:hover,
@@ -10232,10 +10379,16 @@ label.checkout-item-checkbox {
    later in this file (originally under "Section transition: editorial
    discovery → trust") was overriding background with a gradient; that
    was the effective value, now merged here as the single definition. */
+/* Restructured from a "text-left, icon-pairs-right" layout into a
+   heading band followed by a full-width row of standalone elevated
+   cards (Phase 11B, customer-visual-redesign-phase-11b.md) -- the
+   previous layout was structurally not table-like but read as flat;
+   this gives each trust point its own card-sized presence instead of
+   sharing a 2-column text block. */
 .trust-closing {
   position: relative;
-  background: linear-gradient(180deg, rgba(16, 49, 43, 0.03) 0%, var(--paper) 2rem);
-  padding-block: clamp(2.5rem, 4vw, 3.5rem) clamp(3rem, 5vw, 4rem);
+  background: linear-gradient(180deg, rgba(16, 49, 43, 0.04) 0%, var(--paper) 3rem);
+  padding-block: clamp(3rem, 5vw, 4.5rem) clamp(3.5rem, 6vw, 5rem);
   padding-inline: clamp(1rem, 3vw, 2rem);
 }
 
@@ -10243,9 +10396,7 @@ label.checkout-item-checkbox {
   width: min(80rem, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(14rem, 0.42fr) minmax(0, 0.58fr);
-  gap: clamp(2.5rem, 5vw, 5.5rem);
-  align-items: center;
+  gap: clamp(2rem, 4vw, 2.75rem);
 }
 
 .trust-closing-head {
@@ -10280,22 +10431,34 @@ label.checkout-item-checkbox {
 
 .trust-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem 2rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.25rem;
 }
 
 .trust-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.875rem;
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 1.5rem 1.35rem;
+  background: linear-gradient(165deg, #fff 0%, rgba(251, 247, 239, 0.96) 100%);
+  border: 1px solid rgba(15, 42, 36, 0.07);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), var(--shadow-xs);
+  transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+}
+
+.trust-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(215, 168, 74, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), var(--shadow-soft);
 }
 
 .trust-icon-circle {
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  min-width: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
   flex-shrink: 0;
   background: linear-gradient(135deg, #fff, rgba(247, 241, 232, 0.95));
   border: 1px solid rgba(215, 168, 74, 0.22);
@@ -10306,28 +10469,35 @@ label.checkout-item-checkbox {
 }
 
 .trust-item:hover .trust-icon-circle {
-  transform: translateY(-2px) scale(1.04);
+  transform: scale(1.06);
   box-shadow: 0 10px 22px rgba(23, 23, 23, 0.1);
-}
-
-.trust-item > div {
-  display: grid;
-  gap: 0.25rem;
 }
 
 .trust-item strong {
   display: block;
-  font-size: 0.93rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--ink);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .trust-item span {
   display: block;
-  font-size: 0.83rem;
+  font-size: 0.85rem;
   color: var(--muted);
   line-height: 1.55;
+}
+
+@media (max-width: 980px) {
+  .trust-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .trust-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 1180px) {

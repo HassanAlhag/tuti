@@ -202,19 +202,25 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
 function ShopHeader({ totalCount, onFindScent }) {
   return (
     <section className="shop-header" aria-labelledby="shop-header-title">
-      <div className="shop-header-copy">
-        <span className="eyebrow">Shop Tuti</span>
-        <h1 id="shop-header-title">Find the right gift for the moment.</h1>
-        <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
-      </div>
-      <div className="shop-header-meta">
-        <span className="shop-header-count">
-          {totalCount} live {totalCount === 1 ? "product" : "products"} available now
-        </span>
-        <button className="shop-ai-button shop-ai-button--header" type="button" onClick={onFindScent}>
-          <Wand2 size={16} aria-hidden="true" />
-          Help me choose
-        </button>
+      <div className="shop-header-inner">
+        <div className="shop-header-copy">
+          <span className="shop-header-badge">
+            <Wand2 size={12} aria-hidden="true" />
+            AI-assisted shopping
+          </span>
+          <span className="eyebrow">Shop Tuti</span>
+          <h1 id="shop-header-title">Find the right gift for the moment.</h1>
+          <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
+        </div>
+        <div className="shop-header-meta">
+          <span className="shop-header-count">
+            {totalCount} live {totalCount === 1 ? "product" : "products"} available now
+          </span>
+          <button className="shop-ai-button shop-ai-button--header" type="button" onClick={onFindScent}>
+            <Wand2 size={16} aria-hidden="true" />
+            Help me choose
+          </button>
+        </div>
       </div>
     </section>
   );
