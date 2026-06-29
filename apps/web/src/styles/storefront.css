@@ -614,16 +614,34 @@ a {
     radial-gradient(circle at top right, rgba(214, 176, 88, 0.12), transparent 36%);
   border: 1px solid color-mix(in srgb, var(--line) 78%, #f1e5c5);
   border-radius: 20px;
-  box-shadow: 0 14px 32px rgba(21, 26, 23, 0.08);
+  box-shadow: var(--shadow-soft);
   transition: box-shadow var(--t-base), transform var(--t-base), border-color var(--t-base);
+}
+
+/* Faint inset top highlight — the one restrained "glass" touch on the
+   card surface itself (Phase 11, customer-visual-redesign-phase-11.md). */
+.product-card::before,
+.cake-card::before,
+.gift-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  pointer-events: none;
 }
 
 .product-card:hover,
 .cake-card:hover,
 .gift-card:hover {
-  box-shadow: 0 22px 40px rgba(21, 26, 23, 0.12);
+  box-shadow: var(--shadow-strong);
   border-color: color-mix(in srgb, var(--brand) 20%, #e5d7b0);
   transform: translateY(-4px);
+}
+
+.product-card:hover .catalog-card-image,
+.cake-card:hover .catalog-card-image {
+  transform: scale(1.025);
 }
 
 .product-media-button {
@@ -675,6 +693,7 @@ a {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 320ms ease;
 }
 
 .product-media-button:hover .bottle-art,
@@ -4000,14 +4019,20 @@ th {
 }
 
 /* ── Search, category and toolbar ────────────────────────────────── */
+/* One unified, glass-touched control surface (Phase 11,
+   customer-visual-redesign-phase-11.md) -- search, sort, filters,
+   category tabs, family chips and the results summary all read as one
+   polished interface instead of separate stacked widgets. */
 .shop-toolbar {
   display: grid;
   gap: 1.35rem;
   padding: clamp(1.25rem, 2.2vw, 1.75rem);
-  background: rgba(255, 252, 247, 0.82);
-  border: 1px solid rgba(119, 131, 123, 0.14);
-  border-radius: 18px;
-  box-shadow: 0 14px 32px rgba(23, 28, 25, 0.05);
+  background: rgba(255, 252, 247, 0.78);
+  backdrop-filter: blur(14px) saturate(1.08);
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 14px 32px rgba(23, 28, 25, 0.07);
 }
 
 .shop-toolbar-controls {
@@ -4142,7 +4167,7 @@ th {
 
 .shop-ai-button {
   color: var(--info);
-  background: var(--info-bg);
+  background: linear-gradient(135deg, var(--info-bg), rgba(27, 138, 122, 0.04));
   border: 1px solid rgba(27, 138, 122, 0.28);
 }
 
@@ -9967,9 +9992,9 @@ label.checkout-item-checkbox {
   min-height: 22rem;
   padding: clamp(1.5rem, 2vw, 2rem);
   background: #16241f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
   color: #f8f5ef;
   cursor: pointer;
@@ -10002,7 +10027,7 @@ label.checkout-item-checkbox {
 
 .path-card-link:hover {
   border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 20px 44px rgba(0, 0, 0, 0.2);
   transform: translateY(-3px);
 }
 
@@ -10268,14 +10293,21 @@ label.checkout-item-checkbox {
 .trust-icon-circle {
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  min-width: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
   flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(247, 241, 232, 0.92), rgba(241, 232, 214, 0.92));
-  border: 1px solid rgba(215, 168, 74, 0.18);
+  background: linear-gradient(135deg, #fff, rgba(247, 241, 232, 0.95));
+  border: 1px solid rgba(215, 168, 74, 0.22);
   border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(23, 23, 23, 0.07);
   color: var(--brand-dark);
+  transition: transform var(--t-base), box-shadow var(--t-base);
+}
+
+.trust-item:hover .trust-icon-circle {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 10px 22px rgba(23, 23, 23, 0.1);
 }
 
 .trust-item > div {

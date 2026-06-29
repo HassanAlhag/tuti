@@ -125,12 +125,6 @@ function BoutiqueCampaign({ placement, onViewSeller }) {
         <span className="eyebrow">Boutique makers</span>
         <h2 className="boutique-campaign-name" id="boutique-campaign-name">{title}</h2>
 
-        {seller.displayNameAr ? (
-          <span className="boutique-campaign-arabic" lang="ar" dir="rtl">
-            {seller.displayNameAr}
-          </span>
-        ) : null}
-
         <p className="boutique-campaign-tagline">{subtitle}</p>
 
         {tags.length > 0 ? (
@@ -296,9 +290,6 @@ function SellerGalleryCard({ placement, index, onViewSeller }) {
         <div className="featured-seller-heading">
           <strong>{title}</strong>
         </div>
-        {seller.displayNameAr ? (
-          <small lang="ar" dir="auto">{seller.displayNameAr}</small>
-        ) : null}
         <p>{subtitle}</p>
         {tags.length ? (
           <div className="featured-seller-tags">

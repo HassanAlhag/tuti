@@ -19,10 +19,13 @@ export function BottleArt({ product, compact = false }) {
       style={{ "--bottle": product?.color || "#52796f", "--accent": product?.accent || "#e9c46a" }}
       aria-hidden="true"
     >
-      <span className="bottle-cap" />
-      <span className="bottle-neck" />
-      <span className="bottle-body" />
-      <span className="bottle-shine" />
+      <span className="bottle-art-stage">
+        <span className="bottle-art-shadow" />
+        <span className="bottle-cap" />
+        <span className="bottle-neck" />
+        <span className="bottle-body" />
+        <span className="bottle-shine" />
+      </span>
     </div>
   );
 }

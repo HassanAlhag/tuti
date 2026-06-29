@@ -216,31 +216,35 @@
    applies — the card surfaces are UI controls, not design elements
    competing with the photography). */
 .is-card {
+  position: relative;
   flex: 0 0 auto;
   scroll-snap-align: start;
   min-width: clamp(104px, 16vw, 152px);
   min-height: 44px;
   padding: 0.72rem 0.9rem;
-  background: rgba(6, 14, 12, 0.66);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(6, 14, 12, 0.6);
+  backdrop-filter: saturate(200%) blur(16px);
+  -webkit-backdrop-filter: saturate(200%) blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.18);
   color: rgba(255, 255, 255, 0.6);
   text-align: left;
   cursor: pointer;
-  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease, transform 200ms ease;
 }
 
 .is-card:hover {
-  background: rgba(12, 28, 24, 0.80);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(12, 28, 24, 0.76);
+  border-color: rgba(255, 255, 255, 0.24);
   color: rgba(255, 255, 255, 0.88);
+  transform: translateY(-2px);
 }
 
 .is-card--active {
-  background: rgba(18, 54, 46, 0.86);
-  border-color: rgba(215, 168, 74, 0.52);
+  background: rgba(18, 54, 46, 0.82);
+  border-color: rgba(215, 168, 74, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 8px 24px rgba(0, 0, 0, 0.22);
   color: #fff;
 }
 

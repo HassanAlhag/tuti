@@ -1,4 +1,4 @@
-import { Droplet, Gift, PackageSearch, PartyPopper, Sparkles, Store } from "lucide-react";
+import { Droplet, Gift, PackageSearch, PartyPopper, Sparkles, Store, Wand2 } from "lucide-react";
 
 const SHORTCUTS = [
   {
@@ -84,6 +84,10 @@ export function GiftingShortcuts({
     <section className="gifting-shortcuts" aria-labelledby="gifting-shortcuts-title">
       <div className="gifting-shortcuts-panel">
         <div className="gifting-shortcuts-head">
+          <span className="gifting-shortcuts-badge">
+            <Wand2 size={12} aria-hidden="true" />
+            AI-assisted
+          </span>
           <span className="gifting-shortcuts-label" id="gifting-shortcuts-title">Start your journey</span>
           <p>Choose how you would like Tuti to help.</p>
         </div>
