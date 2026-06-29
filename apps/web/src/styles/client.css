@@ -7,7 +7,7 @@ body {
 /* ── Shell ─────────────────────────────────────────────────────── */
 .cl-shell { min-height: 100vh; background: var(--paper); overflow-x: clip; }
 .cl-shell img { max-width: 100%; }
-.cl-body  { min-height: calc(100vh - 7.5rem); } /* topbar is now ~7.5rem tall */
+.cl-body  { min-height: calc(100vh - 6rem); }
 
 .cl-loading, .cl-error {
   display: grid; place-items: center; min-height: 100vh;
@@ -35,15 +35,8 @@ body {
   border-bottom-color: rgba(255,255,255,0.1);
   box-shadow: 0 10px 28px rgba(12, 25, 22, 0.18);
 }
-.cl-topbar-inner {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  width: min(90rem, calc(100% - 2rem));
-  margin: 0 auto;
-  height: 3.75rem;
-  gap: 1.5rem;
-}
+/* .cl-topbar-inner removed (Phase 2, css-revamp-phase-2.md) — fresh-
+   verified zero JSX consumers; superseded by .cl-bar1/.cl-bar2 below. */
 
 /* ── Bar 1 — logo · search · chips ──────────────────────────────── */
 .cl-bar1 {
@@ -52,7 +45,7 @@ body {
   gap: 1rem;
   width: min(90rem, calc(100% - 2rem));
   margin: 0 auto;
-  height: 3.75rem;
+  height: 3.25rem;
 }
 
 /* ── Logo ──────────────────────────────────────────────────────── */
@@ -124,6 +117,8 @@ body {
   transition: background var(--t-fast);
 }
 .cl-search-btn:hover { background: #ffeab1; }
+.cl-search-btn:focus-visible { outline: 2px solid rgba(255,255,255,0.7); outline-offset: -2px; }
+.cl-search-btn:active { background: #f0d080; }
 
 /* ── Right chip group ──────────────────────────────────────────── */
 .cl-bar1-right {
@@ -141,12 +136,14 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--sp-1) var(--sp-3);
+  padding: 0.2rem var(--sp-2);
   border-radius: var(--radius);
   white-space: nowrap;
   transition: background var(--t-fast);
 }
 .cl-account-chip:hover { background: rgba(255,255,255,0.08); }
+.cl-account-chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--radius); }
+.cl-account-chip:active { background: rgba(255,255,255,0.12); }
 .cl-chip-top {
   font-size: var(--text-xs);
   color: rgba(255,255,255,0.55);
@@ -186,12 +183,14 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--sp-1) var(--sp-3);
+  padding: 0.2rem var(--sp-2);
   border-radius: var(--radius);
   color: #fff;
   transition: background var(--t-fast);
 }
 .cl-cart-chip:hover { background: rgba(255,255,255,0.08); }
+.cl-cart-chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: var(--radius); }
+.cl-cart-chip:active { background: rgba(255,255,255,0.12); }
 .cl-cart-icon-wrap {
   position: relative;
   display: flex;
@@ -229,8 +228,7 @@ body {
   scrollbar-width: none;
   border-top: 1px solid rgba(255,255,255,0.06);
   padding: 0 max(1rem, calc((100% - 90rem) / 2 + 1rem));
-  /* Increased from 2.75rem to meet 44px tap target */
-  min-height: 2.85rem;
+  min-height: 2.625rem;
   width: 100%;
 }
 .cl-bar2::-webkit-scrollbar { display: none; }
@@ -285,73 +283,23 @@ body {
   display: flex; align-items: center; gap: var(--sp-3);
   background: none; border: none; cursor: pointer; padding: 0;
 }
-.cl-brand-mark {
-  display: grid; width: 2.25rem; height: 2.25rem;
-  place-items: center; font-size: 1.2rem; color: #111c19;
-  background: linear-gradient(135deg, #f4e0a3, var(--gold));
-  border-radius: var(--radius);
-}
-.cl-brand-name { font-size: var(--text-base); font-weight: var(--fw-bold); color: #fff; }
+/* Phase 2 (css-revamp-phase-2.md): removed .cl-brand-mark, .cl-brand-name,
+   .cl-nav-btn (+ hover/active), .cl-icon-btn/.cl-cart-btn (+ hover),
+   .cl-cart-badge, .cl-sell-btn (+ hover), .cl-signin-btn (+ hover),
+   .cl-user-btn — all fresh-verified zero JSX consumers. .cl-brand,
+   .cl-nav, .cl-actions, .cl-user-wrap are live and were left untouched
+   (they were never compound-joined with the deleted classes). */
 
 /* ── Navigation ────────────────────────────────────────────────── */
 .cl-nav { display: flex; align-items: center; gap: var(--sp-1); justify-content: center; overflow-x: auto; scrollbar-width: none; }
 .cl-nav::-webkit-scrollbar { display: none; }
-.cl-nav-btn {
-  display: flex; align-items: center; gap: var(--sp-2);
-  background: none; border: none; padding: var(--sp-2) var(--sp-4);
-  border-radius: 999px; font-size: var(--text-sm); font-weight: var(--fw-medium);
-  color: rgba(255,255,255,0.65); cursor: pointer; white-space: nowrap;
-  transition: color var(--t-fast), background var(--t-fast);
-}
-.cl-nav-btn:hover { color: #fff; background: rgba(255,255,255,0.08); }
-.cl-nav-btn.active { color: #111c19; background: #f3df9c; font-weight: var(--fw-semibold); }
 
 /* ── Right actions ─────────────────────────────────────────────── */
 .cl-actions { display: flex; align-items: center; gap: var(--sp-3); }
-.cl-icon-btn, .cl-cart-btn {
-  position: relative; display: flex; align-items: center; justify-content: center;
-  width: 2.5rem; height: 2.5rem;
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 999px; color: rgba(255,255,255,0.82); cursor: pointer;
-  transition: background var(--t-fast), color var(--t-fast), transform var(--t-fast);
-}
-.cl-icon-btn:hover, .cl-cart-btn:hover {
-  background: rgba(255,255,255,0.16); color: #fff; transform: translateY(-1px);
-}
-.cl-cart-badge {
-  position: absolute; top: 2px; right: 2px;
-  min-width: 17px; height: 17px; padding: 0 3px;
-  background: var(--gold); color: #17110a;
-  font-size: 0.6rem; font-weight: var(--fw-bold);
-  border-radius: 999px; display: flex; align-items: center; justify-content: center;
-}
-.cl-sell-btn {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  min-height: 2.5rem; padding: 0 var(--sp-4);
-  color: #111c19; font-size: var(--text-sm); font-weight: var(--fw-semibold);
-  background: #f3df9c; border: 1px solid rgba(243,223,156,0.75);
-  border-radius: 999px; white-space: nowrap; cursor: pointer;
-  transition: background var(--t-fast);
-}
-.cl-sell-btn:hover { background: #ffeab1; }
-.cl-signin-btn {
-  display: flex; align-items: center; gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-4);
-  background: var(--brand); color: #fff; border: none;
-  border-radius: 999px; font-size: var(--text-sm); font-weight: var(--fw-semibold);
-  cursor: pointer; transition: background var(--t-fast);
-}
-.cl-signin-btn:hover { background: var(--brand-dark); }
 
 /* ── User menu ─────────────────────────────────────────────────── */
 .cl-user-wrap { position: relative; }
-.cl-user-btn  { padding: 0; }
-.cl-avatar {
-  width: 1.95rem; height: 1.95rem; border-radius: 999px;
-  background: #f3df9c; color: #17110a;
-  font-size: var(--text-sm); font-weight: var(--fw-bold);
-  display: flex; align-items: center; justify-content: center;
-}
+/* .cl-avatar removed (Phase 2) — fresh-verified zero JSX consumers. */
 .cl-dropdown {
   position: absolute; top: calc(100% + var(--sp-2)); right: 0;
   width: 220px; background: var(--panel); border: 1px solid var(--line);
@@ -479,11 +427,11 @@ body {
   margin-bottom: var(--sp-5);
 }
 
-/* Product detail — wide layout variant (no third column constraint) */
-.product-detail-layout-wide {
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  max-width: none;
-}
+/* .product-detail-layout-wide removed (Phase 5, css-revamp-phase-5.md) —
+   this file's unconditional override always won over storefront.css's
+   responsive rules for the same modifier class, which broke the mobile
+   layout. Merged into storefront.css's .product-detail-layout as the
+   single, responsive owner. */
 
 /* ── Inner pages — Gifting · Finder · Offers · Journal ─────────── */
 
@@ -710,6 +658,24 @@ body {
   color: var(--brand-dark);
   font-size: var(--text-xs);
   font-weight: var(--fw-bold);
+}
+
+.offer-empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+  padding: clamp(2rem, 5vw, 3rem);
+  text-align: center;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.offer-empty p {
+  margin: 0;
+  max-width: 28rem;
 }
 
 /* ── Seller brand page ─────────────────────────────────────────── */
@@ -1235,12 +1201,12 @@ body {
 }
 
 .featured-product-rail--luxury-picks {
-  background: linear-gradient(180deg, rgba(251, 247, 239, 0.9), rgba(246, 239, 227, 0.9));
+  background: transparent;
 }
 
 .featured-product-rail--new-arrivals {
-  background: linear-gradient(180deg, #f5ebd7, #f8f1e5);
-  border-top: 1px solid rgba(215, 168, 74, 0.24);
+  background: transparent;
+  border-top: none;
 }
 
 .featured-product-grid {
@@ -1256,25 +1222,29 @@ body {
 
 .featured-product-grid::-webkit-scrollbar { display: none; }
 
+/* Consolidated from two definitions in this file (Phase 3,
+   css-revamp-phase-3.md) — effective styles merged, single rule now. */
 .featured-product-card {
   display: grid;
   gap: var(--sp-3);
   padding: 0;
   text-align: left;
-  background: var(--panel);
+  background: rgba(255, 252, 247, 0.96);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  box-shadow: var(--shadow-xs);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(16, 30, 26, 0.07), 0 4px 12px rgba(16, 30, 26, 0.05);
   overflow: hidden;
   cursor: pointer;
   transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
   min-width: 0;
+  width: min(20rem, 100%);
+  flex: 0 0 auto;
 }
 
 .featured-product-card:hover {
   transform: translateY(-1px);
-  border-color: rgba(0, 92, 70, 0.24);
-  box-shadow: var(--shadow-sm);
+  border-color: rgba(0, 92, 70, 0.20);
+  box-shadow: 0 3px 16px rgba(16, 30, 26, 0.10), 0 1px 4px rgba(16, 30, 26, 0.07);
 }
 
 .featured-product-media {
@@ -1807,10 +1777,7 @@ body {
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  /* Legacy rules kept for orphaned classes */
-  .cl-topbar-inner { grid-template-columns: auto auto; gap: var(--sp-3); }
   .cl-nav     { display: none; }
-  .cl-sell-btn { display: none; }
   /* Footer: brand stacks above 2-col nav grid */
   .cl-footer-inner  { grid-template-columns: 1fr; gap: var(--sp-6); }
   .cl-footer-nav    { grid-template-columns: repeat(2, 1fr); }
@@ -1897,9 +1864,6 @@ body {
   }
 }
 @media (max-width: 520px) {
-  /* Legacy */
-  .cl-brand-name    { display: none; }
-  .cl-topbar-inner  { width: calc(100% - 1rem); }
   .cl-footer        { padding: 2rem 1rem 1.5rem; }
   /* Bar 1 full-bleed on small phones */
   .cl-bar1          { width: calc(100% - 1rem); }
@@ -2399,23 +2363,23 @@ body {
   display: none;
 }
 
-.featured-product-card {
-  width: min(20rem, 100%);
-  flex: 0 0 auto;
-  border-radius: 14px;
-  background: rgba(255, 252, 247, 0.96);
-  box-shadow: 0 1px 3px rgba(16, 30, 26, 0.07), 0 4px 12px rgba(16, 30, 26, 0.05);
-}
-
-.featured-product-card:hover {
-  box-shadow: 0 3px 16px rgba(16, 30, 26, 0.10), 0 1px 4px rgba(16, 30, 26, 0.07);
-  border-color: rgba(0, 92, 70, 0.20);
-}
+/* .featured-product-card duplicate removed (Phase 3) — merged into the
+   single definition earlier in this file. */
 
 .featured-product-media {
+  position: relative;
+  overflow: hidden;
   aspect-ratio: 4/5;
   min-height: 0;
   border-bottom: 1px solid rgba(16, 30, 26, 0.06);
+}
+
+.featured-product-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .featured-product-copy {
@@ -2425,24 +2389,10 @@ body {
 
 .featured-product-rail--luxury-picks {
   padding-top: clamp(0.5rem, 1vw, 1rem);
-  background: linear-gradient(180deg, rgba(251, 247, 239, 0.9), rgba(246, 239, 227, 0.9));
 }
 
 .featured-product-rail--new-arrivals {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-  padding: clamp(5rem, 7vw, 7rem) 1rem;
-  background: linear-gradient(180deg, #f3e7cf 0%, #f8f1e3 100%);
-  border-top: 1px solid rgba(215, 168, 74, 0.22);
-}
-
-.featured-product-rail--new-arrivals .featured-product-shell--split {
-  width: min(92rem, calc(100% - 0rem));
-  margin: 0 auto;
-}
-
-.featured-product-rail--new-arrivals .featured-product-card:first-child {
-  width: min(22rem, 100%);
+  padding-top: clamp(0.5rem, 1vw, 1rem);
 }
 
 @media (max-width: 980px) {
@@ -2514,7 +2464,7 @@ body {
   }
 
   .featured-product-rail--new-arrivals {
-    padding: 4.5rem 1rem;
+    padding-top: 0.5rem;
   }
 }
 

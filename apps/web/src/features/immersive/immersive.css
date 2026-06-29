@@ -88,11 +88,14 @@
 /* ── Copy block ──────────────────────────────────────────────────── */
 /* Keyed by activeChapter in JSX — React remounts this div on every
    chapter change, restarting the entrance animation from scratch. */
+/* animation duration consolidated from storefront.css (Phase 3,
+   css-revamp-phase-3.md) — 520ms was the effective value (storefront.css
+   loads after this file in the real bundle, see css-revamp-audit.md §3). */
 .is-copy {
   padding: clamp(1.5rem, 2.8vw, 2.25rem) clamp(2rem, 5vw, 5rem);
   padding-bottom: 1.25rem;
   max-width: 42rem;
-  animation: is-copy-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: is-copy-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes is-copy-in {
