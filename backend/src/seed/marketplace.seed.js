@@ -32,6 +32,7 @@ export const shops = [
     cover: "Luxury bespoke cakes and perfume gifts",
     category: "mixed",
     categories: ["perfume", "cake", "dessert", "gift_box"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   12,
       holdDays:         3,
@@ -61,7 +62,9 @@ export const shops = [
     avatar: "LP",
     story: "French-inspired pastry and Arabic sweets, crafted for gifting and celebrations.",
     cover: "French pastry & Arabic sweets",
-    category: "cakes",
+    category: "cake",
+    categories: ["cake", "dessert", "gift_box"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   11,
       holdDays:         3,
@@ -91,6 +94,9 @@ export const shops = [
     avatar: "OL",
     story: "Small-batch oud and amber perfumes blended in Dubai.",
     cover: "Reserve oud blends",
+    category: "perfume",
+    categories: ["perfume"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   14,
       holdDays:         5,
@@ -149,6 +155,9 @@ export const shops = [
     avatar: "CA",
     story: "Clean daily scents with citrus, tea, neroli, and cedar.",
     cover: "Fresh everyday fragrance",
+    category: "perfume",
+    categories: ["perfume"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   12,
       holdDays:         5,
@@ -178,6 +187,9 @@ export const shops = [
     avatar: "MR",
     story: "Soft musk, skin scents, and quiet luxury perfumes.",
     cover: "Clean musk essentials",
+    category: "perfume",
+    categories: ["perfume"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   15,
       holdDays:         7,
@@ -304,6 +316,7 @@ export const products = [
     id: "prf-001",
     name: "Midnight Oud Reserve",
     shopId: "shop-oud-lane",
+    category: "perfume",
     family: "Oud",
     gender: "Unisex",
     notes: ["Cambodian oud", "saffron", "smoked amber"],
@@ -339,6 +352,7 @@ export const products = [
     id: "prf-002",
     name: "Damask Rose Silk",
     shopId: "shop-rose-vault",
+    category: "perfume",
     family: "Floral",
     gender: "Women",
     notes: ["rose absolute", "pink pepper", "white musk"],
@@ -374,6 +388,7 @@ export const products = [
     id: "prf-003",
     name: "Citrus Majlis",
     shopId: "shop-citrus-atelier",
+    category: "perfume",
     family: "Fresh",
     gender: "Men",
     notes: ["bergamot", "mint leaf", "cedar"],
@@ -409,6 +424,7 @@ export const products = [
     id: "prf-004",
     name: "Velvet Musk No. 8",
     shopId: "shop-musk-room",
+    category: "perfume",
     family: "Musk",
     gender: "Unisex",
     notes: ["clean musk", "tonka", "iris"],
@@ -444,6 +460,7 @@ export const products = [
     id: "prf-005",
     name: "Amber Souk Elixir",
     shopId: "shop-oud-lane",
+    category: "perfume",
     family: "Amber",
     gender: "Unisex",
     notes: ["golden amber", "date resin", "vanilla wood"],
@@ -783,8 +800,8 @@ export const products = [
     allergens: ["Gluten", "Dairy", "Eggs"],
     leadTimeDays: 2,
     customMessageAvailable: true,
-    bundledProductIds: ["prf-002", "cke-002"],
-    includes: ["Damask Rose Silk 50ml perfume", "Rose Velvet Dream cake", "Luxury gift box", "Handwritten card"],
+    bundledProductIds: ["prf-007", "cke-002"],
+    includes: ["Cocoa Rose Parfum 50ml perfume", "Rose Velvet Dream cake", "Luxury gift box", "Handwritten card"],
     price: 499,
     originalPrice: 575,
     size: "",
@@ -899,10 +916,28 @@ export const promotions = [
 
 export const collections = [
   {
+    id: "collection-signature-gift-edit",
+    title: "The Signature Gift Edit",
+    description: "Our most-loved perfumes, cakes, and gift boxes paired for the perfect occasion.",
+    productIds: ["prf-001", "cke-001", "gft-002", "prf-007", "gft-001"],
+  },
+  {
+    id: "collection-oud-celebration",
+    title: "Oud & Celebration Cakes",
+    description: "Deep oud reserves paired with show-stopping cakes for the grandest gifting moments.",
+    productIds: ["prf-001", "prf-005", "cke-001", "cke-003", "gft-002"],
+  },
+  {
+    id: "collection-last-minute-luxury",
+    title: "Last-Minute Luxury",
+    description: "Same-day gift picks — premium, ready to deliver, and effortlessly beautiful.",
+    productIds: ["prf-003", "prf-006", "cke-002", "gft-003", "prf-004"],
+  },
+  {
     id: "collection-signature",
     title: "Signature Collection",
     description: "Hero scents that define Tuti's warm, premium marketplace style.",
-    productIds: ["prf-001", "prf-002", "prf-006"],
+    productIds: ["prf-001", "prf-007", "prf-006"],
   },
   {
     id: "collection-luxury",
@@ -932,19 +967,19 @@ export const collections = [
     id: "collection-floral",
     title: "Floral Collection",
     description: "Rose, iris, soft petals, and polished feminine blends.",
-    productIds: ["prf-002", "prf-006"],
+    productIds: ["prf-007", "prf-006"],
   },
   {
     id: "collection-musk",
     title: "Musk Collection",
     description: "Skin scents, white musk, tonka, iris, and quiet luxury.",
-    productIds: ["prf-004", "prf-002"],
+    productIds: ["prf-004", "prf-007"],
   },
   {
     id: "collection-seasonal",
     title: "Seasonal Collection",
     description: "Limited drops, gifting edits, and occasion-based perfume stories.",
-    productIds: ["prf-004", "prf-005", "prf-002"],
+    productIds: ["prf-004", "prf-005", "prf-007"],
   },
 ];
 
@@ -1250,4 +1285,96 @@ export const auditEvents = [
   "ORD-9301 placed on payout hold after customer dispute.",
   "Payout PO-5501 passed reserve and delivery checks.",
   "Rose Vault submitted trade license for admin review.",
+];
+
+// ── Homepage merchandising (seed-memory only) ───────────────────────
+// brandProfile.service.js / featured-sellers.service.js / featured-
+// products.service.js each fall back to an empty in-memory Map when
+// MONGO_URI is unset, so the homepage's featured-seller and featured-
+// product rails render empty on every seed-memory restart unless
+// something pre-populates them. These three arrays are that
+// pre-population, reusing each shop's existing story/cover copy rather
+// than inventing new text. Mongo is never touched by this -- see
+// brandProfile.service.js / featured-sellers.service.js /
+// seedRepository.js for where each is wired in.
+
+export const sellerBrandProfiles = [
+  {
+    id: "seed-brand-sweet-studio",
+    shopId: "shop-sweet-studio",
+    slug: "sweet-studio",
+    displayName: "Sweet Studio",
+    shortTagline: "Luxury bespoke cakes and perfume gifts",
+    brandStory: "Artisan cakes, dessert boxes, and gift-ready perfume pairings made for luxury celebrations.",
+    published: true,
+  },
+  {
+    id: "seed-brand-la-patisserie",
+    shopId: "shop-la-patisserie",
+    slug: "la-patisserie",
+    displayName: "La Pâtisserie",
+    shortTagline: "French pastry & Arabic sweets",
+    brandStory: "French-inspired pastry and Arabic sweets, crafted for gifting and celebrations.",
+    published: true,
+  },
+  {
+    id: "seed-brand-oud-lane",
+    shopId: "shop-oud-lane",
+    slug: "oud-lane",
+    displayName: "Oud Lane",
+    shortTagline: "Reserve oud blends",
+    brandStory: "Small-batch oud and amber perfumes blended in Dubai.",
+    published: true,
+  },
+  {
+    id: "seed-brand-citrus-atelier",
+    shopId: "shop-citrus-atelier",
+    slug: "citrus-atelier",
+    displayName: "Citrus Atelier",
+    shortTagline: "Fresh everyday fragrance",
+    brandStory: "Clean daily scents with citrus, tea, neroli, and cedar.",
+    published: true,
+  },
+  {
+    id: "seed-brand-musk-room",
+    shopId: "shop-musk-room",
+    slug: "musk-room",
+    displayName: "Musk Room",
+    shortTagline: "Clean musk essentials",
+    brandStory: "Soft musk, skin scents, and quiet luxury perfumes.",
+    published: true,
+  },
+];
+
+export const featuredSellerPlacements = [
+  { id: "seed-fsp-sweet-studio", shopId: "shop-sweet-studio", brandProfileId: "seed-brand-sweet-studio", placementKey: "homepage_featured_sellers", priority: 100, active: true },
+  { id: "seed-fsp-oud-lane", shopId: "shop-oud-lane", brandProfileId: "seed-brand-oud-lane", placementKey: "homepage_featured_sellers", priority: 90, active: true },
+  { id: "seed-fsp-la-patisserie", shopId: "shop-la-patisserie", brandProfileId: "seed-brand-la-patisserie", placementKey: "homepage_featured_sellers", priority: 80, active: true },
+  { id: "seed-fsp-citrus-atelier", shopId: "shop-citrus-atelier", brandProfileId: "seed-brand-citrus-atelier", placementKey: "homepage_featured_sellers", priority: 70, active: true },
+  { id: "seed-fsp-musk-room", shopId: "shop-musk-room", brandProfileId: "seed-brand-musk-room", placementKey: "homepage_featured_sellers", priority: 60, active: true },
+];
+
+export const featuredProductPlacements = [
+  // Luxury picks — homepage featured rail
+  { id: "seed-fpp-luxury-1", productId: "prf-001", shopId: "shop-oud-lane",      placementKey: "luxury_picks",  priority: 100, active: true },
+  { id: "seed-fpp-luxury-2", productId: "prf-005", shopId: "shop-oud-lane",      placementKey: "luxury_picks",  priority: 90,  active: true },
+  { id: "seed-fpp-luxury-3", productId: "gft-002", shopId: "shop-sweet-studio",  placementKey: "luxury_picks",  priority: 80,  active: true },
+  { id: "seed-fpp-luxury-4", productId: "cke-001", shopId: "shop-sweet-studio",  placementKey: "luxury_picks",  priority: 70,  active: true },
+  { id: "seed-fpp-luxury-5", productId: "prf-007", shopId: "shop-citrus-atelier",placementKey: "luxury_picks",  priority: 60,  active: true },
+  { id: "seed-fpp-luxury-6", productId: "gft-001", shopId: "shop-la-patisserie", placementKey: "luxury_picks",  priority: 50,  active: true },
+  // New arrivals rail
+  { id: "seed-fpp-new-1",    productId: "prf-008", shopId: "shop-sweet-studio",  placementKey: "new_arrivals",  priority: 100, active: true },
+  { id: "seed-fpp-new-2",    productId: "cke-002", shopId: "shop-sweet-studio",  placementKey: "new_arrivals",  priority: 90,  active: true },
+  { id: "seed-fpp-new-3",    productId: "gft-003", shopId: "shop-la-patisserie", placementKey: "new_arrivals",  priority: 80,  active: true },
+  { id: "seed-fpp-new-4",    productId: "prf-006", shopId: "shop-citrus-atelier",placementKey: "new_arrivals",  priority: 70,  active: true },
+  // Top rated / best sellers rail
+  { id: "seed-fpp-top-1",    productId: "prf-001", shopId: "shop-oud-lane",      placementKey: "top_rated",     priority: 100, active: true },
+  { id: "seed-fpp-top-2",    productId: "cke-003", shopId: "shop-sweet-studio",  placementKey: "top_rated",     priority: 90,  active: true },
+  { id: "seed-fpp-top-3",    productId: "prf-003", shopId: "shop-citrus-atelier",placementKey: "top_rated",     priority: 80,  active: true },
+  { id: "seed-fpp-top-4",    productId: "gft-002", shopId: "shop-sweet-studio",  placementKey: "top_rated",     priority: 70,  active: true },
+  // Gift picks rail
+  { id: "seed-fpp-gift-1",   productId: "gft-001", shopId: "shop-la-patisserie", placementKey: "gift_picks",    priority: 100, active: true },
+  { id: "seed-fpp-gift-2",   productId: "gft-002", shopId: "shop-sweet-studio",  placementKey: "gift_picks",    priority: 90,  active: true },
+  { id: "seed-fpp-gift-3",   productId: "gft-003", shopId: "shop-la-patisserie", placementKey: "gift_picks",    priority: 80,  active: true },
+  { id: "seed-fpp-gift-4",   productId: "cke-004", shopId: "shop-la-patisserie", placementKey: "gift_picks",    priority: 70,  active: true },
 ];

@@ -12,6 +12,7 @@
 
 import { randomUUID } from "node:crypto";
 import { env } from "../../config/env.js";
+import { logger } from "../../shared/logger.js";
 import { CommissionEntry } from "../../models/CommissionEntry.js";
 import { SalesRep } from "../../models/SalesRep.js";
 import { SellerReferral } from "../../models/SellerReferral.js";
@@ -109,7 +110,7 @@ async function accrueMongoCommissions(order) {
       }
     } catch (shopErr) {
       // Never propagate; commission failure must not undo the order status update.
-      console.error(`[orderCommissions] mongo shop=${shopId} order=${order.orderId}:`, shopErr.message);
+      logger.error({ err: shopErr, shopId, orderId: order.orderId }, "[orderCommissions] mongo commission");
     }
   }
 }
@@ -190,7 +191,7 @@ function accrueSeedCommissions(order) {
         }
       }
     } catch (shopErr) {
-      console.error(`[orderCommissions] seed shop=${shopId} order=${order.orderId}:`, shopErr.message);
+      logger.error({ err: shopErr, shopId, orderId: order.orderId }, "[orderCommissions] seed commission");
     }
   }
 }
@@ -205,6 +206,6 @@ export async function accrueDeliveredOrderCommissions(order) {
       accrueSeedCommissions(order);
     }
   } catch (err) {
-    console.error("[orderCommissions] top-level error:", err.message);
+    logger.error({ err }, "[orderCommissions] top-level error");
   }
 }

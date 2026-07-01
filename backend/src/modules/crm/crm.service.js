@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { env } from "../../config/env.js";
+import { escapeRegex } from "../../shared/regex.js";
 import { Customer } from "../../models/Customer.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 
@@ -17,10 +18,6 @@ export const addCrmNoteSchema = z.object({
   text: z.string().min(1).max(1000),
   type: z.enum(["note", "call", "email", "follow_up", "complaint", "compliment"]).optional().default("note"),
 });
-
-function escapeRegex(str) {
-  return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 export async function listCrmCustomers({ q = "", segment = "", risk = "", status = "", page = 1, limit = 20 }) {
   const safeLimit = Math.min(Math.max(Number(limit) || 20, 1), 100);

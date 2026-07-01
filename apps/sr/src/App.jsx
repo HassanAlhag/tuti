@@ -574,18 +574,20 @@ export default function App() {
             </div>
           ) : null}
 
-          <div className="sr-demo-credentials">
-            <strong>SR demo</strong>
-            <span>email: {DEMO_EMAIL}</span>
-            <span>password: {DEMO_PASSWORD}</span>
-            <button
-              className="ghost-action compact"
-              type="button"
-              onClick={() => { setEmail(DEMO_EMAIL); setPassword(DEMO_PASSWORD); }}
-            >
-              Use demo credentials
-            </button>
-          </div>
+          {import.meta.env.DEV && (
+            <div className="sr-demo-credentials">
+              <strong>SR demo</strong>
+              <span>email: {DEMO_EMAIL}</span>
+              <span>password: {DEMO_PASSWORD}</span>
+              <button
+                className="ghost-action compact"
+                type="button"
+                onClick={() => { setEmail(DEMO_EMAIL); setPassword(DEMO_PASSWORD); }}
+              >
+                Use demo credentials
+              </button>
+            </div>
+          )}
 
           <form className="sr-login-form" onSubmit={handleLogin}>
             <label className="sr-field">

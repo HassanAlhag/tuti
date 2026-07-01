@@ -1,5 +1,4 @@
-import { Gift, Lock, ShieldCheck, Store } from "lucide-react";
-import { ImmersiveStory } from "../immersive/ImmersiveStory.jsx";
+import { ArrowRight, CakeSlice, Gift, Lock, Package, ShieldCheck, SprayCan, Store, Truck, Wand2 } from "lucide-react";
 import { GiftingShortcuts } from "../homepage/GiftingShortcuts.jsx";
 import { PathSelector } from "../homepage/PathSelector.jsx";
 import { GiftBuilderPreview } from "../homepage/GiftBuilderPreview.jsx";
@@ -32,6 +31,106 @@ const TRUST_ITEMS = [
     text: "COD checkout with transparent order confirmation.",
   },
 ];
+
+function LiquidGlassHero({ goToBuildBox, goToFragranceFinder, goToShop, goToShops }) {
+  return (
+    <section className="liquid-home-hero is-story" aria-labelledby="liquid-home-hero-title">
+      <div className="liquid-ambient liquid-ambient--cyan" aria-hidden="true" />
+      <div className="liquid-ambient liquid-ambient--cherry" aria-hidden="true" />
+      <div className="liquid-ambient liquid-ambient--gold" aria-hidden="true" />
+
+      <div className="liquid-hero-copy">
+        <span className="liquid-eyebrow">
+          <i aria-hidden="true" />
+          AI gift concierge for perfumes and patisserie
+        </span>
+        <h1 id="liquid-home-hero-title">
+          Gifts that feel <span>chosen.</span>
+        </h1>
+        <p>
+          Match luxury fragrance, elegant cakes, and polished gift boxes in one calm marketplace built for same-day moments, boutique sellers, and thoughtful recommendations.
+        </p>
+
+        <form
+          className="liquid-command-bar"
+          aria-label="Find gift ideas"
+          onSubmit={(event) => {
+            event.preventDefault();
+            goToFragranceFinder?.();
+          }}
+        >
+          <span className="liquid-command-ai" aria-hidden="true">AI</span>
+          <span className="liquid-command-copy">
+            <strong>Find a gift for an anniversary tonight, under AED 450.</strong>
+            <small>Scanning oud, floral cakes, pistachio patisserie, and boutique availability.</small>
+          </span>
+          <button type="submit">Generate picks</button>
+          <span className="liquid-command-scan" aria-hidden="true" />
+        </form>
+
+        <div className="liquid-hero-actions">
+          <button className="liquid-primary" type="button" onClick={goToBuildBox}>
+            Build a premium box <ArrowRight size={17} aria-hidden="true" />
+          </button>
+          <button className="liquid-secondary" type="button" onClick={() => goToShop?.("gift_box")}>
+            Explore same-day gifts
+          </button>
+        </div>
+
+        <div className="liquid-hero-chips" aria-label="Tuti trust cues">
+          <span className="liquid-chip liquid-chip--ai">Smart pairing</span>
+          <span className="liquid-chip">Same-day UAE delivery</span>
+          <span className="liquid-chip">Boutique verified</span>
+          <span className="liquid-chip">COD-ready preview</span>
+        </div>
+      </div>
+
+      <div className="liquid-product-stage" aria-label="Perfume cake and gift composition">
+        <div className="liquid-stage-light" aria-hidden="true" />
+        <div className="liquid-stage-ring" aria-hidden="true" />
+        <div className="liquid-stage-note">
+          <strong>Curated gift stage</strong>
+          Glass fragrance, patisserie texture, and matte packaging share one premium visual language.
+        </div>
+        <div className="liquid-composition" aria-hidden="true">
+          <div className="liquid-stage-shadow" />
+          <div className="liquid-gift">
+            <span className="liquid-gift-box" />
+            <span className="liquid-gift-lid" />
+            <span className="liquid-gift-ribbon-v" />
+            <span className="liquid-gift-ribbon-h" />
+            <span className="liquid-gift-seal">T</span>
+          </div>
+          <div className="liquid-perfume">
+            <span className="liquid-perfume-cap" />
+            <span className="liquid-perfume-neck" />
+            <span className="liquid-perfume-bottle" />
+            <span className="liquid-perfume-label">NOIR</span>
+          </div>
+          <div className="liquid-cake">
+            <span className="liquid-cake-plate" />
+            <span className="liquid-cake-body" />
+            <span className="liquid-cake-cream" />
+          </div>
+        </div>
+        <div className="liquid-metrics" aria-label="Marketplace highlights">
+          <span><strong>4.9</strong> Boutique rating</span>
+          <span><strong>28m</strong> AI shortlist</span>
+          <span><strong>120+</strong> Pairings</span>
+        </div>
+      </div>
+
+      <div className="liquid-action-dock" aria-label="Quick gift actions">
+        <button type="button" onClick={() => goToShop?.("perfume")}><SprayCan size={20} aria-hidden="true" />Perfumes</button>
+        <button type="button" onClick={() => goToShop?.("cake")}><CakeSlice size={20} aria-hidden="true" />Cakes</button>
+        <button type="button" onClick={() => goToShop?.("gift_box")}><Package size={20} aria-hidden="true" />Gift Boxes</button>
+        <button type="button" onClick={() => goToShop?.("all")}><Truck size={20} aria-hidden="true" />Same Day</button>
+        <button type="button" onClick={goToFragranceFinder}><Wand2 size={20} aria-hidden="true" />AI Finder</button>
+        <button type="button" onClick={goToShops}><Store size={20} aria-hidden="true" />Boutiques</button>
+      </div>
+    </section>
+  );
+}
 
 function TrustClosing() {
   return (
@@ -83,8 +182,12 @@ export function HomePage({
 }) {
   return (
     <main className="home-page">
-      {/* Act 1 — The Gift Journey (four pinned immersive scenes) */}
-      <ImmersiveStory onBuildGift={goToBuildBox} />
+      <LiquidGlassHero
+        goToBuildBox={goToBuildBox}
+        goToFragranceFinder={goToFragranceFinder}
+        goToShop={goToShop}
+        goToShops={goToShops}
+      />
 
       <div className="home-content">
 

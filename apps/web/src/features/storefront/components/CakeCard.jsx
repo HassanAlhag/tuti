@@ -1,6 +1,8 @@
-import { Clock, Plus, ShoppingBag, Star } from "lucide-react";
+import { Clock, Heart, Plus, ShoppingBag, Star } from "lucide-react";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { bayesianScore } from "@tuti/shared/utils/rating.js";
+import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 
 const OCCASION_LABELS = {
   birthday:    "Birthday",
@@ -14,7 +16,7 @@ const OCCASION_LABELS = {
   baby_shower: "Baby Shower",
 };
 
-function CakeVisual({ product }) {
+export function CakeVisual({ product }) {
   return (
     <div className="cake-visual" style={{ "--cake-color": product.color, "--cake-accent": product.accent }}>
       <div className="cake-tier tier-3" />
@@ -26,6 +28,10 @@ function CakeVisual({ product }) {
 }
 
 export function CakeCard({ product, shop, onAddToCart, onViewProduct }) {
+  const { isAuthenticated } = useAuthStore();
+  const { has, toggle } = useWishlistStore();
+  const isWishlisted = has(product.id);
+
   const score = bayesianScore(product.rating, product.reviews);
   const stockLabel = product.stock > 5 ? "In stock" : product.stock > 0 ? "Limited availability" : "Out of stock";
   const occasionTags = (product.occasionTags || []).slice(0, 2);
@@ -40,13 +46,37 @@ export function CakeCard({ product, shop, onAddToCart, onViewProduct }) {
 
   return (
     <article className="cake-card">
-      <button className="product-media-button catalog-card-media" onClick={viewProduct} type="button" aria-label={`View details for ${product.name}`}>
-        {product.imagePath ? (
-          <img className="catalog-card-image" src={product.imagePath} alt={imageAlt} loading="lazy" decoding="async" />
-        ) : (
-          <CakeVisual product={product} />
-        )}
-      </button>
+      <div className="catalog-card-media-wrap">
+        <button className="product-media-button catalog-card-media" onClick={viewProduct} type="button" aria-label={`View details for ${product.name}`}>
+          {product.imagePath ? (
+            <img className="catalog-card-image" src={product.imagePath} alt={imageAlt} loading="lazy" decoding="async" />
+          ) : (
+            <CakeVisual product={product} />
+          )}
+        </button>
+        <div className="catalog-card-media-actions">
+          {isAuthenticated() ? (
+            <button
+              aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
+              aria-pressed={isWishlisted}
+              className={isWishlisted ? "catalog-card-float-btn wishlist-btn saved" : "catalog-card-float-btn wishlist-btn"}
+              onClick={() => toggle(product.id, product.name)}
+              type="button"
+            >
+              <Heart size={17} fill={isWishlisted ? "currentColor" : "none"} />
+            </button>
+          ) : null}
+          <button className="catalog-card-float-btn catalog-card-float-btn--primary" onClick={() => onAddToCart(product)} title="Add to cart" aria-label={`Add ${product.name} to cart`} type="button">
+            <Plus size={19} />
+          </button>
+        </div>
+        {hasReviews ? (
+          <div className="catalog-card-rating-badge">
+            <Star size={12} fill="currentColor" />
+            <strong>{score}</strong>
+          </div>
+        ) : null}
+      </div>
 
       <div className="cake-card-body catalog-card-body">
         <div className="catalog-card-header">
@@ -87,14 +117,6 @@ export function CakeCard({ product, shop, onAddToCart, onViewProduct }) {
           </div>
         )}
 
-        {hasReviews ? (
-          <div className="cake-card-rating catalog-card-rating">
-            <Star size={14} fill="currentColor" />
-            <strong>{score}</strong>
-            <span>{product.reviews} reviews</span>
-          </div>
-        ) : null}
-
         <div className="cake-card-footer catalog-card-footer">
           <div className="cake-price-block catalog-card-price">
             <strong>{formatCurrency(product.price)}</strong>
@@ -103,20 +125,9 @@ export function CakeCard({ product, shop, onAddToCart, onViewProduct }) {
             )}
             <span>{stockLabel}</span>
           </div>
-          <div className="catalog-card-actions">
-            <button className="secondary-action compact catalog-card-view" onClick={viewProduct} type="button">
-              View details
-            </button>
-            <button
-              className="icon-button primary cake-add-btn"
-              onClick={() => onAddToCart(product)}
-              title="Add to cart"
-              aria-label={`Add ${product.name} to cart`}
-              type="button"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
+          <button className="secondary-action compact catalog-card-view" onClick={viewProduct} type="button">
+            View details
+          </button>
         </div>
       </div>
     </article>

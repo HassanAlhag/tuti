@@ -29,6 +29,18 @@ function getSellerInitials(value) {
   return words.map((word) => word[0]).join("").toUpperCase();
 }
 
+/* Deterministic per-shop hue from the shop's own name/slug, so the
+   no-photo fallback background varies card to card instead of every
+   boutique sharing one identical flat gradient. */
+function getSellerHue(seed) {
+  const text = String(seed || "tuti");
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) % 360;
+  }
+  return (hash + 360) % 360;
+}
+
 function buildSellerTags(seller) {
   const source = [
     ...(Array.isArray(seller?.fragranceIdentityTags) ? seller.fragranceIdentityTags : []),
@@ -169,12 +181,13 @@ function BoutiqueSplit({ placements, onViewSeller }) {
             className="boutique-split-panel"
             type="button"
             ref={impressionRef}
+            style={image ? undefined : { "--seller-hue": getSellerHue(slug || title) }}
             onClick={() => {
               void trackPlacementClick(makeTrackingPayload(placement, index));
               if (slug && onViewSeller) onViewSeller(slug);
             }}
           >
-            {image ? <img src={image} alt="" /> : null}
+            {image ? <img src={image} alt="" /> : <span className="boutique-split-mark" aria-hidden="true">{getSellerInitials(title)}</span>}
             <div className="boutique-split-copy">
               <span className="boutique-split-name">{title}</span>
               <span className="boutique-split-tag">{subtitle}</span>
@@ -209,12 +222,13 @@ function BoutiqueTrio({ placements, onViewSeller }) {
         className="boutique-split-panel boutique-trio-primary"
         type="button"
         ref={primaryRef}
+        style={primaryImage ? undefined : { "--seller-hue": getSellerHue(primarySlug || primaryTitle) }}
         onClick={() => {
           void trackPlacementClick(makeTrackingPayload(primary, 0));
           if (primarySlug && onViewSeller) onViewSeller(primarySlug);
         }}
       >
-        {primaryImage ? <img src={primaryImage} alt="" /> : null}
+        {primaryImage ? <img src={primaryImage} alt="" /> : <span className="boutique-split-mark" aria-hidden="true">{getSellerInitials(primaryTitle)}</span>}
         <div className="boutique-split-copy">
           <span className="boutique-split-name">{primaryTitle}</span>
           <span className="boutique-split-tag">{primary.subtitle || getSellerSubtitle(primarySeller)}</span>
@@ -238,12 +252,13 @@ function BoutiqueTrio({ placements, onViewSeller }) {
               className="boutique-split-panel"
               type="button"
               ref={ref}
+              style={image ? undefined : { "--seller-hue": getSellerHue(slug || title) }}
               onClick={() => {
                 void trackPlacementClick(makeTrackingPayload(placement, index + 1));
                 if (slug && onViewSeller) onViewSeller(slug);
               }}
             >
-              {image ? <img src={image} alt="" /> : null}
+              {image ? <img src={image} alt="" /> : <span className="boutique-split-mark" aria-hidden="true">{getSellerInitials(title)}</span>}
               <div className="boutique-split-copy">
                 <span className="boutique-split-name">{title}</span>
                 <span className="boutique-split-tag">{placement.subtitle || getSellerSubtitle(seller)}</span>
@@ -280,9 +295,11 @@ function SellerGalleryCard({ placement, index, onViewSeller }) {
         if (slug && onViewSeller) onViewSeller(slug);
       }}
     >
-      <div className={image ? "featured-seller-media featured-seller-media--image" : "featured-seller-media featured-seller-media--abstract"}>
+      <div
+        className={image ? "featured-seller-media featured-seller-media--image" : "featured-seller-media featured-seller-media--abstract"}
+        style={image ? undefined : { "--seller-hue": getSellerHue(seller.slug || title) }}
+      >
         {image ? <img alt="" src={image} /> : null}
-        <span className="featured-seller-watermark" aria-hidden="true">{initials}</span>
         {seller.published ? <span className="featured-seller-badge">Verified boutique</span> : null}
         <span className="featured-seller-mark" aria-hidden="true">{initials}</span>
       </div>

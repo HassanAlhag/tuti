@@ -262,8 +262,8 @@ export function SellerLogin({ idleExpired = false, onResume }) {
               )}
             </div>
 
-            {/* ── Demo credentials (login mode only) ─────────────────── */}
-            {!isRegister && (
+            {/* ── Demo credentials (login mode only, dev builds only) ─── */}
+            {import.meta.env.DEV && !isRegister && (
               <div className="sl-demo-credentials">
                 <strong>Seller demo</strong>
                 <span>email: {DEMO_EMAIL}</span>

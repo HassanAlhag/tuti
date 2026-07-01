@@ -100,6 +100,31 @@ function isLocalCorsOrigin(origin) {
   }
 }
 
+function isLocalHostname(hostname) {
+  return hostname === "localhost"
+    || hostname.startsWith("127.")
+    || hostname === "::1"
+    || hostname === "[::1]"
+    || hostname === "0.0.0.0"
+    || hostname.endsWith(".localhost");
+}
+
+// Mongo connection strings can list multiple hosts (replica sets) and
+// mongodb+srv:// has no port, so this parses by hand rather than relying
+// on the URL class across every shape. Unlike isLocalCorsOrigin, a parse
+// failure here defaults to "not local" -- a missed remote-Mongo warning
+// is worse than an extra one.
+export function getMongoHosts(uri) {
+  const match = String(uri || "").match(/^mongodb(?:\+srv)?:\/\/(?:[^@/]*@)?([^/?]+)/i);
+  if (!match) return [];
+  return match[1].split(",").map((entry) => entry.split(":")[0]).filter(Boolean);
+}
+
+export function isLocalMongoUri(uri) {
+  const hosts = getMongoHosts(uri);
+  return hosts.length > 0 && hosts.every(isLocalHostname);
+}
+
 function isPlaceholderSecret(secret) {
   const normalized = String(secret || "").trim().toLowerCase();
   return placeholderSecrets.has(normalized);

@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { env } from "../../config/env.js";
+import { logger } from "../../shared/logger.js";
 import { Order } from "../../models/Order.js";
 import { Product } from "../../models/Product.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
@@ -702,7 +703,7 @@ async function reverseCommissionsForOrder(order, reason) {
   try {
     await reverseSalesRepCommissions(order, { reason });
   } catch (err) {
-    console.error(`[commissionReversal] order=${order?.orderId || "unknown"}:`, err.message);
+    logger.error({ err, orderId: order?.orderId }, "[commissionReversal]");
   }
 }
 

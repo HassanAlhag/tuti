@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { publicSellerBrandApi } from "@tuti/shared/api/client.js";
+import { getLocalizedField, DEFAULT_LOCALE } from "@tuti/shared/utils/locale.js";
 import { ProductCardRouter } from "../storefront/components/ProductCardRouter.jsx";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
 import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
@@ -37,8 +38,8 @@ function safeDecodeSlug(value) {
   }
 }
 
-function getBrandHeading(profile) {
-  return profile?.displayName || "Seller brand";
+function getBrandHeading(profile, locale = DEFAULT_LOCALE) {
+  return getLocalizedField(profile, "displayName", locale) || "Seller brand";
 }
 
 export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }) {
@@ -185,7 +186,7 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
   const hasBanner = isImageUrl(profile.bannerUrl);
   const hasLogo = isImageUrl(profile.logoUrl);
   const publicShop = { name: profile.displayName || "Tuti seller" };
-  const hasStory = Boolean(profile.brandStory || profile.brandStoryAr);
+  const hasStory = Boolean(getLocalizedField(profile, "brandStory", DEFAULT_LOCALE));
   const hasTrustContent = Boolean((profile.trustBadges || []).length || (profile.sellerPolicies || []).length);
   const sellerHeading = getBrandHeading(profile);
 
@@ -216,7 +217,6 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
               <div className="seller-brand-title-row">
                 <div className="seller-brand-title-stack">
                   <h1>{sellerHeading}</h1>
-                  {profile.displayNameAr ? <strong lang="ar" dir="auto">{profile.displayNameAr}</strong> : null}
                 </div>
                 <span className="seller-brand-pill seller-brand-pill--brand">
                   <BadgeCheck size={14} />
@@ -224,8 +224,9 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
                 </span>
               </div>
 
-              {profile.shortTagline ? <p className="seller-brand-tagline">{profile.shortTagline}</p> : null}
-              {profile.shortTaglineAr ? <p className="seller-brand-tagline" lang="ar" dir="auto">{profile.shortTaglineAr}</p> : null}
+              {getLocalizedField(profile, "shortTagline", DEFAULT_LOCALE) ? (
+                <p className="seller-brand-tagline">{getLocalizedField(profile, "shortTagline", DEFAULT_LOCALE)}</p>
+              ) : null}
             </div>
 
             <div className="seller-brand-chip-row">
@@ -249,8 +250,9 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
 
           {hasStory ? (
             <div className="seller-brand-story-block">
-              {profile.brandStory ? <p className="seller-brand-story">{profile.brandStory}</p> : null}
-              {profile.brandStoryAr ? <p className="seller-brand-story" lang="ar" dir="auto">{profile.brandStoryAr}</p> : null}
+              {getLocalizedField(profile, "brandStory", DEFAULT_LOCALE) ? (
+                <p className="seller-brand-story">{getLocalizedField(profile, "brandStory", DEFAULT_LOCALE)}</p>
+              ) : null}
             </div>
           ) : (
             <p className="seller-brand-story seller-brand-story--fallback">

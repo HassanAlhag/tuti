@@ -169,9 +169,11 @@ export function AuthModal({ initialMode = "login", onClose }) {
                 Use the unified sign-in page.
               </button>
             </p>
-            <p className="modal-hint">
-              Demo — admin@tuti.dev · seller@tuti.dev · customer@tuti.dev · Password: password123
-            </p>
+            {import.meta.env.DEV && (
+              <p className="modal-hint">
+                Demo — admin@tuti.dev · seller@tuti.dev · customer@tuti.dev · Password: password123
+              </p>
+            )}
           </>
         )}
       </div>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Shop } from "../../models/Shop.js";
 import { User } from "../../models/User.js";
 import { PERMISSIONS, USER_ROLES, normalizePermissions, permissionsForRole, roleDefinitions } from "./user.roles.js";
+import { escapeRegex } from "../../shared/regex.js";
 
 const SHOP_CATEGORIES = ["perfume", "cake", "dessert", "gift_box", "mixed"];
 const permissionIds = PERMISSIONS.map((permission) => permission.id);
@@ -42,9 +43,6 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8).max(128),
 });
 
-function escapeRegex(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function makeShopId(name) {
   const slug = String(name || "seller-shop")

@@ -13,6 +13,7 @@ import {
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { bayesianScore } from "@tuti/shared/utils/rating.js";
+import { getLocalizedField, DEFAULT_LOCALE } from "@tuti/shared/utils/locale.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { publicCollectionsApi } from "@tuti/shared/api/client.js";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
@@ -158,7 +159,6 @@ function CollectionSellerCard({ item, onNavigate }) {
         </div>
 
         {subtitle ? <p>{subtitle}</p> : null}
-        {seller.displayNameAr ? <small lang="ar" dir="auto">{seller.displayNameAr}</small> : null}
 
         {tags.length ? (
           <div className="collection-item-tags">
@@ -213,7 +213,7 @@ export function CollectionPage({ slug, onNavigate, onViewProduct }) {
   const bannerUrl = collection?.bannerUrl || collection?.mobileBannerUrl || "";
   const mobileBannerUrl = collection?.mobileBannerUrl || collection?.bannerUrl || "";
   const heroPlacement = collection?.placementKey ? toTitleLabel(collection.placementKey) : "Curated collection";
-  const collectionTitle = collection?.title || collection?.titleAr || "Curated collection";
+  const collectionTitle = getLocalizedField(collection, "title", DEFAULT_LOCALE) || "Curated collection";
 
   useEffect(() => {
     if (!collectionQuery.isSuccess || !collection) return;
@@ -299,7 +299,7 @@ export function CollectionPage({ slug, onNavigate, onViewProduct }) {
               {mobileBannerUrl && mobileBannerUrl !== bannerUrl ? (
                 <source media="(max-width: 640px)" srcSet={mobileBannerUrl} />
               ) : null}
-              <img alt={`${collection.title || collection.titleAr || "Collection"} banner`} src={bannerUrl} />
+              <img alt={`${getLocalizedField(collection, "title", DEFAULT_LOCALE) || "Collection"} banner`} src={bannerUrl} />
             </picture>
           ) : (
             <div className="collection-hero-banner-fallback">
@@ -311,9 +311,9 @@ export function CollectionPage({ slug, onNavigate, onViewProduct }) {
           <div className="collection-hero-overlay">
             <span className="eyebrow">Curated by Tuti</span>
             <h1>{collectionTitle}</h1>
-            {collection.titleAr ? <strong lang="ar" dir="auto">{collection.titleAr}</strong> : null}
-            {collection.subtitle ? <p>{collection.subtitle}</p> : null}
-            {collection.subtitleAr ? <p lang="ar" dir="auto">{collection.subtitleAr}</p> : null}
+            {getLocalizedField(collection, "subtitle", DEFAULT_LOCALE) ? (
+              <p>{getLocalizedField(collection, "subtitle", DEFAULT_LOCALE)}</p>
+            ) : null}
 
             <div className="collection-hero-meta">
               {collection.theme ? (
@@ -337,10 +337,9 @@ export function CollectionPage({ slug, onNavigate, onViewProduct }) {
         </div>
       </section>
 
-      {collection.description || collection.descriptionAr ? (
+      {getLocalizedField(collection, "description", DEFAULT_LOCALE) ? (
         <section className="collection-story">
-          {collection.description ? <p className="collection-story-lede">{collection.description}</p> : null}
-          {collection.descriptionAr ? <p className="collection-story-lede" lang="ar" dir="auto">{collection.descriptionAr}</p> : null}
+          <p className="collection-story-lede">{getLocalizedField(collection, "description", DEFAULT_LOCALE)}</p>
         </section>
       ) : null}
 

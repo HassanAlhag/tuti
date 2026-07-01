@@ -3,6 +3,7 @@ import {
   collections,
   customerProfiles,
   customerReviews,
+  featuredProductPlacements,
   orderHistory,
   paymentLedger,
   payoutQueue,
@@ -16,6 +17,7 @@ const state = {
   auditEvents:        structuredClone(auditEvents),
   collections:        structuredClone(collections),
   customers:          structuredClone(customerProfiles),
+  featuredProductPlacements: structuredClone(featuredProductPlacements), // seed-memory only, see marketplace.seed.js
   orders:             structuredClone(orderHistory),
   payments:           structuredClone(paymentLedger),
   payouts:            structuredClone(payoutQueue),   // legacy mock payout queue (display only)

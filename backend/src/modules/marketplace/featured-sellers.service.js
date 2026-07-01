@@ -2,9 +2,15 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { env } from "../../config/env.js";
 import { FeaturedSellerPlacement } from "../../models/FeaturedSellerPlacement.js";
+import { featuredSellerPlacements } from "../../seed/marketplace.seed.js";
 import { getSellerBrandProfile } from "./brandProfile.service.js";
 
-const seedFeaturedSellerPlacements = new Map();
+// Pre-populated from marketplace.seed.js -- see that file's "Homepage
+// merchandising" section and brandProfile.service.js's matching seed.
+// Mongo is unaffected.
+const seedFeaturedSellerPlacements = new Map(
+  featuredSellerPlacements.map((placement) => [placement.id, structuredClone(placement)])
+);
 
 function createHttpError(status, message) {
   const error = new Error(message);

@@ -804,6 +804,18 @@ export default function App() {
               Sign in
             </button>
           </form>
+          {import.meta.env.DEV && (
+            <div className="dp-demo-credentials">
+              <span>driver@tuti.dev · password123</span>
+              <button
+                type="button"
+                className="ghost-action compact"
+                onClick={() => { setEmail("driver@tuti.dev"); setPassword("password123"); }}
+              >
+                Use demo credentials
+              </button>
+            </div>
+          )}
         </section>
       </main>
     );

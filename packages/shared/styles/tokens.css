@@ -68,6 +68,7 @@
   --sp-4:  1rem;      /* 16px */
   --sp-5:  1.25rem;   /* 20px */
   --sp-6:  1.5rem;    /* 24px */
+  --sp-7:  1.75rem;   /* 28px */
   --sp-8:  2rem;      /* 32px */
   --sp-10: 2.5rem;    /* 40px */
   --sp-12: 3rem;      /* 48px */
@@ -113,4 +114,33 @@
   --sidebar-w: 15.5rem;
   --topbar-h:  3.75rem;
   --commerce-h:3.75rem;
+
+  /* ─── Liquid Glass V2 theme tokens ──────────────────────────── */
+  /* Source of truth matching design-preview/motion-marketplace-liquid-glass-v2.html */
+  --lg-white:         #ffffff;
+  --lg-porcelain:     #fbfbfa;
+  --lg-ivory:         #f6f2ea;
+  --lg-silver:        #e8e9ea;
+  --lg-graphite:      #151618;
+  --lg-ink:           #07080a;
+  --lg-muted:         #6b7078;
+  --lg-cyan:          #0bb9df;
+  --lg-blue:          #307cff;
+  --lg-raspberry:     #e17491;
+  --lg-cherry:        #c13862;
+  --lg-pistachio:     #b8cf9f;
+  --lg-sage:          #6f8565;
+  --lg-champagne:     #d7b777;
+  --lg-champagne-2:   #f3dfad;
+  --lg-glass:         rgba(255, 255, 255, 0.68);
+  --lg-glass-strong:  rgba(255, 255, 255, 0.84);
+  --lg-border:        rgba(21, 22, 24, 0.1);
+  --lg-shadow-air:    0 18px 60px rgba(15, 18, 22, 0.08);
+  --lg-shadow-float:  0 34px 90px rgba(15, 18, 22, 0.15);
+  --lg-shadow-luxury: 0 44px 110px rgba(0, 0, 0, 0.38);
+  --lg-radius-xxl:    54px;
+  --lg-radius-xl:     38px;
+  --lg-radius-lg:     28px;
+  --lg-radius-md:     20px;
+  --lg-ease:          cubic-bezier(.18,.82,.22,1);
 }

@@ -91,7 +91,7 @@ export function ResetPasswordPage({ onNavigate }) {
               If <strong>{email}</strong> has a Tuti account, a password reset link has been sent.
               Check your inbox and follow the link to set a new password.
             </p>
-            {devToken ? (
+            {import.meta.env.DEV && devToken ? (
               <div className="checkout-auth-helper">
                 <strong>Dev mode — use this token:</strong>{" "}
                 <button

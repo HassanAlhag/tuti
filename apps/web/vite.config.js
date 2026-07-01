@@ -9,8 +9,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@tuti/shared":        resolve(root, "../../packages/shared"),
-      "@":                   resolve(root, "src"),
+      "@tuti/shared": resolve(root, "../../packages/shared"),
     },
   },
   server: {

@@ -33,7 +33,7 @@ function getSection() {
 
 function AdminLogin({ idleExpired = false, onResume }) {
   const { setAuth } = useAuthStore();
-  const [form, setForm] = useState({ email: "admin@tuti.dev", password: "password123" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -91,6 +91,18 @@ function AdminLogin({ idleExpired = false, onResume }) {
         <button className="primary-action" type="submit" disabled={pending}>
           {pending ? "Signing in..." : "Sign in"}
         </button>
+        {import.meta.env.DEV && (
+          <div className="admin-app-demo">
+            <span>admin@tuti.dev · password123</span>
+            <button
+              type="button"
+              className="ghost-action compact"
+              onClick={() => setForm({ email: "admin@tuti.dev", password: "password123" })}
+            >
+              Use demo credentials
+            </button>
+          </div>
+        )}
       </form>
     </main>
   );

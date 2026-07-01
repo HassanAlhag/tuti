@@ -21,6 +21,7 @@
 
 import { randomUUID } from "node:crypto";
 import { env } from "../../config/env.js";
+import { logger } from "../../shared/logger.js";
 import { Shop } from "../../models/Shop.js";
 import { SellerTransaction } from "../../models/SellerTransaction.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
@@ -152,7 +153,7 @@ function seedApply(shopId, orderId, type, amount, note, opts = {}) {
   // Apply the balance change to the shop.
   const shop = state.shops.find((s) => s.id === shopId);
   if (!shop) {
-    console.warn(`[sellerBalance] seed shop not found: ${shopId}`);
+    logger.warn({ shopId }, "[sellerBalance] seed shop not found");
     return txId;
   }
 
@@ -207,7 +208,7 @@ export async function recordDeliveryEarning(order) {
         seedApply(shopId, order.orderId, "delivery_credit", amount, note);
       }
     } catch (err) {
-      console.error(`[sellerBalance] recordDeliveryEarning shop=${shopId} order=${order.orderId}:`, err.message);
+      logger.error({ err, shopId, orderId: order.orderId }, "[sellerBalance] recordDeliveryEarning");
     }
   }
 }
@@ -234,10 +235,7 @@ export async function recordCodCredit(order, settledBy) {
         : seedFindTx(order.orderId, shopId, "delivery_credit");
 
       if (existingDeliveryCredit) {
-        console.warn(
-          `[sellerBalance] recordCodCredit skipped — delivery_credit already exists` +
-          ` for order ${order.orderId} shop ${shopId}. No double-credit applied.`
-        );
+        logger.warn({ orderId: order.orderId, shopId }, "[sellerBalance] recordCodCredit skipped — delivery_credit already exists, no double-credit applied");
         continue;
       }
 
@@ -248,7 +246,7 @@ export async function recordCodCredit(order, settledBy) {
         seedApply(shopId, order.orderId, "cod_credit", amount, note, { createdBy: settledBy || "admin" });
       }
     } catch (err) {
-      console.error(`[sellerBalance] recordCodCredit shop=${shopId} order=${order.orderId}:`, err.message);
+      logger.error({ err, shopId, orderId: order.orderId }, "[sellerBalance] recordCodCredit");
     }
   }
 }
@@ -368,7 +366,7 @@ export async function freezeSellerBalanceForDispute(order) {
         seedApply(shopId, orderId, "dispute_hold", creditTx.amount, note, { fromAvailable });
       }
     } catch (err) {
-      console.error(`[sellerBalance] freezeSellerBalanceForDispute shop=${shopId} order=${order.orderId}:`, err.message);
+      logger.error({ err, shopId, orderId: order.orderId }, "[sellerBalance] freezeSellerBalanceForDispute");
     }
   }
 }
@@ -396,7 +394,7 @@ export async function releaseDisputeHold(order) {
         seedApply(shopId, orderId, "dispute_release", holdTx.amount, note);
       }
     } catch (err) {
-      console.error(`[sellerBalance] releaseDisputeHold shop=${shopId} order=${order.orderId}:`, err.message);
+      logger.error({ err, shopId, orderId: order.orderId }, "[sellerBalance] releaseDisputeHold");
     }
   }
 }
@@ -435,7 +433,7 @@ export async function debitForRefund(order) {
         seedApply(shopId, orderId, "refund_debit", creditTx.amount, note, { fromHold, fromAvailable });
       }
     } catch (err) {
-      console.error(`[sellerBalance] debitForRefund shop=${shopId} order=${order.orderId}:`, err.message);
+      logger.error({ err, shopId, orderId: order.orderId }, "[sellerBalance] debitForRefund");
     }
   }
 }

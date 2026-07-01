@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { env } from "../../config/env.js";
+import { escapeRegex } from "../../shared/regex.js";
 import { Lead } from "../../models/Lead.js";
 import { SRTarget } from "../../models/SRTarget.js";
 import { SellerReferral } from "../../models/SellerReferral.js";
@@ -81,19 +82,22 @@ function targetToObject(t) {
 // ── CRUD: leads ───────────────────────────────────────────────────────────────
 
 export async function listLeads(srCode, { status, search, page = 1, limit = 50 } = {}) {
+  const safePage  = Math.max(1, Number(page)  || 1);
+  const safeLimit = Math.min(Math.max(1, Number(limit) || 50), 100);
+
   if (env.mongoUri) {
     const query = { srCode };
     if (status) query.status = status;
     if (search) {
-      const re = new RegExp(search, "i");
+      const re = new RegExp(escapeRegex(search), "i");
       query.$or = [{ businessName: re }, { contactName: re }, { city: re }, { phone: re }];
     }
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip = (safePage - 1) * safeLimit;
     const [leads, total] = await Promise.all([
-      Lead.find(query).sort({ followUpAt: 1, createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+      Lead.find(query).sort({ followUpAt: 1, createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
       Lead.countDocuments(query),
     ]);
-    return { leads: leads.map(leadToObject), total, page: Number(page), limit: Number(limit) };
+    return { leads: leads.map(leadToObject), total, page: safePage, limit: safeLimit };
   }
 
   let results = seedLeads.filter((l) => l.srCode === srCode);
@@ -110,8 +114,8 @@ export async function listLeads(srCode, { status, search, page = 1, limit = 50 }
     if (b.followUpAt) return 1;
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
-  const skip = (Number(page) - 1) * Number(limit);
-  return { leads: results.slice(skip, skip + Number(limit)), total: results.length, page: Number(page), limit: Number(limit) };
+  const skip = (safePage - 1) * safeLimit;
+  return { leads: results.slice(skip, skip + safeLimit), total: results.length, page: safePage, limit: safeLimit };
 }
 
 export async function createLead(srCode, data) {

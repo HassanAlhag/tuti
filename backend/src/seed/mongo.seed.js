@@ -4,6 +4,7 @@ import {
   products,
   shops,
 } from "./marketplace.seed.js";
+import { Driver } from "../models/Driver.js";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js";
 import { Review } from "../models/Review.js";
@@ -38,7 +39,34 @@ const demoUsers = [
     role: "customer",
     permissions: permissionsForRole("customer"),
   },
+  {
+    name: "Demo Driver",
+    email: "driver@tuti.dev",
+    password: demoPassword,
+    role: "driver",
+    shopId: "shop-oud-lane",
+    driverId: "drv-seed-demo",
+    permissions: permissionsForRole("driver"),
+  },
 ];
+
+const DEMO_DRIVER = {
+  id: "drv-seed-demo",
+  name: "Demo Driver",
+  phone: "+971 50 000 0001",
+  email: "driver@tuti.dev",
+  vehicleType: "motorcycle",
+  zone: "Dubai",
+  status: "active",
+  shopId: "shop-oud-lane",
+  shopName: "Oud Lane",
+  loginEnabled: true,
+  loginEmail: "driver@tuti.dev",
+  codBalance: 0,
+  totalDeliveries: 0,
+  totalCodCollected: 0,
+  isActive: true,
+};
 
 function normalizedShopCategory(category) {
   if (category === "cakes") return "cake";
@@ -95,6 +123,18 @@ async function seedDemoUsers() {
   return { label: "users", inserted, skipped: demoUsers.length - inserted };
 }
 
+async function seedDemoDriver() {
+  const exists = await Driver.exists({ id: DEMO_DRIVER.id });
+  if (exists) return { label: "demo-driver", inserted: 0, skipped: 1 };
+  try {
+    await Driver.create(DEMO_DRIVER);
+    return { label: "demo-driver", inserted: 1, skipped: 0 };
+  } catch (err) {
+    if (err?.code === 11000) return { label: "demo-driver", inserted: 0, skipped: 1 };
+    throw err;
+  }
+}
+
 export async function seedMongoIfNeeded() {
   const results = await Promise.all([
     seedCollection(Shop, {}, shops.map(normalizeShop), "shops"),
@@ -102,6 +142,7 @@ export async function seedMongoIfNeeded() {
     seedCollection(Review, {}, customerReviews, "reviews"),
     seedCollection(Order, {}, orderHistory, "orders"),
     seedDemoUsers(),
+    seedDemoDriver(),
   ]);
 
   const inserted = results.reduce((sum, item) => sum + item.inserted, 0);

@@ -33,7 +33,6 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
     notes: "",
   });
 
-  const payableNow = paymentMethod === "card" ? cartTotal : 0;
   const isAccountCheckout = isAuthenticated() && checkoutMode === "account";
 
   function updateForm(field, value) {
@@ -119,7 +118,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
 
   if (!cart.length) {
     return (
-      <main className="page-shell">
+      <main className="page-shell cart-checkout-page">
         <PageHero
           kicker="Cart & checkout"
           title="Your cart is ready for something thoughtful."
@@ -139,11 +138,11 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
   }
 
   return (
-    <main className="page-shell">
+    <main className="page-shell cart-checkout-page">
       <PageHero
         kicker="Cart & checkout"
         title="Continue your order"
-        text="Review your order, confirm your delivery details, and choose from the payment options shown at checkout."
+        text="Review your order, confirm your delivery details, and place your cash-on-delivery order. Card payment is not available for this launch."
       />
 
       <section className="checkout-layout">
@@ -249,7 +248,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
               <span>3</span>
               <div>
                 <h2>Payment method</h2>
-                <p>Payment options are shown at checkout. Your order will be confirmed before preparation.</p>
+                <p>Cash on delivery is the only active payment method for this launch.</p>
               </div>
             </div>
             <div className="payment-method-grid" role="radiogroup" aria-label="Payment method">
@@ -262,8 +261,8 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                 type="button"
               >
                 <CreditCard size={20} aria-hidden="true" />
-                <strong>Secure checkout</strong>
-                <span>Payment options are shown at checkout.</span>
+                <strong>Card payment unavailable</strong>
+                <span>Online payment will return after a verified gateway is integrated.</span>
               </button>
               <button
                 aria-checked={paymentMethod === "cod"}
@@ -275,7 +274,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
               >
                 <WalletCards size={20} aria-hidden="true" />
                 <strong>Cash on delivery</strong>
-                <span>Pay when the order arrives.</span>
+                <span>Pay the driver when your order arrives.</span>
               </button>
             </div>
           </section>
@@ -388,8 +387,8 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
             </button>
             <p className="checkout-method-note">
               {paymentMethod === "card"
-                ? "Your order will be confirmed before preparation."
-                : "The seller will prepare your order after confirmation."}
+                ? "Card payment is currently disabled."
+                : "No online payment is taken. The seller prepares your order after confirmation, and you pay on delivery."}
             </p>
           </div>
         </aside>

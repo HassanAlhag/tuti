@@ -211,15 +211,46 @@ function ShopHeader({ totalCount, onFindScent }) {
           <span className="eyebrow">Shop Tuti</span>
           <h1 id="shop-header-title">Find the right gift for the moment.</h1>
           <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
+          <div className="shop-header-command" aria-label="AI shop command preview">
+            <span className="shop-header-command-orb" aria-hidden="true">AI</span>
+            <span>
+              <strong>Search oud, pistachio cake, or a same-day gift box.</strong>
+              <small>Liquid search, smart filters, and live boutique availability stay in sync below.</small>
+            </span>
+          </div>
         </div>
-        <div className="shop-header-meta">
-          <span className="shop-header-count">
-            {totalCount} live {totalCount === 1 ? "product" : "products"} available now
-          </span>
-          <button className="shop-ai-button shop-ai-button--header" type="button" onClick={onFindScent}>
-            <Wand2 size={16} aria-hidden="true" />
-            Help me choose
-          </button>
+        <div className="shop-header-showcase" aria-label="Perfume cake and gift shop preview">
+          <div className="shop-showcase-light" aria-hidden="true" />
+          <div className="shop-showcase-ring" aria-hidden="true" />
+          <div className="shop-showcase-products" aria-hidden="true">
+            <span className="shop-showcase-gift">
+              <i className="shop-showcase-gift-box" />
+              <i className="shop-showcase-gift-lid" />
+              <i className="shop-showcase-gift-ribbon-v" />
+              <i className="shop-showcase-gift-ribbon-h" />
+              <i className="shop-showcase-gift-seal">T</i>
+            </span>
+            <span className="shop-showcase-perfume">
+              <i className="shop-showcase-perfume-cap" />
+              <i className="shop-showcase-perfume-neck" />
+              <i className="shop-showcase-perfume-bottle" />
+              <i className="shop-showcase-perfume-label">OUD</i>
+            </span>
+            <span className="shop-showcase-cake">
+              <i className="shop-showcase-cake-plate" />
+              <i className="shop-showcase-cake-body" />
+              <i className="shop-showcase-cake-cream" />
+            </span>
+          </div>
+          <div className="shop-header-meta">
+            <span className="shop-header-count">
+              {totalCount} live {totalCount === 1 ? "product" : "products"}
+            </span>
+            <button className="shop-ai-button shop-ai-button--header" type="button" onClick={onFindScent}>
+              <Wand2 size={16} aria-hidden="true" />
+              Help me choose
+            </button>
+          </div>
         </div>
       </div>
     </section>

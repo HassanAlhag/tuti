@@ -13,6 +13,7 @@ import { User } from "../../models/User.js";
 import { normalizePermissions } from "../users/user.roles.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { logAuditEvent } from "../audit/audit.service.js";
+import { escapeRegex } from "../../shared/regex.js";
 import { createNotificationsForRole } from "../notifications/notifications.service.js";
 
 // ── Seed data ─────────────────────────────────────────────────────────
@@ -215,10 +216,6 @@ export const updateChecklistSchema = z.object({
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function escapeRegex(str) {
-  return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 function assertFound(app, id) {
   if (app) return;

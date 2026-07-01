@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import mongoose from "mongoose";
 import { z } from "zod";
 import { env } from "../../config/env.js";
+import { escapeRegex } from "../../shared/regex.js";
 import { Order } from "../../models/Order.js";
 import { SupportTicket } from "../../models/SupportTicket.js";
 import { User } from "../../models/User.js";
@@ -620,7 +621,7 @@ export async function listSupportTickets(user, rawQuery = {}) {
     const filter = { ...accessFilter };
     if (query.status) filter.status = query.status;
     if (query.priority) filter.priority = query.priority;
-    if (query.category) filter.category = new RegExp(query.category, "i");
+    if (query.category) filter.category = new RegExp(escapeRegex(query.category), "i");
     if (query.orderId) filter.orderId = query.orderId;
     if (query.q) {
       const pattern = new RegExp(query.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
@@ -691,7 +692,7 @@ export async function listSupportTicketsSnapshot(user, rawQuery = {}) {
     const filter = { ...accessFilter };
     if (query.status) filter.status = query.status;
     if (query.priority) filter.priority = query.priority;
-    if (query.category) filter.category = new RegExp(query.category, "i");
+    if (query.category) filter.category = new RegExp(escapeRegex(query.category), "i");
     if (query.orderId) filter.orderId = query.orderId;
     if (query.q) {
       const pattern = new RegExp(query.q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");

@@ -234,7 +234,7 @@ export function ProductDetailPage({
     if (!actionsRef.current) return undefined;
 
     const observer = new window.IntersectionObserver(([entry]) => {
-      setShowStickyBar(!entry?.isIntersecting);
+      setShowStickyBar(Boolean(entry && !entry.isIntersecting && entry.boundingClientRect.top < 0));
     }, { threshold: 0.15 });
 
     observer.observe(actionsRef.current);

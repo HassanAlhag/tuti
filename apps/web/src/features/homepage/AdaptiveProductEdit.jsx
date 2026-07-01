@@ -4,9 +4,8 @@ import { ArrowRight, ChevronLeft, ChevronRight, Sparkles, Tag } from "lucide-rea
 import { publicMerchandisingApi } from "@tuti/shared/api/client.js";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
-import cakeCategoryImage from "../../assets/category-cakes.jpg";
-import completeGiftImage from "../../assets/home-ch4-complete.png";
-import perfumeImage from "../../assets/category-perfumes.jpg";
+import { CakeVisual } from "../storefront/components/CakeCard.jsx";
+import { GiftVisual } from "../storefront/components/GiftBoxCard.jsx";
 import { trackPlacementClick, usePlacementImpressionTracker } from "../tracking/marketplaceTracking.js";
 
 function normalizeText(value) {
@@ -39,11 +38,22 @@ function getProductImage(placement, product) {
   return isRenderableImageUrl(fallback) ? fallback : "";
 }
 
-function getProductFallbackImage(product) {
+/* No real photo -- a per-product-colored illustration (same fallback
+   family Shop's ProductCard/CakeCard/GiftBoxCard already use) instead
+   of one shared static category photo repeated across every card. */
+function ProductFallbackVisual({ product }) {
   const category = normalizeText(product?.category);
-  if (category === "cake" || category === "dessert") return cakeCategoryImage;
-  if (category === "gift_box" || category === "bundle") return completeGiftImage;
-  return perfumeImage;
+  return (
+    <div className="featured-fallback-visual">
+      {category === "cake" || category === "dessert" ? (
+        <CakeVisual product={product} />
+      ) : category === "gift_box" || category === "bundle" ? (
+        <GiftVisual product={product} />
+      ) : (
+        <BottleArt product={product} />
+      )}
+    </div>
+  );
 }
 
 function getProductShopName(shop) {
@@ -130,7 +140,7 @@ function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
   const productId = product?.id;
   const title = getProductTitle(placement, product);
   const subtitle = getProductSubtitle(placement, product, shop);
-  const image = getProductImage(placement, product) || getProductFallbackImage(product);
+  const image = getProductImage(placement, product);
   const badge = normalizeText(placement?.badgeLabel) || humanizeProductBadge(product);
   const tags = buildProductTags(product);
   const price = Number(product?.price || 0);
@@ -143,7 +153,7 @@ function ProductEditorial({ placement, placementKey, eyebrow, onViewProduct }) {
         {image ? (
           <img src={image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: getImageObjectPosition(product), borderRadius: "16px" }} />
         ) : (
-          <BottleArt product={product} />
+          <ProductFallbackVisual product={product} />
         )}
         {badge ? (
           <span className="product-editorial-badge">
@@ -196,7 +206,7 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
   const productId = product?.id;
   const title = getProductTitle(placement, product);
   const subtitle = getProductSubtitle(placement, product, shop);
-  const image = getProductImage(placement, product) || getProductFallbackImage(product);
+  const image = getProductImage(placement, product);
   const badge = normalizeText(placement?.badgeLabel) || humanizeProductBadge(product);
   const tags = buildProductTags(product);
   const price = Number(product?.price || 0);
@@ -217,7 +227,7 @@ function ProductSplitCard({ placement, placementKey, index, onViewProduct }) {
         {image ? (
           <img src={image} alt="" style={{ objectPosition: getImageObjectPosition(product) }} />
         ) : (
-          <BottleArt product={product} />
+          <ProductFallbackVisual product={product} />
         )}
         {badge ? (
           <span className="product-split-card-badge">
@@ -374,7 +384,7 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
           const productId = product?.id;
           const title = getProductTitle(placement, product);
           const subtitle = getProductSubtitle(placement, product, shop);
-          const image = getProductImage(placement, product) || getProductFallbackImage(product);
+          const image = getProductImage(placement, product);
           const badge = normalizeText(placement?.badgeLabel) || humanizeProductBadge(product);
           const tags = buildProductTags(product);
           const price = Number(product?.price || 0);
@@ -397,7 +407,7 @@ function ProductScrollGrid({ placements, placementKey, onViewProduct }) {
                   <img alt="" src={image} style={{ objectPosition: getImageObjectPosition(product) }} />
                 ) : (
                   <div className="featured-product-art">
-                    <BottleArt product={product} />
+                    <ProductFallbackVisual product={product} />
                   </div>
                 )}
                 {badge ? (
@@ -487,7 +497,7 @@ export function AdaptiveProductEdit({
   if (products.length === 2) {
     return (
       <section
-        className={`home-section ${sectionClassName || ""}`}
+        className={`home-section featured-product-rail featured-product-rail--${placementKey.replace(/_/g, "-")} ${sectionClassName || ""}`}
         aria-labelledby={`${placementKey}-title`}
       >
         <ProductSplit
@@ -505,7 +515,7 @@ export function AdaptiveProductEdit({
   if (products.length === 3) {
     return (
       <section
-        className={`home-section ${sectionClassName || ""}`}
+        className={`home-section featured-product-rail featured-product-rail--${placementKey.replace(/_/g, "-")} ${sectionClassName || ""}`}
         aria-labelledby={`${placementKey}-title`}
       >
         <ProductTrio

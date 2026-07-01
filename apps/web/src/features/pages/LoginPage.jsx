@@ -148,12 +148,14 @@ export function LoginPage({ onNavigate }) {
           </ul>
         </div>
 
-        <div className="login-demo-hint">
-          <p>
-            Demo — <code>admin@tuti.dev</code> · <code>seller@tuti.dev</code> ·{" "}
-            <code>customer@tuti.dev</code> · password: <code>password123</code>
-          </p>
-        </div>
+        {import.meta.env.DEV && (
+          <div className="login-demo-hint">
+            <p>
+              Demo — <code>admin@tuti.dev</code> · <code>seller@tuti.dev</code> ·{" "}
+              <code>customer@tuti.dev</code> · password: <code>password123</code>
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

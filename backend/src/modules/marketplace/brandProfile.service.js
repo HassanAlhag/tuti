@@ -3,8 +3,15 @@ import { Product } from "../../models/Product.js";
 import { SellerBrandProfile } from "../../models/SellerBrandProfile.js";
 import { Shop } from "../../models/Shop.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
+import { sellerBrandProfiles } from "../../seed/marketplace.seed.js";
 
-const seedBrandProfiles = new Map();
+// Pre-populated from marketplace.seed.js so the homepage's featured
+// sellers rail has real, published profiles on a fresh seed-memory
+// restart instead of starting empty (see marketplace.seed.js's
+// "Homepage merchandising" section). Mongo is unaffected.
+const seedBrandProfiles = new Map(
+  sellerBrandProfiles.map((profile) => [profile.shopId, structuredClone(profile)])
+);
 
 function createHttpError(status, message) {
   const error = new Error(message);

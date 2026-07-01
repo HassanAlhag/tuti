@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import mongoose from "mongoose";
 import { z } from "zod";
 import { env } from "../../config/env.js";
+import { escapeRegex } from "../../shared/regex.js";
 import { Order } from "../../models/Order.js";
 import { CommissionEntry } from "../../models/CommissionEntry.js";
 import { Product } from "../../models/Product.js";
@@ -1541,10 +1542,6 @@ export async function updateSellerStockBulk(shopId, rawPayload) {
     ok: r.status === "fulfilled",
     ...(r.status === "fulfilled" ? { stock: r.value?.stock } : { error: r.reason?.message }),
   }));
-}
-
-function escapeRegex(value) {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export async function searchProducts({ q = "", category, family, gender, occasion, minPrice, maxPrice, inStock, page = 1, limit = 20 }) {
