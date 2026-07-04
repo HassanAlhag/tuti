@@ -1,0 +1,157 @@
+.tuti-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: var(--tuti-radius-sm);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 180ms var(--tuti-ease), border-color 180ms var(--tuti-ease), box-shadow 180ms var(--tuti-ease), color 180ms var(--tuti-ease), transform 160ms var(--tuti-ease);
+}
+
+.tuti-button--sm {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.82rem;
+}
+
+.tuti-button--md {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  font-size: 0.92rem;
+}
+
+.tuti-button--lg {
+  min-height: 3.15rem;
+  padding: 0 1.25rem;
+  font-size: 1rem;
+}
+
+.tuti-button--full {
+  width: 100%;
+}
+
+.tuti-button--primary {
+  color: var(--lg-white, #fff);
+  background: linear-gradient(135deg, var(--tuti-primary), var(--tuti-primary-strong));
+  border-color: color-mix(in srgb, var(--tuti-primary) 70%, var(--tuti-primary-strong));
+  box-shadow: 0 14px 32px rgba(48, 124, 255, 0.2);
+}
+
+.tuti-button--secondary {
+  color: var(--lg-white, #fff);
+  background: var(--tuti-text);
+  border-color: var(--tuti-text);
+  box-shadow: var(--tuti-shadow);
+}
+
+.tuti-button--ghost {
+  color: var(--tuti-text);
+  background: transparent;
+  border-color: var(--tuti-border-strong);
+}
+
+.tuti-button--soft {
+  color: var(--tuti-text);
+  background: var(--tuti-surface-soft);
+  border-color: color-mix(in srgb, var(--tuti-champagne) 34%, var(--tuti-border));
+}
+
+.tuti-button--danger {
+  color: #fff;
+  background: var(--tuti-danger);
+  border-color: var(--tuti-danger);
+}
+
+.tuti-button:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(-1px);
+}
+
+.tuti-button--primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  box-shadow: 0 18px 42px rgba(48, 124, 255, 0.26);
+}
+
+.tuti-button--ghost:hover:not(:disabled):not([aria-disabled="true"]),
+.tuti-button--soft:hover:not(:disabled):not([aria-disabled="true"]) {
+  border-color: color-mix(in srgb, var(--tuti-primary) 34%, var(--tuti-border));
+  box-shadow: var(--tuti-shadow);
+}
+
+.tuti-button:disabled,
+.tuti-button[aria-disabled="true"] {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.tuti-button__icon,
+.tuti-button__spinner {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.tuti-button__spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: tuti-spin 700ms linear infinite;
+}
+
+.tuti-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 1.7rem;
+  padding: 0 0.62rem;
+  color: var(--tuti-text);
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.tuti-badge--cyan {
+  color: color-mix(in srgb, var(--tuti-primary-strong) 78%, var(--tuti-text));
+  background: rgba(11, 185, 223, 0.1);
+  border-color: rgba(11, 185, 223, 0.28);
+}
+
+.tuti-badge--champagne {
+  color: color-mix(in srgb, var(--tuti-champagne) 62%, var(--tuti-text));
+  background: rgba(243, 223, 173, 0.36);
+  border-color: rgba(215, 183, 119, 0.32);
+}
+
+.tuti-badge--success {
+  color: var(--tuti-success);
+  background: color-mix(in srgb, var(--tuti-success) 10%, white);
+  border-color: color-mix(in srgb, var(--tuti-success) 28%, var(--tuti-border));
+}
+
+.tuti-badge--warning {
+  color: var(--tuti-warning);
+  background: color-mix(in srgb, var(--tuti-warning) 10%, white);
+  border-color: color-mix(in srgb, var(--tuti-warning) 28%, var(--tuti-border));
+}
+
+.tuti-badge--danger {
+  color: var(--tuti-danger);
+  background: color-mix(in srgb, var(--tuti-danger) 10%, white);
+  border-color: color-mix(in srgb, var(--tuti-danger) 28%, var(--tuti-border));
+}
+
+@keyframes tuti-spin {
+  to { transform: rotate(1turn); }
+}

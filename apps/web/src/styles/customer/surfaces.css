@@ -1,0 +1,52 @@
+.tuti-card {
+  position: relative;
+  min-width: 0;
+  color: var(--tuti-text);
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-lg);
+  box-shadow: none;
+}
+
+.tuti-card--default {
+  background: var(--tuti-surface);
+}
+
+.tuti-card--raised,
+.tuti-card--commerce {
+  box-shadow: var(--tuti-shadow);
+}
+
+.tuti-card--section {
+  background: var(--tuti-surface-commerce);
+  box-shadow: var(--tuti-shadow);
+}
+
+.tuti-card--commerce {
+  background: var(--tuti-surface-commerce);
+  border-color: var(--tuti-border-strong);
+}
+
+.tuti-card--flat {
+  background: transparent;
+  border-color: transparent;
+}
+
+.tuti-card--pad-none { padding: 0; }
+.tuti-card--pad-sm { padding: 0.85rem; }
+.tuti-card--pad-md { padding: 1.1rem; }
+.tuti-card--pad-lg { padding: clamp(1.2rem, 3vw, 1.65rem); }
+
+.tuti-card--interactive {
+  transition: border-color 180ms var(--tuti-ease), box-shadow 180ms var(--tuti-ease), transform 180ms var(--tuti-ease);
+}
+
+.tuti-card--interactive:hover {
+  border-color: color-mix(in srgb, var(--tuti-primary) 34%, var(--tuti-border));
+  box-shadow: var(--tuti-shadow-raised);
+  transform: translateY(-2px);
+}
+
+.tuti-card--interactive:focus-within {
+  border-color: color-mix(in srgb, var(--tuti-primary) 44%, var(--tuti-border));
+}

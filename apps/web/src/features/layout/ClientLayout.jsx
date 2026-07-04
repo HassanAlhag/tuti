@@ -12,6 +12,7 @@ import { ClientFooter }      from "./ClientFooter.jsx";
 import { CookieConsent }     from "./CookieConsent.jsx";
 import { useCartStore }      from "../../store/cartStore.js";
 import { getPortalUrl }      from "./portalUrls.js";
+import { headerNavRoutes, mobileDrawerRoutes } from "../../config/customerRoutes.js";
 
 const SEARCH_CATEGORIES = [
   { value: "all",      label: "All" },
@@ -20,72 +21,6 @@ const SEARCH_CATEGORIES = [
   { value: "gift_box", label: "Gift Sets" },
   { value: "dessert",  label: "Sweets" },
   { value: "bundle",   label: "Bundles" },
-];
-
-// Desktop primary navigation
-const CATEGORY_RAIL = [
-  { id: "home",                       label: "Home" },
-  { id: "shop",                       label: "Shop" },
-  { id: "shop", category: "perfume",  label: "Perfumes" },
-  { id: "shop", category: "cake",     label: "Cakes & Desserts" },
-  { id: "shop", category: "gift_box", label: "Gift Sets" },
-  { id: "build-a-box",                label: "Build a Box" },
-  { id: "shops",                      label: "Sellers" },
-  { id: "fragrance-finder",           label: "Find a Scent ✦", finder: true },
-];
-
-// Mobile drawer link groups
-const DRAWER_GROUPS = [
-  {
-    group: "Shop",
-    items: [
-      { label: "Home",             id: "home" },
-      { label: "Shop",             id: "shop" },
-      { label: "Perfumes",         id: "shop",             category: "perfume" },
-      { label: "Cakes & Desserts", id: "shop",             category: "cake" },
-      { label: "Gift Sets",        id: "shop",             category: "gift_box" },
-      { label: "Build a Box",      id: "build-a-box" },
-      { label: "Sellers",          id: "shops" },
-      { label: "Collections",      id: "collections" },
-    ],
-  },
-  {
-    group: "Discover",
-    items: [
-      { label: "Find a Scent",  id: "fragrance-finder" },
-      { label: "Offers",        id: "offers" },
-      { label: "Gifting",       id: "gifting" },
-      { label: "Journal",       id: "journal" },
-      { label: "Our Story",     id: "about" },
-    ],
-  },
-  {
-    group: "Help",
-    items: [
-      { label: "Support",  id: "support" },
-      { label: "Account",  id: "account" },
-      { label: "Orders",   id: "account" },
-      { label: "Legal",    id: "legal" },
-    ],
-  },
-  {
-    group: "Partners",
-    items: [
-      { label: "Sell on Tuti",   id: "sell" },
-      {
-        label: "Seller Central",
-        portal: getPortalUrl("VITE_SELLER_URL"),
-      },
-      {
-        label: "Driver Portal",
-        portal: getPortalUrl("VITE_DRIVER_URL"),
-      },
-      {
-        label: "Sales Rep Portal",
-        portal: getPortalUrl("VITE_SR_URL"),
-      },
-    ],
-  },
 ];
 
 export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, children }) {
@@ -320,7 +255,7 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
 
         {/* ══ Row 2 — desktop category rail ═══════════════════════════ */}
         <nav className="cl-bar2" aria-label="Product categories">
-          {CATEGORY_RAIL.map(({ id, category, label, finder }) => {
+          {headerNavRoutes.map(({ id, category, label, finder }) => {
             const active = category
               ? route === id && shopCategory === category
               : route === id;
@@ -384,12 +319,12 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
             </div>
 
             <div className="cl-drawer-body">
-              {DRAWER_GROUPS.map(({ group, items }) => (
+              {mobileDrawerRoutes.map(({ group, items }) => (
                 <div key={group} className="cl-drawer-group">
                   <p className="cl-drawer-group-label">{group}</p>
-                  {items.map(({ label, id, category, portal }) => {
-                    // portal === null means env var absent in production — hide the item
-                    if (portal === null) return null;
+                  {items.map(({ label, id, category, portalKey }) => {
+                    const portal = portalKey ? getPortalUrl(portalKey) : "";
+                    if (portalKey && !portal) return null;
                     return portal ? (
                       <a
                         key={label}

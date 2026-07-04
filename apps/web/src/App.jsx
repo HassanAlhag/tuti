@@ -11,6 +11,7 @@ import { useAuthStore }  from "@tuti/shared/store/authStore.js";
 import { marketplaceApi } from "@tuti/shared/api/client.js";
 import { useCartStore }  from "./store/cartStore.js";
 import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
+import { getCustomerRouteByRouteId, routePaths } from "./config/customerRoutes.js";
 
 // ── Page components (client-owned, no seller/admin code) ──────────
 import { ClientLayout }       from "./features/layout/ClientLayout.jsx";
@@ -186,20 +187,24 @@ export default function App() {
 
   function navigate(id, cat, occ) {
     const paths = {
-      home: "/", cart: "/cart", collections: "/collections", shops: "/shops",
-      sell: "/sell", about: "/about",
-      "fragrance-finder": "/fragrance-finder",
-      "build-a-box":      "/build-a-box",
-      gifting:            "/gifting",
-      offers:             "/offers",
-      journal:            "/journal",
-      contact:            "/contact",
-      "customer-service": "/customer-service",
-      support:            "/support",
-      account:            "/account",
-      "store-locator":    "/store-locator",
-      legal:              "/legal",
-      login:              "/login",
+      home: getCustomerRouteByRouteId("home")?.path || "/",
+      cart: getCustomerRouteByRouteId("cart")?.path || "/cart",
+      collections: getCustomerRouteByRouteId("collections")?.path || "/collections",
+      shops: getCustomerRouteByRouteId("shops")?.path || "/shops",
+      sell: getCustomerRouteByRouteId("sell")?.path || "/sell",
+      about: getCustomerRouteByRouteId("about")?.path || "/about",
+      "fragrance-finder": getCustomerRouteByRouteId("fragrance-finder")?.path || "/fragrance-finder",
+      "build-a-box":      getCustomerRouteByRouteId("build-a-box")?.path || "/build-a-box",
+      gifting:            getCustomerRouteByRouteId("gifting")?.path || "/gifting",
+      offers:             getCustomerRouteByRouteId("offers")?.path || "/offers",
+      journal:            getCustomerRouteByRouteId("journal")?.path || "/journal",
+      contact:            getCustomerRouteByRouteId("contact")?.path || "/contact",
+      "customer-service": getCustomerRouteByRouteId("customer-service")?.path || "/customer-service",
+      support:            getCustomerRouteByRouteId("support")?.path || "/support",
+      account:            getCustomerRouteByRouteId("account")?.path || "/account",
+      "store-locator":    getCustomerRouteByRouteId("store-locator")?.path || "/store-locator",
+      legal:              getCustomerRouteByRouteId("legal")?.path || "/legal",
+      login:              getCustomerRouteByRouteId("login")?.path || "/login",
     };
     if (id === "shop") {
       const params = new URLSearchParams();
@@ -281,7 +286,7 @@ export default function App() {
 
   function goToProduct(productId) {
     setSelectedProductId(productId);
-    push(`/products/${productId}`);
+    push(routePaths.product(productId));
     setRoute("product");
   }
 
@@ -395,9 +400,10 @@ export default function App() {
         goToCollections={() => navigate("collections")}
         goToFragranceFinder={() => navigate("fragrance-finder")}
         goToJournal={() => navigate("journal")}
+        goToProduct={goToProduct}
         goToSell={() => navigate("sell")}
         goToShops={() => navigate("shops")}
-        goToSellerBrand={(slug) => navigatePath(`/sellers/${slug}`)}
+        goToSellerBrand={(slug) => navigatePath(routePaths.seller(slug))}
         goToShop={(c) => navigate("shop", c)} onAddToCart={addToCartWithFeedback} products={products}
         promotions={promotions} shops={shops} topPerfumes={topPerfumes} topShops={topShops}
       />

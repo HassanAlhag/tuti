@@ -1,5 +1,5 @@
 import { brand }         from "@tuti/shared/brand.js";
-import { footerColumns } from "../pages/siteMap.js";
+import { footerRouteGroups } from "../../config/customerRoutes.js";
 import { getPortalUrl }  from "./portalUrls.js";
 
 export function ClientFooter({ onNavigate }) {
@@ -16,15 +16,15 @@ export function ClientFooter({ onNavigate }) {
 
         {/* Navigation columns */}
         <nav className="cl-footer-nav" aria-label="Footer navigation">
-          {footerColumns.map(({ title, links }) => (
+          {footerRouteGroups.map(({ title, links }) => (
             <div key={title}>
               <p className="cl-footer-links-heading">{title}</p>
               <div className="cl-footer-links">
-                {links.map(({ label, nav, portal }) => {
-                  if (portal !== undefined) {
+                {links.map(({ label, nav, portalKey }) => {
+                  if (portalKey) {
                     // Resolve through the shared helper — returns null in
                     // production when the env var is missing
-                    const href = getPortalUrl(portal);
+                    const href = getPortalUrl(portalKey);
                     if (!href) return null; // hide unconfigured portals
                     return (
                       <a

@@ -1,0 +1,25 @@
+:root {
+  --tuti-canvas: var(--lg-porcelain, #fbfbfa);
+  --tuti-surface: var(--lg-white, #ffffff);
+  --tuti-surface-soft: color-mix(in srgb, var(--lg-porcelain, #fbfbfa) 82%, var(--lg-champagne-2, #f3dfad));
+  --tuti-surface-commerce: linear-gradient(155deg, var(--lg-white, #fff) 0%, var(--lg-porcelain, #fbfbfa) 72%, rgba(243, 223, 173, 0.2) 100%);
+  --tuti-text: var(--lg-graphite, #151618);
+  --tuti-text-strong: var(--lg-ink, #07080a);
+  --tuti-text-muted: var(--lg-muted, #6b7078);
+  --tuti-border: var(--lg-border, rgba(21, 22, 24, 0.1));
+  --tuti-border-strong: rgba(21, 22, 24, 0.16);
+  --tuti-primary: var(--lg-cyan, #0bb9df);
+  --tuti-primary-strong: var(--lg-blue, #307cff);
+  --tuti-champagne: var(--lg-champagne, #d7b777);
+  --tuti-champagne-soft: var(--lg-champagne-2, #f3dfad);
+  --tuti-success: var(--success, #0f7a5d);
+  --tuti-warning: var(--warning, #b86b45);
+  --tuti-danger: var(--danger, #9f5139);
+  --tuti-radius-sm: 0.75rem;
+  --tuti-radius-md: 1rem;
+  --tuti-radius-lg: 1.25rem;
+  --tuti-radius-xl: 1.5rem;
+  --tuti-shadow: 0 16px 44px rgba(15, 18, 22, 0.08);
+  --tuti-shadow-raised: 0 22px 58px rgba(15, 18, 22, 0.11);
+  --tuti-ease: var(--lg-ease, cubic-bezier(.18,.82,.22,1));
+}

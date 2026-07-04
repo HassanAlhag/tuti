@@ -1,0 +1,20 @@
+@import "./tokens.css";
+@import "./surfaces.css";
+@import "./buttons.css";
+@import "./sections.css";
+@import "./media.css";
+@import "./carousel.css";
+@import "./empty-states.css";
+@import "./price.css";
+@import "./quantity.css";
+@import "./commerce-components.css";
+
+@media (prefers-reduced-motion: reduce) {
+  .tuti-button,
+  .tuti-card--interactive,
+  .tuti-carousel__arrow,
+  .tuti-media-stage__shine {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}

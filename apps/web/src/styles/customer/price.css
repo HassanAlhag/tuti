@@ -1,0 +1,31 @@
+.tuti-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.55rem;
+  min-width: 0;
+  color: var(--tuti-text-strong);
+}
+
+.tuti-price--right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.tuti-price__current {
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tuti-price__compare {
+  color: var(--tuti-text-muted);
+  font-weight: 700;
+  text-decoration-thickness: 1.5px;
+}
+
+.tuti-price--sm .tuti-price__current { font-size: 0.95rem; }
+.tuti-price--md .tuti-price__current { font-size: 1.12rem; }
+.tuti-price--lg .tuti-price__current { font-size: clamp(1.35rem, 2vw, 1.8rem); }
+.tuti-price--sm .tuti-price__compare { font-size: 0.76rem; }
+.tuti-price--md .tuti-price__compare { font-size: 0.84rem; }
+.tuti-price--lg .tuti-price__compare { font-size: 0.95rem; }

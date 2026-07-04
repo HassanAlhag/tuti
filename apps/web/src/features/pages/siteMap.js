@@ -350,51 +350,6 @@ export const legalContent = {
   },
 };
 
-// nav: args passed to onNavigate(id, category?)
-// portal: env var key name for window.location.href fallback
-// auth: triggers the shared auth modal
-export const footerColumns = [
-  {
-    title: "Shop",
-    links: [
-      { label: "Perfumes",         nav: ["shop", "perfume"] },
-      { label: "Cakes & Desserts", nav: ["shop", "cake"] },
-      { label: "Gift Sets",        nav: ["shop", "gift_box"] },
-      { label: "Collections",      nav: ["collections"] },
-      { label: "Offers",           nav: ["offers"] },
-    ],
-  },
-  {
-    title: "Discover",
-    links: [
-      { label: "Build a Box",  nav: ["build-a-box"] },
-      { label: "Find a Scent", nav: ["fragrance-finder"] },
-      { label: "Gifting",      nav: ["gifting"] },
-      { label: "Journal",      nav: ["journal"] },
-      { label: "Our Story",    nav: ["about"] },
-    ],
-  },
-  {
-    title: "Partners",
-    links: [
-      { label: "Sell on Tuti",   nav: ["sell"] },
-      { label: "Seller Central",   portal: "VITE_SELLER_URL" },
-      { label: "Driver Portal",    portal: "VITE_DRIVER_URL" },
-      { label: "Sales Rep Portal", portal: "VITE_SR_URL" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Help Centre", nav: ["support"] },
-      { label: "Contact",     nav: ["contact"] },
-      { label: "Account",     nav: ["account"] },
-      { label: "Orders",      nav: ["account"] },
-      { label: "Legal",       nav: ["legal"] },
-    ],
-  },
-];
-
 export function getShopCategoryBySlug(slug = "") {
   return shopCategories.find((category) => category.slug === slug) || shopCategories[0];
 }

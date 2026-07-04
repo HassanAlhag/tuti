@@ -1,0 +1,41 @@
+.tuti-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  min-height: 13rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  color: var(--tuti-text-muted);
+  text-align: center;
+  background: var(--tuti-surface-commerce);
+  border: 1px dashed color-mix(in srgb, var(--tuti-border) 76%, var(--tuti-champagne));
+  border-radius: var(--tuti-radius-lg);
+}
+
+.tuti-empty-state__icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  color: var(--tuti-primary-strong);
+  background: rgba(11, 185, 223, 0.1);
+  border: 1px solid rgba(11, 185, 223, 0.22);
+  border-radius: 1rem;
+}
+
+.tuti-empty-state h2 {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  line-height: 1.1;
+}
+
+.tuti-empty-state p {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--tuti-text-muted);
+  line-height: 1.55;
+}
+
+.tuti-empty-state__action {
+  margin-top: 0.25rem;
+}

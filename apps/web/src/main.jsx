@@ -6,6 +6,7 @@ import App from "./App.jsx";
 import { AppErrorBoundary } from "./AppErrorBoundary.jsx";
 import "@tuti/shared/styles/tokens.css";
 import "@tuti/shared/styles/base.css";
+import "./styles/customer/index.css";
 import "./styles/storefront.css";
 import "./styles/client.css";
 
