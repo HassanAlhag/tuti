@@ -297,6 +297,12 @@ body {
 }
 .cl-rail-btn:hover       { color: #fff; background: rgba(247, 232, 195, 0.08); }
 .cl-rail-btn.active      { color: #fff; border-bottom-color: #B88A2E; font-weight: var(--fw-semibold); }
+.cl-rail-btn:not(.active):hover {
+  border-bottom-color: rgba(184, 138, 46, 0.28);
+}
+.cl-rail-btn[aria-current="page"] {
+  background: linear-gradient(180deg, rgba(247, 232, 195, 0.06), rgba(184, 138, 46, 0.08));
+}
 .cl-rail-btn:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: -2px;
@@ -2057,6 +2063,12 @@ body {
   .cl-bar1-right { gap: var(--sp-1); }
 }
 
+@media (max-width: 480px) {
+  /* Topbar search is too cramped at small phone widths (<~120px wide).
+     The shop page has a full-width search field; hide this input only. */
+  .cl-search-bar { display: none; }
+}
+
 /* ══════════════════════════════════════════════════════════════════
    MOBILE DRAWER OVERLAY
 ══════════════════════════════════════════════════════════════════ */
@@ -2176,6 +2188,14 @@ body {
 .cl-drawer-link:hover {
   background: rgba(247, 232, 195, 0.08);
   color: #fff;
+}
+
+.cl-drawer-link.active,
+.cl-drawer-link[aria-current="page"] {
+  color: #fff;
+  background: rgba(184, 138, 46, 0.18);
+  border-color: rgba(214, 180, 106, 0.42);
+  box-shadow: inset 3px 0 0 #D6B46A;
 }
 
 /* Footer strip */

@@ -11242,8 +11242,8 @@ label.checkout-item-checkbox {
 }
 
 @keyframes shop-liquid-pulse {
-  0%, 100% { box-shadow: 0 20px 70px rgba(11, 185, 223, 0.13), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
-  50% { box-shadow: 0 28px 90px rgba(48, 124, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 1); }
+  0%, 100% { box-shadow: 0 20px 64px rgba(7, 27, 58, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+  50% { box-shadow: 0 24px 78px rgba(184, 138, 46, 0.18), inset 0 1px 0 rgba(255, 255, 255, 1); }
 }
 
 @keyframes shop-liquid-shine {
@@ -11253,11 +11253,11 @@ label.checkout-item-checkbox {
 }
 
 .shop-page {
-  color: var(--lg-ink);
+  color: var(--tuti-text-strong, #061426);
   background:
-    radial-gradient(circle at 12% -8%, rgba(11, 185, 223, 0.14), transparent 26rem),
-    radial-gradient(circle at 86% 8%, rgba(215, 183, 119, 0.16), transparent 28rem),
-    linear-gradient(180deg, #ffffff 0%, var(--lg-porcelain) 45%, var(--lg-ivory) 100%);
+    radial-gradient(circle at 12% -8%, rgba(7, 27, 58, 0.1), transparent 26rem),
+    radial-gradient(circle at 86% 8%, rgba(184, 138, 46, 0.18), transparent 28rem),
+    linear-gradient(180deg, #ffffff 0%, var(--tuti-canvas, #fbf8f1) 48%, #f5efe2 100%);
   overflow-x: hidden;
 }
 
@@ -11281,13 +11281,15 @@ label.checkout-item-checkbox {
 }
 
 .shop-header {
-  width: min(92rem, calc(100% - 2rem));
-  min-height: 42rem;
-  margin: 0 auto;
-  padding-top: 7.25rem;
-  color: var(--lg-ink);
-  background: transparent;
-  box-shadow: none;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  min-height: auto;
+  padding-top: 0;
+  color: #f7f1e8;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(184, 138, 46, 0.12), transparent 28rem),
+    linear-gradient(150deg, #0B2348 0%, #071B3A 58%, #061426 100%);
+  box-shadow: inset 0 -1px 0 rgba(184, 138, 46, 0.16);
 }
 
 .shop-header::before,
@@ -11306,46 +11308,42 @@ label.checkout-item-checkbox {
 .shop-header::before {
   top: 5rem;
   left: -11rem;
-  background: radial-gradient(circle, rgba(11, 185, 223, 0.42), transparent 64%);
+  background: radial-gradient(circle, rgba(7, 27, 58, 0.24), transparent 64%);
 }
 
 .shop-header::after {
   right: -13rem;
   bottom: 2rem;
-  background: radial-gradient(circle, rgba(225, 116, 145, 0.3), transparent 66%);
+  background: radial-gradient(circle, rgba(184, 138, 46, 0.28), transparent 66%);
 }
 
 .shop-header-inner {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(500px, 0.86fr);
-  align-items: stretch;
-  gap: clamp(1rem, 2vw, 1.5rem);
-  width: 100%;
-  min-height: 34rem;
-  padding: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.72fr);
+  align-items: center;
+  gap: clamp(1.1rem, 2.4vw, 2rem);
+  width: min(92rem, calc(100% - 2rem));
+  margin: 0 auto;
+  min-height: auto;
+  padding: clamp(2.25rem, 4vw, 3.25rem) 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .shop-header-copy,
 .shop-header-showcase {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: clamp(2.1rem, 4vw, 3.4rem);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    inset 0 -1px 0 rgba(21, 22, 24, 0.035),
-    var(--lg-shadow-air);
-  backdrop-filter: blur(24px) saturate(1.18);
-  -webkit-backdrop-filter: blur(24px) saturate(1.18);
+  border-radius: var(--tuti-radius-lg, 1.25rem);
 }
 
 .shop-header-copy {
   align-content: center;
   max-width: none;
-  padding: clamp(2.1rem, 4.8vw, 4.6rem);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.91), rgba(255, 255, 255, 0.62)),
-    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.98), transparent 28%);
+  padding: clamp(1.2rem, 3.2vw, 2.8rem);
+  background: transparent;
   animation: shop-liquid-rise 760ms 70ms var(--lg-ease) both;
 }
 
@@ -11353,34 +11351,33 @@ label.checkout-item-checkbox {
   gap: 0.55rem;
   min-height: 2.25rem;
   padding: 0 0.9rem;
-  color: var(--lg-muted);
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(21, 22, 24, 0.075);
-  box-shadow: 0 10px 26px rgba(15, 18, 22, 0.05);
+  color: var(--tuti-primary, #071b3a);
+  background: rgba(247, 232, 195, 0.62);
+  border: 1px solid rgba(184, 138, 46, 0.24);
+  box-shadow: 0 10px 26px rgba(7, 27, 58, 0.06);
 }
 
 .shop-header-badge svg {
-  color: var(--lg-cyan);
-  filter: drop-shadow(0 0 10px rgba(11, 185, 223, 0.45));
+  color: var(--tuti-gold, #b88a2e);
 }
 
 .shop-header-copy .eyebrow {
-  color: var(--lg-muted);
+  color: rgba(247, 241, 232, 0.68);
 }
 
 .shop-header-copy h1 {
-  max-width: 10.5ch;
-  color: var(--lg-ink);
-  font-size: clamp(4rem, 7.8vw, 8.2rem);
-  font-weight: 940;
-  letter-spacing: -0.085em;
-  line-height: 0.88;
+  max-width: 12ch;
+  color: #fff;
+  font-size: clamp(3.1rem, 5.8vw, 6.1rem);
+  font-weight: 920;
+  letter-spacing: -0.055em;
+  line-height: 0.95;
 }
 
 .shop-header-copy p {
-  max-width: 43rem;
-  color: var(--lg-muted);
-  font-size: clamp(1.08rem, 1.3vw, 1.3rem);
+  max-width: 40rem;
+  color: rgba(247, 241, 232, 0.78);
+  font-size: clamp(1rem, 1.15vw, 1.18rem);
   letter-spacing: -0.02em;
   line-height: 1.7;
 }
@@ -11392,24 +11389,22 @@ label.checkout-item-checkbox {
   align-items: center;
   gap: 0.85rem;
   max-width: 43rem;
-  min-height: 4.85rem;
+  min-height: 4.2rem;
   margin-top: 0.6rem;
   padding: 0.65rem 1rem;
   overflow: hidden;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.68)),
-    radial-gradient(circle at 16% 0%, rgba(11, 185, 223, 0.16), transparent 38%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 999px;
-  box-shadow: 0 24px 86px rgba(11, 185, 223, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(251, 248, 241, 0.82)),
+    radial-gradient(circle at 16% 0%, rgba(184, 138, 46, 0.15), transparent 38%);
+  border: 1px solid rgba(7, 27, 58, 0.14);
+  border-radius: var(--tuti-radius-lg, 1.25rem);
+  box-shadow: 0 22px 58px rgba(7, 27, 58, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.96);
   animation: shop-liquid-pulse 5.2s ease-in-out infinite;
 }
 
 .shop-header-command::after,
 .shop-toolbar::after,
-.shop-page .product-card::after,
-.shop-page .cake-card::after,
-.shop-page .gift-card::after,
+.shop-page .tuti-product-card::after,
 .shop-build-insert::after {
   content: "";
   position: absolute;
@@ -11422,9 +11417,7 @@ label.checkout-item-checkbox {
 
 .shop-header-command:hover::after,
 .shop-toolbar:focus-within::after,
-.shop-page .product-card:hover::after,
-.shop-page .cake-card:hover::after,
-.shop-page .gift-card:hover::after,
+.shop-page .tuti-product-card:hover::after,
 .shop-build-insert:hover::after {
   animation: shop-liquid-shine 820ms var(--lg-ease);
 }
@@ -11432,20 +11425,20 @@ label.checkout-item-checkbox {
 .shop-header-command-orb {
   display: grid;
   place-items: center;
-  width: 3.35rem;
-  height: 3.35rem;
+  width: 2.9rem;
+  height: 2.9rem;
   color: #fff;
   background:
     radial-gradient(circle at 28% 20%, rgba(255, 255, 255, 0.9), transparent 20%),
-    linear-gradient(145deg, var(--lg-cyan), var(--lg-blue));
+    linear-gradient(145deg, var(--tuti-primary, #071b3a), var(--tuti-primary-strong, #0b1f3f));
   border-radius: 50%;
-  box-shadow: 0 12px 34px rgba(11, 185, 223, 0.34);
+  box-shadow: 0 12px 34px rgba(7, 27, 58, 0.26);
   font-weight: 920;
 }
 
 .shop-header-command strong {
   display: block;
-  color: var(--lg-graphite);
+  color: var(--tuti-text-strong, #061426);
   font-size: 0.94rem;
   letter-spacing: -0.02em;
   line-height: 1.18;
@@ -11454,7 +11447,7 @@ label.checkout-item-checkbox {
 .shop-header-command small {
   display: block;
   margin-top: 0.2rem;
-  color: var(--lg-muted);
+  color: var(--tuti-text-muted, #656b74);
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.25;
@@ -11462,14 +11455,14 @@ label.checkout-item-checkbox {
 
 .shop-header-showcase {
   display: grid;
-  min-height: 34rem;
-  padding: clamp(1.5rem, 3vw, 2.8rem);
+  min-height: 24rem;
+  padding: clamp(1rem, 2vw, 1.5rem);
   background:
-    radial-gradient(circle at 72% 22%, rgba(11, 185, 223, 0.2), transparent 19rem),
-    radial-gradient(circle at 22% 72%, rgba(225, 116, 145, 0.18), transparent 20rem),
-    radial-gradient(circle at 50% 50%, rgba(215, 183, 119, 0.14), transparent 20rem),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(237, 239, 240, 0.66));
-  box-shadow: var(--lg-shadow-float);
+    radial-gradient(circle at 68% 18%, rgba(184, 138, 46, 0.20), transparent 18rem),
+    radial-gradient(circle at 24% 74%, rgba(7, 27, 58, 0.26), transparent 16rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(247, 232, 195, 0.14);
+  box-shadow: 0 14px 34px rgba(7, 27, 58, 0.28);
   animation: shop-liquid-rise 820ms 150ms var(--lg-ease) both;
 }
 
@@ -11500,8 +11493,8 @@ label.checkout-item-checkbox {
   z-index: 1;
   align-self: center;
   justify-self: center;
-  width: min(34rem, 100%);
-  height: 25rem;
+  width: min(27rem, 100%);
+  height: 19.5rem;
 }
 
 .shop-showcase-products::after {
@@ -11527,8 +11520,8 @@ label.checkout-item-checkbox {
 .shop-showcase-perfume {
   left: 38%;
   bottom: 4.1rem;
-  width: 8.6rem;
-  height: 18rem;
+  width: 7rem;
+  height: 14.7rem;
   animation: shop-liquid-float-a 6.4s var(--lg-ease) infinite;
 }
 
@@ -11602,8 +11595,8 @@ label.checkout-item-checkbox {
 .shop-showcase-cake {
   right: 3%;
   bottom: 3.6rem;
-  width: 12.6rem;
-  height: 11.2rem;
+  width: 10.2rem;
+  height: 9rem;
   animation: shop-liquid-float-b 6.8s var(--lg-ease) infinite;
   animation-delay: -1s;
 }
@@ -11643,8 +11636,8 @@ label.checkout-item-checkbox {
 .shop-showcase-gift {
   left: 2%;
   bottom: 3.35rem;
-  width: 12rem;
-  height: 12.3rem;
+  width: 9.8rem;
+  height: 10rem;
   animation: shop-liquid-float-b 7.4s var(--lg-ease) infinite;
   animation-delay: -2.2s;
 }
@@ -11699,8 +11692,8 @@ label.checkout-item-checkbox {
   width: 3rem;
   height: 3rem;
   transform: translateX(-50%);
-  color: var(--lg-graphite);
-  background: linear-gradient(145deg, var(--lg-champagne-2), var(--lg-champagne));
+  color: var(--tuti-text-strong, #061426);
+  background: linear-gradient(145deg, var(--tuti-champagne-soft, #f7e8c3), var(--tuti-champagne, #d6b46a));
   border-radius: 50%;
   box-shadow: 0 14px 28px rgba(215, 183, 119, 0.35);
   font-style: normal;
@@ -11719,7 +11712,7 @@ label.checkout-item-checkbox {
 
 .shop-header-count,
 .shop-ai-button--header {
-  color: var(--lg-graphite);
+  color: var(--tuti-text-strong, #061426);
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.78);
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.07);
@@ -11728,29 +11721,73 @@ label.checkout-item-checkbox {
 }
 
 .shop-ai-button--header {
-  color: #065b70;
-  background: rgba(11, 185, 223, 0.11);
-  border-color: rgba(11, 185, 223, 0.22);
+  color: var(--tuti-primary, #071b3a);
+  background: rgba(247, 232, 195, 0.7);
+  border-color: rgba(184, 138, 46, 0.24);
 }
 
 .shop-shell {
   width: min(92rem, calc(100% - 2rem));
-  margin-top: clamp(1.75rem, 4vw, 3.5rem);
+  margin-top: -2rem;
+}
+
+.shop-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.45rem;
+}
+
+/* Primary CTA on dark navy banner — use gold so it's visible */
+.shop-header-copy .tuti-button--primary {
+  background: linear-gradient(145deg, #F7E8C3, #B88A2E);
+  border-color: rgba(247, 232, 195, 0.48);
+  color: #061426;
+  box-shadow: 0 14px 32px rgba(184, 138, 46, 0.32);
+}
+.shop-header-copy .tuti-button--primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  box-shadow: 0 18px 42px rgba(184, 138, 46, 0.42);
+}
+/* Soft CTA on dark navy banner — ghost style */
+.shop-header-copy .tuti-button--soft {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(247, 232, 195, 0.28);
+  color: #f7f1e8;
+}
+.shop-header-copy .tuti-button--soft:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(247, 232, 195, 0.46);
+  box-shadow: none;
+}
+
+.shop-trust-strip {
+  margin-bottom: clamp(0.9rem, 2vw, 1.25rem);
+}
+
+.shop-page .tuti-trust-strip__item {
+  background: var(--tuti-surface-commerce, #fff);
+  border-color: var(--tuti-border, rgba(7, 27, 58, 0.16));
+  box-shadow: 0 12px 28px rgba(7, 27, 58, 0.08);
+}
+
+.shop-page .tuti-trust-strip__icon {
+  color: var(--tuti-primary, #071b3a);
+  background: rgba(247, 232, 195, 0.74);
 }
 
 .shop-toolbar {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: clamp(1.35rem, 2.4vw, 2rem);
+  padding: clamp(1.15rem, 2vw, 1.55rem);
   background:
-    radial-gradient(circle at 84% 0%, rgba(11, 185, 223, 0.1), transparent 22rem),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62));
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 2.25rem;
+    radial-gradient(circle at 84% 0%, rgba(184, 138, 46, 0.12), transparent 22rem),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(251, 248, 241, 0.9));
+  border: 1px solid var(--tuti-border, rgba(7, 27, 58, 0.16));
+  border-radius: var(--tuti-radius-xl, 1.5rem);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.92),
-    var(--lg-shadow-air);
+    var(--tuti-shadow, 0 14px 34px rgba(7, 27, 58, 0.11));
 }
 
 .shop-search-field,
@@ -11759,37 +11796,75 @@ label.checkout-item-checkbox {
 .shop-family-chip,
 .shop-results-bar {
   background: rgba(255, 255, 255, 0.74);
-  border-color: rgba(21, 22, 24, 0.075);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 12px 30px rgba(0, 0, 0, 0.055);
+  border-color: var(--tuti-border, rgba(7, 27, 58, 0.16));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86), 0 10px 24px rgba(7, 27, 58, 0.06);
 }
 
 .shop-search-field {
-  min-height: 3.55rem;
-  box-shadow: 0 22px 70px rgba(11, 185, 223, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  flex-basis: min(100%, 42rem);
+  min-height: 4.15rem;
+  padding: 0 1.25rem;
+  background: #fff;
+  border-color: rgba(7, 27, 58, 0.2);
+  box-shadow:
+    0 18px 44px rgba(7, 27, 58, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.shop-search-label {
+  color: var(--tuti-primary, #071b3a);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .shop-search-field svg {
-  color: var(--lg-cyan);
+  color: var(--tuti-gold, #b88a2e);
+}
+
+.shop-search-field input {
+  font-size: 1.04rem;
+  font-weight: 750;
+}
+
+.shop-search-field input::placeholder {
+  color: rgba(32, 36, 42, 0.52);
 }
 
 .shop-search-field:focus-within,
 .shop-sort-control:focus-within {
-  border-color: rgba(11, 185, 223, 0.36);
-  box-shadow: 0 0 0 4px rgba(11, 185, 223, 0.11), 0 20px 54px rgba(11, 185, 223, 0.12);
+  border-color: rgba(7, 27, 58, 0.34);
+  box-shadow: 0 0 0 4px rgba(184, 138, 46, 0.13), 0 18px 44px rgba(7, 27, 58, 0.1);
 }
 
 .shop-ai-button:not(.shop-ai-button--header) {
-  color: #065b70;
-  background: rgba(11, 185, 223, 0.11);
-  border-color: rgba(11, 185, 223, 0.22);
-  box-shadow: 0 12px 30px rgba(11, 185, 223, 0.1);
+  color: var(--tuti-primary, #071b3a);
+  background: rgba(247, 232, 195, 0.72);
+  border-color: rgba(184, 138, 46, 0.24);
+  box-shadow: 0 12px 30px rgba(7, 27, 58, 0.08);
 }
 
 .shop-category-button.active,
 .shop-family-chip.active {
   color: #fff;
-  background: linear-gradient(145deg, #24262b, #050607);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+  background: linear-gradient(145deg, var(--tuti-primary, #071b3a), var(--tuti-primary-strong, #0b1f3f));
+  box-shadow: 0 16px 34px rgba(7, 27, 58, 0.22);
+}
+
+.shop-category-button:not(.active):hover,
+.shop-family-chip:not(.active):hover {
+  border-color: rgba(184, 138, 46, 0.3);
+  background: rgba(247, 232, 195, 0.45);
+}
+
+.shop-family-chip.active {
+  color: var(--tuti-primary, #071b3a);
+  background: rgba(247, 232, 195, 0.92);
+  border-color: rgba(184, 138, 46, 0.38);
+  box-shadow: 0 10px 24px rgba(184, 138, 46, 0.14);
 }
 
 .shop-family-dot {
@@ -11802,7 +11877,7 @@ label.checkout-item-checkbox {
 
 .shop-results-copy h2,
 .shop-empty-state h2 {
-  color: var(--lg-ink);
+  color: var(--tuti-text-strong, #061426);
   font-size: clamp(2.25rem, 4.4vw, 4.4rem);
   font-weight: 940;
   letter-spacing: -0.075em;
@@ -11810,7 +11885,51 @@ label.checkout-item-checkbox {
 }
 
 .shop-product-grid {
-  gap: clamp(1rem, 2vw, 1.35rem);
+  gap: clamp(0.8rem, 1.4vw, 1rem);
+}
+
+.shop-page .tuti-product-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 1.6vw, 1.25rem);
+}
+
+.shop-results-section {
+  scroll-margin-top: 7rem;
+}
+
+.shop-page .tuti-product-card {
+  border-color: var(--tuti-border-strong, rgba(7, 27, 58, 0.24));
+}
+
+.shop-page .tuti-product-card__media-wrap {
+  padding: 0.62rem 0.62rem 0;
+}
+
+.shop-page .tuti-product-card__media {
+  min-height: 13.2rem;
+  border-radius: var(--tuti-radius-md, 1rem);
+}
+
+.shop-page .tuti-product-card__body {
+  gap: 0.68rem;
+  padding: 1rem;
+}
+
+.shop-page .tuti-product-card__summary {
+  -webkit-line-clamp: 1;
+}
+
+.shop-page .tuti-product-card__tags {
+  gap: 0.28rem;
+}
+
+.shop-page .tuti-product-card__footer {
+  gap: 0.55rem;
+}
+
+.shop-page .tuti-product-card__icon-button--primary {
+  background: linear-gradient(145deg, var(--tuti-primary, #071b3a), var(--tuti-primary-strong, #0b1f3f));
+  box-shadow: 0 12px 28px rgba(7, 27, 58, 0.22);
 }
 
 .shop-page .product-card,
@@ -12080,62 +12199,90 @@ label.checkout-item-checkbox {
   overflow: hidden;
   padding: clamp(1.2rem, 2.4vw, 1.8rem);
   background:
-    radial-gradient(circle at 18% 20%, rgba(215, 183, 119, 0.18), transparent 24rem),
-    radial-gradient(circle at 82% 12%, rgba(11, 185, 223, 0.12), transparent 21rem),
-    linear-gradient(145deg, #1b1717, #060708 68%, #151719);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 2.6rem;
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.28);
+    radial-gradient(circle at 82% 12%, rgba(214, 180, 106, 0.16), transparent 21rem),
+    linear-gradient(145deg, #071b3a, #061426 68%, #0b1f3f);
+  border-color: rgba(214, 180, 106, 0.32);
+  border-radius: var(--tuti-radius-xl, 1.5rem);
+  box-shadow: var(--tuti-shadow-raised, 0 20px 46px rgba(7, 27, 58, 0.16));
+}
+
+.shop-build-insert-copy,
+.shop-build-insert-copy h3,
+.shop-build-insert-copy p {
+  color: #fff;
+}
+
+.shop-build-insert-copy .eyebrow {
+  color: #f7e8c3;
+}
+
+.shop-build-insert-copy p {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.shop-build-insert-copy .tuti-button--secondary {
+  color: #061426;
+  background: linear-gradient(145deg, #f7e8c3, #d6b46a);
+  border-color: rgba(214, 180, 106, 0.64);
 }
 
 .shop-build-insert-media {
-  border-radius: 2rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(184, 138, 46, 0.2);
+  border-radius: var(--tuti-radius-lg, 1.25rem);
+  box-shadow: 0 18px 42px rgba(7, 27, 58, 0.14);
 }
 
 .shop-results-end,
 .shop-empty-state {
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.58));
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 2rem;
-  box-shadow: var(--lg-shadow-air);
+    linear-gradient(145deg, #ffffff, rgba(251, 248, 241, 0.94));
+  border: 1px solid var(--tuti-border, rgba(7, 27, 58, 0.16));
+  border-radius: var(--tuti-radius-xl, 1.5rem);
+  box-shadow: var(--tuti-shadow, 0 14px 34px rgba(7, 27, 58, 0.11));
   padding: clamp(1.25rem, 2.5vw, 2rem);
 }
 
 @media (max-width: 1180px) {
   .shop-header-inner {
     grid-template-columns: 1fr;
+    padding: clamp(2rem, 3.5vw, 2.75rem) 0;
   }
 
   .shop-header-showcase {
-    min-height: 31rem;
+    min-height: 22rem;
+  }
+
+  .shop-page .tuti-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 820px) {
   .shop-header {
-    width: min(100% - 1rem, 92rem);
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     min-height: auto;
-    padding-top: 5.75rem;
+    padding-top: 0;
   }
 
   .shop-header-inner {
-    padding: 0;
+    width: min(100% - 2rem, 92rem);
+    margin: 0 auto;
+    padding: clamp(1.75rem, 5vw, 2.5rem) 0;
   }
 
   .shop-header-copy,
   .shop-header-showcase {
-    border-radius: 2.2rem;
+    border-radius: 0;
   }
 
   .shop-header-copy {
-    padding: 1.8rem;
+    padding: 0;
   }
 
   .shop-header-copy h1 {
-    max-width: 10ch;
-    font-size: clamp(3.25rem, 16vw, 5rem);
+    max-width: 11ch;
+    font-size: clamp(2.75rem, 12vw, 4.2rem);
   }
 
   .shop-header-command {
@@ -12144,13 +12291,13 @@ label.checkout-item-checkbox {
   }
 
   .shop-header-showcase {
-    min-height: 27rem;
+    min-height: 18rem;
     padding: 1.1rem;
   }
 
   .shop-showcase-products {
-    height: 22rem;
-    transform: scale(0.82);
+    height: 18rem;
+    transform: scale(0.72);
     transform-origin: center bottom;
   }
 
@@ -12163,12 +12310,36 @@ label.checkout-item-checkbox {
 
   .shop-shell {
     width: min(100% - 1rem, 92rem);
-    margin-top: 1.25rem;
+    margin-top: -1.5rem;
     padding-top: 0;
   }
 
   .shop-toolbar {
-    border-radius: 2rem;
+    border-radius: 1.5rem;
+  }
+
+  .shop-toolbar-controls {
+    align-items: stretch;
+  }
+
+  .shop-search-field {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    flex-basis: 100%;
+    min-height: 4rem;
+    border-radius: 1.15rem;
+  }
+
+  .shop-search-label {
+    grid-column: 1 / -1;
+  }
+
+  .shop-sort,
+  .shop-filter-toggle {
+    flex: 1 1 10rem;
+  }
+
+  .shop-page .tuti-product-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .shop-results-copy h2,

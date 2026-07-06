@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CreditCard, ShieldCheck, Sparkles, Truck, Wand2 } from "lucide-react";
 import homeCompleteGiftImage from "../../assets/home-ch4-complete.png";
-import { ProductCardRouter } from "./components/ProductCardRouter.jsx";
+import { TutiButton, TutiCard, TutiEmptyState } from "../../ui/customer/primitives/index.js";
+import { TutiProductGrid, TutiTrustStrip } from "../../ui/customer/commerce/index.js";
 import { ShopToolbar } from "./components/ShopToolbar.jsx";
 import { ShopFilterDrawer } from "./components/ShopFilterDrawer.jsx";
 
@@ -15,13 +16,34 @@ const CATEGORY_TABS = [
 const FAMILY_ORDER = ["All", "Oud", "Floral", "Musk", "Amber", "Fresh"];
 
 const FAMILY_TONES = {
-  All: "#c79b3a",
+  All: "#B88A2E",
   Oud: "#7b5336",
   Floral: "#b46c8d",
   Musk: "#8f7d5b",
   Amber: "#b77e2f",
   Fresh: "#5d8e88",
 };
+
+const SHOP_TRUST_ITEMS = [
+  {
+    id: "verified",
+    title: "Verified boutiques",
+    text: "Shop from approved sellers with live catalogue controls.",
+    icon: <ShieldCheck size={18} />,
+  },
+  {
+    id: "delivery",
+    title: "UAE delivery windows",
+    text: "Choose gifts prepared for same-day and scheduled moments.",
+    icon: <Truck size={18} />,
+  },
+  {
+    id: "cod",
+    title: "COD-ready checkout",
+    text: "Pay on delivery while online payments are being integrated.",
+    icon: <CreditCard size={18} />,
+  },
+];
 
 const CATEGORY_STORIES = {
   all: {
@@ -211,12 +233,13 @@ function ShopHeader({ totalCount, onFindScent }) {
           <span className="eyebrow">Shop Tuti</span>
           <h1 id="shop-header-title">Find the right gift for the moment.</h1>
           <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
-          <div className="shop-header-command" aria-label="AI shop command preview">
-            <span className="shop-header-command-orb" aria-hidden="true">AI</span>
-            <span>
-              <strong>Search oud, pistachio cake, or a same-day gift box.</strong>
-              <small>Liquid search, smart filters, and live boutique availability stay in sync below.</small>
-            </span>
+          <div className="shop-header-actions">
+            <TutiButton as="a" href="#shop-results" size="lg">
+              Browse gifts
+            </TutiButton>
+            <TutiButton variant="soft" size="lg" icon={<Wand2 size={16} />} onClick={onFindScent}>
+              Find a scent
+            </TutiButton>
           </div>
         </div>
         <div className="shop-header-showcase" aria-label="Perfume cake and gift shop preview">
@@ -259,16 +282,16 @@ function ShopHeader({ totalCount, onFindScent }) {
 
 function BuildBoxInsertion({ onNavigatePath }) {
   return (
-    <article className="shop-build-insert">
+    <TutiCard as="article" variant="section" padding="none" className="shop-build-insert">
       <div className="shop-build-insert-copy">
         <span className="eyebrow">Only at Tuti</span>
         <h3>Pair a scent with something sweet.</h3>
         <p>
           Choose a perfume, add a cake or dessert, and include your personal message in one considered gift.
         </p>
-        <button className="secondary-action" type="button" onClick={() => onNavigatePath("/build-a-box")}>
-          Build your box <ArrowRight size={16} aria-hidden="true" />
-        </button>
+        <TutiButton variant="secondary" onClick={() => onNavigatePath("/build-a-box")} icon={<ArrowRight size={16} />} iconPosition="right">
+          Build your box
+        </TutiButton>
       </div>
       <button
         className="shop-build-insert-media"
@@ -283,7 +306,7 @@ function BuildBoxInsertion({ onNavigatePath }) {
           decoding="async"
         />
       </button>
-    </article>
+    </TutiCard>
   );
 }
 
@@ -376,20 +399,7 @@ export function StorefrontPage({
     query,
   });
   const viewProduct = onViewProduct || setSelectedReviewProductId;
-  const shouldShowBuildInsert = sortedProducts.length > 6 && ["all", "perfume", "women", "men", "unisex", "gift_box"].includes(activeCategory);
-  const gridMode = sortedProducts.length <= 1 ? "single" : sortedProducts.length === 2 ? "pair" : "grid";
   const drawerFilterCount = hasFamilyFilter ? 1 : 0;
-
-  const collectionItems = useMemo(() => {
-    const items = [];
-    sortedProducts.forEach((product, index) => {
-      items.push({ type: "product", key: product.id, product });
-      if (shouldShowBuildInsert && index === 5) {
-        items.push({ type: "build-box", key: "shop-build-box-insert" });
-      }
-    });
-    return items;
-  }, [sortedProducts, shouldShowBuildInsert]);
 
   function navigateToPath(path) {
     window.history.pushState(null, "", path);
@@ -453,6 +463,8 @@ export function StorefrontPage({
       <ShopHeader totalCount={liveProducts.length} onFindScent={() => navigateToPath("/fragrance-finder")} />
 
       <section className="shop-shell">
+        <TutiTrustStrip items={SHOP_TRUST_ITEMS} variant="compact" className="shop-trust-strip" />
+
         <ShopToolbar
           query={query}
           setQuery={setQuery}
@@ -491,60 +503,58 @@ export function StorefrontPage({
 
         {sortedProducts.length ? (
           <>
-            <section className={`product-grid shop-product-grid shop-product-grid--${gridMode}`} aria-label={`${pageCopy.eyebrow} product collection`}>
-              {collectionItems.map((item) => {
-                if (item.type === "build-box") {
-                  return (
-                    <div key={item.key} className="shop-grid-feature">
-                      <BuildBoxInsertion onNavigatePath={navigateToPath} />
-                    </div>
-                  );
-                }
-                return (
-                  <ProductCardRouter
-                    key={item.key}
-                    product={item.product}
-                    shop={getShop(item.product.shopId)}
-                    onAddToCart={onAddToCart}
-                    onRateProduct={() => viewProduct?.(item.product.id)}
-                    onViewProduct={() => viewProduct?.(item.product.id)}
-                  />
-                );
-              })}
+            <section id="shop-results" className="shop-results-section" aria-label={`${pageCopy.eyebrow} product collection`}>
+              <TutiProductGrid
+                products={sortedProducts}
+                getShop={getShop}
+                variant="catalog"
+                className="shop-product-grid"
+                onAddToCart={onAddToCart}
+                onViewProduct={(productId) => viewProduct?.(productId)}
+              />
             </section>
+
+            {["all", "perfume", "women", "men", "unisex", "gift_box"].includes(activeCategory) ? (
+              <BuildBoxInsertion onNavigatePath={navigateToPath} />
+            ) : null}
 
             <section className="shop-results-end" aria-label="End of results">
               <p>You’ve reached the end of this edit.</p>
               <div className="shop-results-end-actions">
                 {hasActiveFilters ? (
-                  <button className="secondary-action compact" type="button" onClick={clearAllFilters}>
+                  <TutiButton variant="secondary" size="sm" onClick={clearAllFilters}>
                     Clear filters
-                  </button>
+                  </TutiButton>
                 ) : activeCategory !== "all" ? (
-                  <button className="secondary-action compact" type="button" onClick={() => selectCategory("all")}>
+                  <TutiButton variant="secondary" size="sm" onClick={() => selectCategory("all")}>
                     Browse all products
-                  </button>
+                  </TutiButton>
                 ) : null}
-                <button className="ghost-action compact" type="button" onClick={() => navigateToPath("/build-a-box")}>
+                <TutiButton variant="ghost" size="sm" onClick={() => navigateToPath("/build-a-box")}>
                   Build your box
-                </button>
+                </TutiButton>
               </div>
             </section>
           </>
         ) : (
-          <section className="shop-empty-state" role="status" aria-live="polite">
-            <Sparkles size={20} aria-hidden="true" />
-            <h2>{emptyState.title}</h2>
-            <p>{emptyState.text}</p>
-            <div className="shop-empty-actions">
-              <button className="secondary-action" type="button" onClick={handleEmptyPrimaryAction}>
-                {emptyState.primaryAction}
-              </button>
-              <button className="ghost-action" type="button" onClick={handleEmptySecondaryAction}>
-                {emptyState.secondaryAction}
-              </button>
-            </div>
-          </section>
+          <TutiEmptyState
+            className="shop-empty-state"
+            role="status"
+            aria-live="polite"
+            icon={<Sparkles size={20} />}
+            title={emptyState.title}
+            description={emptyState.text}
+            action={(
+              <div className="shop-empty-actions">
+                <TutiButton variant="secondary" onClick={handleEmptyPrimaryAction}>
+                  {emptyState.primaryAction}
+                </TutiButton>
+                <TutiButton variant="ghost" onClick={handleEmptySecondaryAction}>
+                  {emptyState.secondaryAction}
+                </TutiButton>
+              </div>
+            )}
+          />
         )}
       </section>
     </main>

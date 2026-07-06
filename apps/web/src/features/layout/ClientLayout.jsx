@@ -119,7 +119,7 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
   const accountName = user?.name?.split(" ")[0] || "Sign in";
   const isAuth = isAuthenticated();
   const immersiveRoute = route === "home";
-  const showTopbarSearch = route !== "shop";
+  const showTopbarSearch = true;
 
   function handleNotificationNavigate(notification) {
     if (!notification?.entityType) return;
@@ -257,8 +257,8 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
         <nav className="cl-bar2" aria-label="Product categories">
           {headerNavRoutes.map(({ id, category, label, finder }) => {
             const active = category
-              ? route === id && shopCategory === category
-              : route === id;
+              ? route === "shop" && shopCategory === category
+              : route === id && !(id === "shop" && shopCategory && shopCategory !== "all");
             return (
               <button
                 key={label}
@@ -268,6 +268,7 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                   active ? "active" : "",
                   finder ? "cl-rail-btn--finder" : "",
                 ].filter(Boolean).join(" ")}
+                aria-current={active ? "page" : undefined}
                 onClick={() => onNavigate(id, category)}
               >
                 {label}
@@ -324,6 +325,9 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                   <p className="cl-drawer-group-label">{group}</p>
                   {items.map(({ label, id, category, portalKey }) => {
                     const portal = portalKey ? getPortalUrl(portalKey) : "";
+                    const active = category
+                      ? route === "shop" && shopCategory === category
+                      : route === id && !(id === "shop" && shopCategory && shopCategory !== "all");
                     if (portalKey && !portal) return null;
                     return portal ? (
                       <a
@@ -340,7 +344,8 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                       <button
                         key={label}
                         type="button"
-                        className="cl-drawer-link"
+                        className={active ? "cl-drawer-link active" : "cl-drawer-link"}
+                        aria-current={active ? "page" : undefined}
                         onClick={() => drawerNavigate(id, category)}
                       >
                         {label}

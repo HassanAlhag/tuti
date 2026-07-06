@@ -35,14 +35,15 @@ export function ShopToolbar({
     <section className="shop-toolbar" aria-label="Search, filters and sorting">
       <div className="shop-toolbar-controls">
         <label className="shop-search-field">
+          <span className="shop-search-label">Search the catalogue</span>
           <Search size={18} aria-hidden="true" />
           <input
             id="catalog-search-input"
             type="search"
-            placeholder="Search products, boutiques or occasions"
+            placeholder="Search perfumes, cakes, gift boxes, boutiques..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            aria-label="Search products, boutiques or occasions"
+            aria-label="Search perfumes, cakes, gift boxes, boutiques"
           />
           {query ? (
             <button className="shop-search-clear" type="button" onClick={() => setQuery("")} aria-label="Clear search">
