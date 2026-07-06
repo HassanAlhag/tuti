@@ -2594,10 +2594,35 @@ body {
   border-color: var(--brand);
 }
 
-@media (max-width: 480px) {
-  .cookie-banner { flex-direction: column; align-items: flex-start; bottom: 0; border-radius: var(--radius) var(--radius) 0 0; width: 100%; }
-  .cookie-banner-actions { width: 100%; }
-  .cookie-banner-actions button { flex: 1; }
+@media (max-width: 640px) {
+  .cookie-banner {
+    flex-direction: column;
+    align-items: stretch;
+    bottom: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    width: 100%;
+    gap: 0.35rem;
+    padding: 0.55rem 0.9rem 0.65rem;
+  }
+  .cookie-banner-text {
+    font-size: 0.72rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: none;
+    margin: 0;
+  }
+  .cookie-banner-actions {
+    width: 100%;
+    flex-direction: row;
+    gap: 0.4rem;
+  }
+  .cookie-banner-actions button {
+    flex: 1;
+    font-size: 0.72rem;
+  }
 }
 
 /* ── Topbar LGV2 ease refinement ────────────────────────────────── */

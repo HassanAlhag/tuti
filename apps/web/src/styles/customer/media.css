@@ -6,11 +6,15 @@
   overflow: hidden;
   isolation: isolate;
   background:
-    radial-gradient(circle at 24% 18%, rgba(11, 185, 223, 0.1), transparent 30%),
-    radial-gradient(circle at 78% 78%, rgba(243, 223, 173, 0.26), transparent 34%),
-    linear-gradient(155deg, var(--lg-white, #fff), var(--lg-porcelain, #fbfbfa));
-  border: 1px solid var(--tuti-border);
+    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.92) 0%, transparent 46%),
+    radial-gradient(circle at 24% 18%, rgba(11, 185, 223, 0.13), transparent 32%),
+    radial-gradient(circle at 78% 78%, rgba(243, 223, 173, 0.32), transparent 36%),
+    linear-gradient(155deg, var(--lg-porcelain, #fbfbfa) 0%, var(--lg-ivory, #f6f2ea) 100%);
+  border: 1px solid rgba(21, 22, 24, 0.11);
   border-radius: var(--tuti-radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(21, 22, 24, 0.07);
 }
 
 .tuti-media-stage--sm {
@@ -47,21 +51,23 @@
 
 .tuti-media-stage--perfume .tuti-media-stage__shape--primary {
   left: 34%;
-  bottom: 12%;
+  bottom: 10%;
   width: 32%;
-  height: 58%;
-  background: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(11,185,223,0.12) 48%, rgba(21,22,24,0.1));
-  border: 1px solid rgba(21, 22, 24, 0.18);
+  height: 62%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(11,185,223,0.16) 50%, rgba(21,22,24,0.14));
+  border: 1px solid rgba(21, 22, 24, 0.22);
   border-radius: 1.4rem 1.4rem 1.8rem 1.8rem;
-  box-shadow: inset 14px 0 24px rgba(255,255,255,0.62), 0 18px 34px rgba(21,22,24,0.14);
+  box-shadow:
+    inset 14px 0 24px rgba(255,255,255,0.72),
+    0 20px 38px rgba(21,22,24,0.18);
 }
 
 .tuti-media-stage--perfume .tuti-media-stage__shape--secondary {
   left: 41%;
-  top: 8%;
+  top: 6%;
   width: 18%;
   height: 22%;
-  background: linear-gradient(180deg, var(--tuti-text), #4c5158);
+  background: linear-gradient(180deg, #2a2d32, #4c5158);
   border-radius: 0.75rem 0.75rem 0.4rem 0.4rem;
 }
 
@@ -69,9 +75,9 @@
   left: 18%;
   bottom: 18%;
   width: 64%;
-  height: 32%;
-  background: linear-gradient(180deg, #fff 0 35%, rgba(225, 116, 145, 0.28) 36% 56%, rgba(184, 207, 159, 0.26) 57% 100%);
-  border: 1px solid rgba(21, 22, 24, 0.12);
+  height: 34%;
+  background: linear-gradient(180deg, #fff 0 30%, rgba(225, 116, 145, 0.38) 31% 58%, rgba(184, 207, 159, 0.34) 59% 100%);
+  border: 1px solid rgba(21, 22, 24, 0.14);
   border-radius: 50% 50% 1rem 1rem;
   box-shadow: 0 18px 32px rgba(21,22,24,0.12);
 }
