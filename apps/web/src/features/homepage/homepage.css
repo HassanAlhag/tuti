@@ -119,15 +119,15 @@
   color: var(--lg-ink);
   font-size: clamp(2.8rem, 6.5vw, 5.45rem);
   line-height: 0.94;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
 }
 
 .home-rebuild-hero p {
-  max-width: 41rem;
+  max-width: 38rem;
   margin: 0;
-  color: var(--lg-muted);
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
-  line-height: 1.58;
+  color: var(--lg-graphite);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.55;
 }
 
 .home-rebuild-hero__actions {
@@ -141,6 +141,7 @@
   align-self: stretch;
   display: grid;
   gap: 1rem;
+  box-shadow: 0 32px 72px rgba(15, 18, 22, 0.09), 0 5px 14px rgba(15, 18, 22, 0.05);
 }
 
 .home-rebuild-stage__grid {
@@ -171,26 +172,31 @@
 
 .home-rebuild-stage__note {
   display: grid;
-  gap: 0.2rem;
-  padding: 0.95rem 1rem;
+  gap: 0.28rem;
+  padding: 0.9rem 1rem;
   color: var(--lg-muted);
-  background: var(--lg-white);
+  background: linear-gradient(135deg, var(--lg-white) 0%, var(--lg-porcelain) 100%);
   border: 1px solid var(--lg-border);
   border-radius: var(--tuti-radius-md);
+  font-size: 0.83rem;
+  line-height: 1.45;
 }
 
 .home-rebuild-stage__note strong {
-  color: var(--lg-graphite);
+  color: var(--lg-ink);
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
 }
 
 .home-shortcut-bar {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.65rem;
+  gap: 0.55rem;
   width: min(90rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: 0.7rem;
-  background: rgba(255, 255, 255, 0.82);
+  padding: 0.6rem;
+  background: var(--lg-white);
   border: 1px solid var(--lg-border);
   border-radius: var(--tuti-radius-lg);
   box-shadow: var(--tuti-shadow);
@@ -200,14 +206,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   min-width: 0;
-  min-height: 3.15rem;
-  padding: 0 0.75rem;
+  min-height: 2.95rem;
+  padding: 0 0.8rem;
   color: var(--lg-graphite);
   background: var(--lg-porcelain);
-  border: 1px solid var(--lg-border);
+  border: 1px solid rgba(21, 22, 24, 0.09);
   border-radius: var(--tuti-radius-md);
+  font-size: 0.83rem;
   font-weight: 850;
   white-space: nowrap;
   transition: border-color 160ms var(--tuti-ease), box-shadow 160ms var(--tuti-ease), transform 160ms var(--tuti-ease);
@@ -230,17 +237,17 @@
 
 .home-shortcut-bar__icon--cyan {
   color: var(--lg-blue);
-  background: rgba(11, 185, 223, 0.1);
+  background: rgba(11, 185, 223, 0.14);
 }
 
 .home-shortcut-bar__icon--champagne {
-  color: color-mix(in srgb, var(--lg-champagne) 72%, var(--lg-graphite));
-  background: rgba(243, 223, 173, 0.38);
+  color: color-mix(in srgb, var(--lg-champagne) 80%, var(--lg-graphite));
+  background: rgba(215, 183, 119, 0.22);
 }
 
 .home-shortcut-bar__icon--neutral {
   color: var(--lg-graphite);
-  background: var(--lg-white);
+  background: rgba(21, 22, 24, 0.06);
 }
 
 .home-rebuild-section .tuti-section__header,
@@ -253,11 +260,15 @@
 }
 
 .home-product-rail .tuti-carousel__track {
-  grid-auto-columns: minmax(13.5rem, 19rem);
+  grid-auto-columns: minmax(13.5rem, 18.5rem);
 }
 
 .home-product-rail .tuti-product-card__media-wrap {
   padding: 0.62rem 0.62rem 0;
+}
+
+.home-product-rail .tuti-media-stage {
+  min-height: clamp(9rem, 14vw, 12.5rem);
 }
 
 .home-product-rail .tuti-product-card__body {
@@ -301,8 +312,17 @@
   align-items: center;
   gap: 0.3rem;
   color: var(--lg-blue);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 850;
+  padding-bottom: 1px;
+  border-bottom: 1.5px solid rgba(48, 124, 255, 0.28);
+  width: fit-content;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+/* Champagne top accent — set via inset shadow so it composes safely with card shadow */
+.home-decision-card {
+  box-shadow: var(--tuti-shadow), inset 0 2px 0 rgba(215, 183, 119, 0.48);
 }
 
 .home-boutique-grid--count-1 {
@@ -313,6 +333,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.home-boutique-grid--count-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .home-boutique-card {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
@@ -320,15 +344,17 @@
 
 .home-boutique-card__mark {
   display: grid;
-  width: 3.4rem;
-  height: 3.4rem;
+  width: 3.6rem;
+  height: 3.6rem;
   place-items: center;
   color: var(--lg-graphite);
   background:
-    radial-gradient(circle at 28% 20%, rgba(11, 185, 223, 0.16), transparent 40%),
-    linear-gradient(145deg, var(--lg-white), rgba(243, 223, 173, 0.38));
-  border: 1px solid var(--lg-border);
+    radial-gradient(circle at 28% 20%, rgba(11, 185, 223, 0.18), transparent 38%),
+    linear-gradient(145deg, var(--lg-white) 0%, rgba(243, 223, 173, 0.52) 100%);
+  border: 1px solid rgba(215, 183, 119, 0.32);
   border-radius: var(--tuti-radius-md);
+  box-shadow: 0 6px 18px rgba(215, 183, 119, 0.14);
+  font-size: 0.88rem;
   font-weight: 950;
   letter-spacing: 0.02em;
 }
@@ -404,21 +430,23 @@
   padding: 0.72rem;
   color: var(--lg-muted);
   background: var(--lg-white);
-  border: 1px solid var(--lg-border);
+  border: 1px solid rgba(21, 22, 24, 0.09);
   border-radius: var(--tuti-radius-md);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
 .home-build-card__steps strong {
   display: grid;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.65rem;
+  height: 1.65rem;
   place-items: center;
   color: var(--lg-white);
   background: linear-gradient(135deg, var(--lg-cyan), var(--lg-blue));
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
+  font-weight: 950;
+  box-shadow: 0 6px 16px rgba(11, 185, 223, 0.34);
 }
 
 .home-build-card__visual {
@@ -493,6 +521,7 @@
   .home-decision-grid,
   .home-boutique-grid,
   .home-boutique-grid--count-2,
+  .home-boutique-grid--count-4,
   .home-build-card {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -559,6 +588,20 @@
 .home-final-cta,
 .home-shortcut-bar {
   scroll-margin-top: 7rem;
+}
+
+/* ── Homepage-scoped trust strip: left cyan accent per item ───── */
+.home-rebuild-section--trust .tuti-trust-strip__item {
+  border-left: 2px solid rgba(11, 185, 223, 0.22);
+}
+
+.home-rebuild-section--trust .tuti-trust-strip__icon {
+  background: rgba(11, 185, 223, 0.12);
+}
+
+/* ── Homepage final CTA: subtle cyan top inset accent ─────────── */
+.home-final-cta__card {
+  box-shadow: var(--tuti-shadow), inset 0 2px 0 rgba(11, 185, 223, 0.25);
 }
 
 /* ── Seller section overrides ───────────────────────────────── */
