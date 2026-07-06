@@ -53,13 +53,13 @@
 
 .tuti-product-card__icon-button--primary {
   color: var(--lg-white, #fff);
-  background: linear-gradient(135deg, var(--tuti-primary), var(--tuti-primary-strong));
-  border-color: color-mix(in srgb, var(--tuti-primary) 70%, var(--tuti-primary-strong));
+  background: linear-gradient(145deg, #0B1F3F, #061426);
+  border-color: rgba(7, 27, 58, 0.8);
 }
 
 .tuti-product-card__icon-button:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--tuti-primary) 38%, var(--tuti-border));
-  box-shadow: 0 14px 28px rgba(48, 124, 255, 0.16);
+  box-shadow: 0 14px 28px rgba(7, 27, 58, 0.18);
   transform: translateY(-1px);
 }
 

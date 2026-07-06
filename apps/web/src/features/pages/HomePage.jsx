@@ -23,6 +23,10 @@ import {
   TutiProductRail,
   TutiTrustStrip,
 } from "../../ui/customer/commerce/index.js";
+import cakeCategoryImage from "../../assets/category-cakes.jpg";
+import giftSetCategoryImage from "../../assets/category-gift-sets.jpg";
+import perfumeCategoryImage from "../../assets/category-perfumes.jpg";
+import perfumeHeroImage from "../../assets/perfume-hero.png";
 import "../homepage/homepage.css";
 
 const SHORTCUTS = [
@@ -214,6 +218,63 @@ function OccasionDiscovery({ collections = [], goToCollections, goToShop }) {
   );
 }
 
+function MomentStorySection({ goToBuildBox, goToShop }) {
+  return (
+    <section className="home-image-story home-image-story--moment" aria-labelledby="home-moment-title">
+      <div className="home-image-story__media">
+        <img src={giftSetCategoryImage} alt="Premium gift box with perfume, cake and chocolates" loading="lazy" />
+      </div>
+      <div className="home-image-story__copy">
+        <TutiBadge tone="champagne">Curated moment</TutiBadge>
+        <h2 id="home-moment-title">For the moments that deserve more than a message.</h2>
+        <p>
+          Perfume, cake and a personal note can become one polished gift flow, ready for the next celebration.
+        </p>
+        <div className="home-image-story__mini-grid" aria-label="Gift composition highlights">
+          <span><strong>01</strong> Choose the scent</span>
+          <span><strong>02</strong> Pair the treat</span>
+        </div>
+        <div className="home-image-story__actions">
+          <TutiButton size="md" onClick={goToBuildBox}>Build a box</TutiButton>
+          <TutiButton variant="ghost" size="md" onClick={() => goToShop?.("gift_box")}>Shop gift sets</TutiButton>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ModernGiftingSection({ goToShop, goToShops }) {
+  const benefits = [
+    "Verified boutique sellers",
+    "Same-day UAE delivery windows",
+    "COD-ready premium checkout",
+  ];
+
+  return (
+    <section className="home-image-story home-image-story--uae" aria-labelledby="home-uae-title">
+      <div className="home-image-story__copy">
+        <TutiBadge tone="champagne">UAE gifting</TutiBadge>
+        <h2 id="home-uae-title">Made for modern UAE gifting.</h2>
+        <p>
+          From last-minute celebrations to planned surprises, Tuti brings verified boutiques into one premium experience.
+        </p>
+        <div className="home-image-story__benefits">
+          {benefits.map((benefit) => <span key={benefit}>{benefit}</span>)}
+        </div>
+        <div className="home-image-story__actions">
+          <TutiButton size="md" onClick={() => goToShop?.("all")}>Browse gifts</TutiButton>
+          <TutiButton variant="ghost" size="md" onClick={goToShops}>View boutiques</TutiButton>
+        </div>
+      </div>
+      <div className="home-image-story__gallery" aria-label="Perfume and patisserie gifting">
+        <img src={perfumeCategoryImage} alt="Luxury perfume bottles on a dark counter" loading="lazy" />
+        <img src={cakeCategoryImage} alt="Premium celebration cake and desserts" loading="lazy" />
+        <img src={perfumeHeroImage} alt="Perfume bottles on a bright luxury counter" loading="lazy" />
+      </div>
+    </section>
+  );
+}
+
 function BoutiqueSection({ goToSellerBrand, goToShops, shops = [] }) {
   const visibleShops = shops.slice(0, 4);
 
@@ -370,6 +431,11 @@ export function HomePage({
           />
         </TutiSection>
 
+        <MomentStorySection
+          goToBuildBox={goToBuildBox}
+          goToShop={goToShop}
+        />
+
         <OccasionDiscovery
           collections={collections}
           goToCollections={goToCollections}
@@ -413,6 +479,11 @@ export function HomePage({
             />
           </TutiSection>
         )}
+
+        <ModernGiftingSection
+          goToShop={goToShop}
+          goToShops={goToShops}
+        />
 
         <BoutiqueSection
           goToSellerBrand={goToSellerBrand}
