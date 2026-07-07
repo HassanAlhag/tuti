@@ -21,6 +21,13 @@ const CART_TRUST_ITEMS = [
   { id: "gift", title: "Gift-ready delivery", description: "Packaging included", icon: <Gift size={17} /> },
 ];
 
+function buildBoutiqueNote(cart) {
+  const shops = [...new Set(cart.map((item) => item.shopName || item.sellerName).filter(Boolean))];
+  if (shops.length === 1) return `Prepared by ${shops[0]}`;
+  if (shops.length > 1) return `Prepared by ${shops.length} boutiques · Each boutique prepares its items separately.`;
+  return null;
+}
+
 export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platformFee, updateCartQuantity, updateItemMetadata, vendorNet }) {
   const { user, isAuthenticated } = useAuthStore();
   const [checkoutMode, setCheckoutMode] = useState(isAuthenticated() ? "account" : "guest");
@@ -141,7 +148,7 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
               </button>
               <button type="button" className="tuti-cart__ghost-btn" onClick={() => onNavigate?.("/build-a-box")}>
                 <Gift size={16} aria-hidden="true" />
-                Build a box
+                Build a gift
               </button>
             </div>
           </div>
@@ -472,6 +479,11 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                 </div>
               ))}
             </div>
+
+            {/* Boutique prep note */}
+            {buildBoutiqueNote(cart) ? (
+              <p className="tuti-cart__boutique-note">{buildBoutiqueNote(cart)}</p>
+            ) : null}
 
             {/* Totals */}
             <div className="tuti-cart__summary-lines">

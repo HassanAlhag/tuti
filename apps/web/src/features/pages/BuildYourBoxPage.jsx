@@ -607,7 +607,7 @@ export function BuildYourBoxPage({ products, getShop, onAddToCart, onNavigate })
                 or browse curated gift sets while new pairings go live.
               </p>
               <button className="secondary-action compact" type="button" onClick={() => onNavigate("/shop?c=gift_box")}>
-                Explore gift sets
+                Explore gift boxes
               </button>
             </div>
           ) : null}
@@ -667,7 +667,7 @@ export function BuildYourBoxPage({ products, getShop, onAddToCart, onNavigate })
                 );
               }) : (
                 <EmptyState
-                  title="No perfumes are currently available for Build a Box."
+                  title="No perfumes are currently available for Build a Gift."
                   text="Please check back soon or browse the wider perfume catalogue."
                   ctaLabel="Browse perfumes"
                   onAction={() => onNavigate("/shop?c=perfume")}

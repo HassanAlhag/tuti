@@ -412,8 +412,8 @@ export function SellerLandingPage() {
   const formRef  = useRef(null);
 
   useSeoMeta({
-    title: "Sell on Tuti — List Your Perfumes, Cakes & Gift Sets",
-    description: "Join Tuti Marketplace as a seller. List perfumes, cakes, and gift sets and reach customers across the UAE with cash on delivery.",
+    title: "Sell on Tuti — List Your Perfumes, Cakes & Gift Boxes",
+    description: "Join Tuti Marketplace as a seller. List perfumes, cakes, and gift boxes and reach customers across the UAE with cash on delivery.",
     canonical: "https://tuti.ae/sell",
   });
 

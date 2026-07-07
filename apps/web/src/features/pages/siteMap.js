@@ -59,9 +59,9 @@ export const shopCategories = [
     id: "gift-sets",
     slug: "gift-sets",
     path: "/shop/gift-sets",
-    label: "Gift Sets",
-    title: "Gift sets",
-    description: "Gift-ready perfumes, curated sets, and polished scents for special moments.",
+    label: "Gift Boxes",
+    title: "Gift boxes",
+    description: "Gift-ready perfumes, curated gift boxes, and polished scents for special moments.",
   },
   {
     id: "travel-size",
@@ -93,7 +93,7 @@ export const collectionCategories = [
 ];
 
 export const giftCategories = [
-  { title: "Gift Sets", path: "/shop/gift-sets", text: "Ready-to-wrap sets and curated discovery pairings." },
+  { title: "Gift Boxes", path: "/shop/gift-sets", text: "Ready-to-wrap gift boxes and curated discovery pairings." },
   { title: "Gifts for Her", path: "/shop/women", text: "Rose, musk, floral, and elegant daily perfumes." },
   { title: "Gifts for Him", path: "/shop/men", text: "Fresh woods, oud, citrus, and confident evening scents." },
   { title: "Luxury Gifts", path: "/collections", text: "Premium edits with stronger projection and richer notes." },
@@ -103,7 +103,7 @@ export const giftCategories = [
 
 export const offerSections = [
   { title: "Current Offers", text: "Limited-time discounts on selected boutique perfumes." },
-  { title: "Bundles", text: "Pair oud, fresh, musk, and rose scents for better value." },
+  { title: "Value Combinations", text: "Pair oud, fresh, musk, and rose scents for better value." },
   { title: "Seasonal Sale", text: "Occasion-led edits for Eid, weddings, travel, and gifting seasons." },
   { title: "Promo Codes", text: "A controlled place for campaign codes and partner promotions." },
 ];
@@ -175,7 +175,7 @@ export const journalArticles = [
     slug: "build-a-box-guide",
     category: "gifting",
     title: "How to Build the Perfect Gift Box on Tuti",
-    summary: "A step-by-step guide to using Build Your Box — choosing a perfume, pairing a cake or dessert, and adding a gift message.",
+    summary: "A step-by-step guide to using Build a Gift — choosing a perfume, pairing a cake or dessert, and adding a gift message.",
     readMins: 3,
     date: "2026-06-08",
     path: "/journal/build-a-box-guide",

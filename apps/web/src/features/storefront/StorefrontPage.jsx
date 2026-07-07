@@ -10,7 +10,7 @@ const CATEGORY_TABS = [
   { id: "all", label: "All" },
   { id: "perfume", label: "Perfumes" },
   { id: "cake", label: "Cakes & Desserts" },
-  { id: "gift_box", label: "Gift Sets" },
+  { id: "gift_box", label: "Gift Boxes" },
 ];
 
 const FAMILY_ORDER = ["All", "Oud", "Floral", "Musk", "Amber", "Fresh"];
@@ -49,7 +49,7 @@ const CATEGORY_STORIES = {
   all: {
     eyebrow: "The Tuti shop",
     description:
-      "Explore boutique perfumes, artisan cakes and desserts, curated gift sets, and thoughtful combinations from Tuti sellers across the UAE.",
+      "Explore boutique perfumes, artisan cakes and desserts, curated gift boxes, and thoughtful combinations from Tuti sellers across the UAE.",
   },
   perfume: {
     eyebrow: "Perfumes",
@@ -76,7 +76,7 @@ const CATEGORY_STORIES = {
     description: "Artisan cakes, desserts and sweets prepared for celebrations, milestones and thoughtful surprises.",
   },
   gift_box: {
-    eyebrow: "Gift Sets",
+    eyebrow: "Gift Boxes",
     description: "Considered combinations, premium presentation and gifts designed to make the moment easier.",
   },
 };
@@ -114,7 +114,7 @@ function buildResultsLabel(category, count, hasFamilyFilter) {
     return count === 1 ? "cake or dessert" : "cakes and desserts";
   }
   if (category === "gift_box") {
-    return count === 1 ? "curated gift set" : "curated gift sets";
+    return count === 1 ? "gift box" : "gift boxes";
   }
   if (hasFamilyFilter || isPerfumeCategory(category)) {
     return count === 1 ? "fragrance" : "fragrances";
@@ -163,7 +163,7 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
     return {
       title: "No products in the marketplace yet",
       text: "Our boutique sellers are preparing their next drop. Check back soon, or build a personal gift instead.",
-      primaryAction: "Build your box",
+      primaryAction: "Build a gift",
       secondaryAction: "Browse all products",
     };
   }
@@ -188,9 +188,9 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
 
   if (activeCategory === "gift_box") {
     return {
-      title: "No gift sets available yet",
+      title: "No gift boxes available yet",
       text: "Explore all products or build a more personal gift with perfume, cake, and a message.",
-      primaryAction: hasActiveFilters ? "Clear filters" : "Build your box",
+      primaryAction: hasActiveFilters ? "Clear filters" : "Build a gift",
       secondaryAction: "Browse all products",
     };
   }
@@ -198,7 +198,7 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
   if (activeCategory === "cake") {
     return {
       title: "No cakes or desserts available yet",
-      text: "Try another category or return to the full Tuti edit to discover perfumes and gift sets.",
+      text: "Try another category or return to the full Tuti edit to discover perfumes and gift boxes.",
       primaryAction: hasActiveFilters ? "Clear filters" : "Browse all products",
       secondaryAction: "Explore perfumes",
     };
@@ -207,9 +207,9 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
   if (isPerfumeCategory(activeCategory)) {
     return {
       title: "No fragrances available yet",
-      text: "Try another family or explore the full Tuti shop to discover cakes, desserts, and gift sets too.",
+      text: "Try another family or explore the full Tuti shop to discover cakes, desserts, and gift boxes too.",
       primaryAction: hasActiveFilters ? "Clear filters" : "Browse all products",
-      secondaryAction: "Explore gift sets",
+      secondaryAction: "Explore gift boxes",
     };
   }
 
@@ -217,7 +217,7 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
     title: "No gifts match these filters yet",
     text: "Try another category or come back soon to discover the latest from Tuti boutiques.",
     primaryAction: hasActiveFilters ? "Clear filters" : "Browse perfumes",
-    secondaryAction: "Build your box",
+    secondaryAction: "Build a gift",
   };
 }
 
@@ -232,7 +232,7 @@ function ShopHeader({ totalCount, onFindScent }) {
           </span>
           <span className="eyebrow">Shop Tuti</span>
           <h1 id="shop-header-title">Find the right gift for the moment.</h1>
-          <p>Boutique perfumes, artisan cakes and desserts, and curated gift sets from sellers across the UAE.</p>
+          <p>Boutique perfumes, artisan cakes and desserts, and curated gift boxes from sellers across the UAE.</p>
           <div className="shop-header-actions">
             <TutiButton as="a" href="#shop-results" size="lg">
               Browse gifts
@@ -290,14 +290,14 @@ function BuildBoxInsertion({ onNavigatePath }) {
           Choose a perfume, add a cake or dessert, and include your personal message in one considered gift.
         </p>
         <TutiButton variant="secondary" onClick={() => onNavigatePath("/build-a-box")} icon={<ArrowRight size={16} />} iconPosition="right">
-          Build your box
+          Build a gift
         </TutiButton>
       </div>
       <button
         className="shop-build-insert-media"
         type="button"
         onClick={() => onNavigatePath("/build-a-box")}
-        aria-label="Open Build a Box"
+        aria-label="Open Build a Gift"
       >
         <img
           src={homeCompleteGiftImage}
@@ -427,7 +427,7 @@ export function StorefrontPage({
   }
 
   function handleEmptyPrimaryAction() {
-    if (emptyState.primaryAction === "Build your box") {
+    if (emptyState.primaryAction === "Build a gift") {
       navigateToPath("/build-a-box");
       return;
     }
@@ -443,7 +443,7 @@ export function StorefrontPage({
   }
 
   function handleEmptySecondaryAction() {
-    if (emptyState.secondaryAction === "Build your box") {
+    if (emptyState.secondaryAction === "Build a gift") {
       navigateToPath("/build-a-box");
       return;
     }
@@ -451,7 +451,7 @@ export function StorefrontPage({
       selectCategory("perfume");
       return;
     }
-    if (emptyState.secondaryAction === "Explore gift sets") {
+    if (emptyState.secondaryAction === "Explore gift boxes") {
       selectCategory("gift_box");
       return;
     }
@@ -531,7 +531,7 @@ export function StorefrontPage({
                   </TutiButton>
                 ) : null}
                 <TutiButton variant="ghost" size="sm" onClick={() => navigateToPath("/build-a-box")}>
-                  Build your box
+                  Build a gift
                 </TutiButton>
               </div>
             </section>

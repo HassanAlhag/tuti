@@ -65,7 +65,7 @@ function humanizeProductBadge(product) {
   if (releaseType) return releaseType;
   const category = normalizeText(product?.category);
   if (!category) return "";
-  if (category === "gift_box" || category === "bundle") return "Gift Set";
+  if (category === "gift_box" || category === "bundle") return "Gift Box";
   if (category === "cake" || category === "dessert") return "Treat";
   if (category === "perfume") return "Perfume";
   return category.replace(/_/g, " ");

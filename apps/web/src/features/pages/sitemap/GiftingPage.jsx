@@ -7,8 +7,8 @@ import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 
 export function GiftingPage({ products, getShop, onAddToCart, onNavigate }) {
   useSeoMeta({
-    title: "Luxury Gifting — Perfumes, Cakes & Gift Sets",
-    description: "Build memorable gifts with perfume and cake combinations, premium gift boxes, and free-form Build Your Box. Cash on delivery available.",
+    title: "Luxury Gifting — Perfumes, Cakes & Gift Boxes",
+    description: "Build memorable gifts with perfume and cake combinations, premium gift boxes, and Build a Gift. Cash on delivery available.",
     canonical: "https://tuti.ae/gifting",
   });
   const giftProducts = products.filter((product) => product.category === "gift_box" || product.category === "bundle").slice(0, 3);
@@ -46,11 +46,11 @@ export function GiftingPage({ products, getShop, onAddToCart, onNavigate }) {
       >
         <button className="primary-action" onClick={() => onNavigate("/build-a-box")} type="button">
           <PackageCheck size={18} />
-          Build Your Box
+          Build a Gift
         </button>
         <button className="primary-action" onClick={() => onNavigate("/shop/gift-sets")} type="button">
           <Gift size={18} />
-          Shop gift sets
+          Shop gift boxes
         </button>
         <div className="gifting-payment-strip">
           <span><WalletCards size={15} /> COD available</span>
@@ -60,13 +60,13 @@ export function GiftingPage({ products, getShop, onAddToCart, onNavigate }) {
 
       <section className="gifting-build-box-card">
         <div>
-          <span className="eyebrow">Build your box</span>
+          <span className="eyebrow">Build a Gift</span>
           <h2>Create one premium gift in three steps</h2>
-          <p>Choose one perfume, one cake or dessert, and add a gift message. Your box is added as one curated cart item.</p>
+          <p>Choose one perfume, one cake or dessert, and add a gift message. Your gift is added as one curated cart item.</p>
         </div>
         <button className="secondary-action" onClick={() => onNavigate("/build-a-box")} type="button">
           <PackageCheck size={18} />
-          Start Build Your Box
+          Start building your gift
         </button>
       </section>
 

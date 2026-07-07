@@ -55,21 +55,21 @@ test("customer dynamic route helpers encode path params", () => {
 test("header, drawer, footer, and shortcut nav are generated from registry", () => {
   assert.deepEqual(
     headerNavRoutes.map((route) => route.label),
-    ["Home", "Shop", "Perfumes", "Cakes & Desserts", "Gift Sets", "Build a Box", "Sellers", "Find a Scent ✦"]
+    ["Home", "Shop", "Perfumes", "Cakes & Desserts", "Gift Boxes", "Build a Gift", "Sellers", "Find a Scent ✦"]
   );
 
   const drawerLabels = mobileDrawerRoutes.flatMap((group) => group.items.map((item) => item.label));
-  for (const label of ["Home", "Shop", "Perfumes", "Cakes & Desserts", "Gift Sets", "Build a Box", "Sellers", "Collections", "Find a Scent", "Offers", "Gifting", "Journal", "Our Story", "Support", "Account", "Orders", "Legal", "Sell on Tuti"]) {
+  for (const label of ["Home", "Shop", "Perfumes", "Cakes & Desserts", "Gift Boxes", "Build a Gift", "Sellers", "Collections", "Find a Scent", "Offers", "Gifting", "Journal", "Our Story", "Support", "Account", "Orders", "Legal", "Sell on Tuti"]) {
     assert.ok(drawerLabels.includes(label), `drawer missing ${label}`);
   }
 
   const footerLabels = footerRouteGroups.flatMap((group) => group.links.map((link) => link.label));
-  for (const label of ["Perfumes", "Cakes & Desserts", "Gift Sets", "Collections", "Offers", "Build a Box", "Find a Scent", "Gifting", "Journal", "Our Story", "Sell on Tuti", "Help Centre", "Contact", "Account", "Orders", "Legal"]) {
+  for (const label of ["Perfumes", "Cakes & Desserts", "Gift Boxes", "Collections", "Offers", "Build a Gift", "Find a Scent", "Gifting", "Journal", "Our Story", "Sell on Tuti", "Help Centre", "Contact", "Account", "Orders", "Legal"]) {
     assert.ok(footerLabels.includes(label), `footer missing ${label}`);
   }
 
   assert.deepEqual(
     categoryShortcutRoutes.map((route) => route.label),
-    ["Perfumes", "Cakes & Desserts", "Gift Sets", "Build a Box", "Find a Scent", "Sellers"]
+    ["Perfumes", "Cakes & Desserts", "Gift Boxes", "Build a Gift", "Find a Scent", "Sellers"]
   );
 });

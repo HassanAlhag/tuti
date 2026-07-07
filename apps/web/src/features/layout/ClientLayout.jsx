@@ -18,9 +18,9 @@ const SEARCH_CATEGORIES = [
   { value: "all",      label: "All" },
   { value: "perfume",  label: "Perfumes" },
   { value: "cake",     label: "Cakes & Desserts" },
-  { value: "gift_box", label: "Gift Sets" },
+  { value: "gift_box", label: "Gift Boxes" },
   { value: "dessert",  label: "Sweets" },
-  { value: "bundle",   label: "Bundles" },
+  { value: "bundle",   label: "Gift Boxes" },
 ];
 
 export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, children }) {

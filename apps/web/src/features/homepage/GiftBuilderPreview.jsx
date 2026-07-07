@@ -41,7 +41,7 @@ export function GiftBuilderPreview({ onBuildGift, onExploreGiftSets }) {
         </div>
       </div>
 
-      <ol className="gift-preview-steps" aria-label="How Build Your Box works">
+      <ol className="gift-preview-steps" aria-label="How Build a Gift works">
         {GIFT_STEPS.map((step) => (
           <li key={step.num} className="gift-preview-step">
             <span className="gift-preview-step-num" aria-hidden="true">{step.num}</span>
@@ -57,7 +57,7 @@ export function GiftBuilderPreview({ onBuildGift, onExploreGiftSets }) {
           type="button"
           onClick={onExploreGiftSets}
         >
-          Explore gift sets
+          Explore gift boxes
         </button>
       </div>
     </section>

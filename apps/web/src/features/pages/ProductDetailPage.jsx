@@ -53,18 +53,18 @@ const typeMeta = {
     pairingTitle: "Recommended perfume pairing",
   },
   gift_box: {
-    label: "Gift set",
-    backLabel: "Back to gift sets",
-    relatedLabel: "Related gift sets",
-    cta: "Add gift set to cart",
+    label: "Gift box",
+    backLabel: "Back to gift boxes",
+    relatedLabel: "Related gift boxes",
+    cta: "Add gift box to cart",
     pairingTitle: "Inside this gift box",
   },
   bundle: {
-    label: "Bundle",
-    backLabel: "Back to gift sets",
-    relatedLabel: "Related bundles",
-    cta: "Add bundle to cart",
-    pairingTitle: "Inside this bundle",
+    label: "Gift box",
+    backLabel: "Back to gift boxes",
+    relatedLabel: "Related gift boxes",
+    cta: "Add gift box to cart",
+    pairingTitle: "Inside this gift box",
   },
 };
 
@@ -552,6 +552,11 @@ export function ProductDetailPage({
               <span><PackageCheck size={14} aria-hidden="true" /> Seller fulfilled</span>
               <span><ShieldCheck size={14} aria-hidden="true" /> Buyer support</span>
             </div>
+            {isGift && shop ? (
+              <p className="tuti-pdp__boutique-note">
+                Prepared by {shop.name} · This boutique prepares the selected gift and options.
+              </p>
+            ) : null}
           </section>
         </section>
 

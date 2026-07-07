@@ -184,7 +184,7 @@ export function OrderConfirmationPage({ onNavigate }) {
               <span>
                 {item.productName}
                 {item?.configuration?.type === "build_your_box" ? (
-                  <small className="account-order-item-tag">Build Your Box</small>
+                  <small className="account-order-item-tag">Customized gift</small>
                 ) : null}
                 <ItemFacts item={item} />
                 <ItemConfigurationSummary item={item} />
