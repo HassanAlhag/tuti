@@ -87,8 +87,9 @@ function getCollectionSlug() {
 }
 
 function getProductId() {
-  const [, section, id] = window.location.pathname.split("/");
-  return section === "products" ? id : "";
+  const [, section, raw] = window.location.pathname.split("/");
+  if (section !== "products") return "";
+  try { return decodeURIComponent(raw || ""); } catch { return raw || ""; }
 }
 
 function getOccasion() {
@@ -314,7 +315,9 @@ export default function App() {
 
   const productId    = route === "product" ? getProductId() : selectedProductId;
   const reviewTarget = products.find((p) => p.id === productId) || products[0];
-  const productDetail = route === "product" ? products.find((p) => p.id === getProductId()) : null;
+  const productDetail = route === "product"
+    ? (products.find((p) => p.id === getProductId() || p._id === getProductId()) || null)
+    : null;
   const cartSubtotal = total();
   const platformFee  = Math.round(cartSubtotal * 0.14);
 

@@ -44,7 +44,7 @@ export function TutiProductCard({
   const unavailable = disabled || product.stock === 0;
 
   function viewProduct(event) {
-    if (unavailable && !href) return;
+    if (!onViewProduct && !href) return;
     event?.preventDefault();
     onViewProduct?.(productId, product);
   }
@@ -63,6 +63,11 @@ export function TutiProductCard({
     onToggleWishlist?.(product);
   }
 
+  function viewFromCard(event) {
+    if (event?.target?.closest?.("a, button, input, textarea, select")) return;
+    viewProduct(event);
+  }
+
   return (
     <TutiCard
       as="article"
@@ -77,7 +82,7 @@ export function TutiProductCard({
         className
       )}
     >
-      <div className="tuti-product-card__media-wrap">
+      <div className="tuti-product-card__media-wrap" onClick={viewFromCard}>
         <TutiMediaStage
           category={category}
           image={image}
@@ -112,7 +117,7 @@ export function TutiProductCard({
         {selected ? <TutiBadge tone="cyan" className="tuti-product-card__selected">Selected</TutiBadge> : null}
       </div>
 
-      <div className="tuti-product-card__body">
+      <div className="tuti-product-card__body" onClick={viewFromCard}>
         <div className="tuti-product-card__meta-row">
           <span>{shopName}</span>
           <TutiBadge tone="neutral">{typeLabel}</TutiBadge>
