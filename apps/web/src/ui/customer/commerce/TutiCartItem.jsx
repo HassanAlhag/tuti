@@ -40,6 +40,9 @@ export function TutiCartItem({
         {Array.isArray(item.includes) && item.includes.length ? (
           <small>{item.includes.slice(0, 2).join(" · ")}</small>
         ) : null}
+      </div>
+      <div className="tuti-cart-item__actions">
+        <TutiPrice price={price != null ? price * quantity : null} size="sm" align="right" className="tuti-cart-item__price" />
         <div className="tuti-cart-item__controls">
           {readonly ? (
             <span className="tuti-cart-item__readonly-qty">Qty {quantity}</span>
@@ -59,7 +62,6 @@ export function TutiCartItem({
           ) : null}
         </div>
       </div>
-      <TutiPrice price={price != null ? price * quantity : null} size="sm" align="right" className="tuti-cart-item__price" />
     </TutiCard>
   );
 }

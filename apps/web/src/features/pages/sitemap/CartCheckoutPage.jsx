@@ -1,18 +1,25 @@
 import { useRef, useState } from "react";
-import { CreditCard, Gift, Minus, Plus, ShoppingBag, Trash2, User, WalletCards } from "lucide-react";
+import { CreditCard, Gift, ShieldCheck, ShoppingBag, User, WalletCards } from "lucide-react";
 import { ordersApi } from "@tuti/shared/api/client.js";
-import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
+import { TutiCartItem } from "../../../ui/customer/commerce/TutiCartItem.jsx";
+import { TutiTrustStrip } from "../../../ui/customer/commerce/TutiTrustStrip.jsx";
+import "../cart-checkout.css";
 import {
   ItemConfigurationSummary,
   ItemFacts,
-  PageHero,
   compactOrderItem,
   getCartLineKey,
   isCakeLikeItem,
   isGiftLikeItem,
 } from "./sitemapPageShared.jsx";
+
+const CART_TRUST_ITEMS = [
+  { id: "cod", title: "Cash on delivery", description: "No online payment needed", icon: <WalletCards size={17} /> },
+  { id: "verified", title: "Verified boutiques", description: "Screened UAE sellers", icon: <ShieldCheck size={17} /> },
+  { id: "gift", title: "Gift-ready delivery", description: "Packaging included", icon: <Gift size={17} /> },
+];
 
 export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platformFee, updateCartQuantity, updateItemMetadata, vendorNet }) {
   const { user, isAuthenticated } = useAuthStore();
@@ -43,8 +50,8 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
     window.dispatchEvent(new CustomEvent("tuti:open-auth"));
   }
 
-  function updateMetadata(productId, field, value) {
-    updateItemMetadata?.(productId, { [field]: value });
+  function updateMetadata(lineKey, field, value) {
+    updateItemMetadata?.(lineKey, { [field]: value });
   }
 
   function getOrCreateIdempotencyKey() {
@@ -116,283 +123,399 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
     return "We could not place your order. Please try again.";
   }
 
+  // ── Empty cart ──────────────────────────────────────────────────────────────
   if (!cart.length) {
     return (
-      <main className="page-shell cart-checkout-page">
-        <PageHero
-          kicker="Cart & checkout"
-          title="Your cart is ready for something thoughtful."
-          text="Add a perfume, cake, dessert, or gift box to get started — or build a personal gift in a few steps."
-        >
-          <button className="primary-action" onClick={() => onNavigate?.("/shop")} type="button">
-            <ShoppingBag size={18} aria-hidden="true" />
-            Browse the shop
-          </button>
-          <button className="ghost-action" onClick={() => onNavigate?.("/build-a-box")} type="button">
-            <Gift size={18} aria-hidden="true" />
-            Build a box
-          </button>
-        </PageHero>
+      <main className="page-shell tuti-cart">
+        <div className="tuti-cart__empty">
+          <div className="tuti-cart__empty-inner">
+            <span className="tuti-cart__empty-icon" aria-hidden="true">
+              <ShoppingBag size={36} />
+            </span>
+            <h1>Your cart is empty</h1>
+            <p>Discover perfumes, cakes, desserts, and gift boxes from our verified boutiques — or build a personal gift in a few steps.</p>
+            <div className="tuti-cart__empty-actions">
+              <button type="button" className="tuti-cart__primary-btn" onClick={() => onNavigate?.("/shop")}>
+                <ShoppingBag size={16} aria-hidden="true" />
+                Browse the shop
+              </button>
+              <button type="button" className="tuti-cart__ghost-btn" onClick={() => onNavigate?.("/build-a-box")}>
+                <Gift size={16} aria-hidden="true" />
+                Build a box
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
     );
   }
 
+  // ── Cart with items ─────────────────────────────────────────────────────────
   return (
-    <main className="page-shell cart-checkout-page">
-      <PageHero
-        kicker="Cart & checkout"
-        title="Continue your order"
-        text="Review your order, confirm your delivery details, and place your cash-on-delivery order. Card payment is not available for this launch."
-      />
+    <main className="page-shell tuti-cart">
 
-      <section className="checkout-layout">
-        <form className="checkout-form-panel" id="checkout-form" onSubmit={placeOrder}>
-          <section className="checkout-choice-grid" aria-label="Checkout identity" role="radiogroup">
-            <button
-              aria-checked={isAccountCheckout}
-              aria-pressed={isAccountCheckout}
-              className={isAccountCheckout ? "checkout-choice active" : "checkout-choice"}
-              disabled={!isAuthenticated()}
-              onClick={() => setCheckoutMode("account")}
-              role="radio"
-              type="button"
-            >
-              <User size={19} aria-hidden="true" />
-              <strong>Client login</strong>
-              <span>{isAuthenticated() ? `Ordering as ${user?.name || user?.email}` : "Login to save orders and addresses"}</span>
-            </button>
-            <button
-              aria-checked={!isAccountCheckout}
-              aria-pressed={!isAccountCheckout}
-              className={!isAccountCheckout ? "checkout-choice active" : "checkout-choice"}
-              disabled={isAuthenticated()}
-              onClick={() => setCheckoutMode("guest")}
-              role="radio"
-              type="button"
-            >
-              <ShoppingBag size={19} aria-hidden="true" />
-              <strong>Guest checkout</strong>
-              <span>{isAuthenticated() ? "Unavailable while signed in." : "No account required. We send the order confirmation by email."}</span>
-            </button>
-          </section>
-
-          {isAuthenticated() ? (
-            <p className="checkout-auth-helper">You are signed in, so this order will be saved to your account.</p>
-          ) : null}
-
-          {!isAuthenticated() ? (
-            <button className="secondary-action compact checkout-login-link" onClick={requestLogin} type="button">
-              <User size={16} />
-              Login instead
-            </button>
-          ) : null}
-
-          <section className="checkout-form-card">
-            <div className="checkout-card-heading">
-              <span>1</span>
-              <div>
-                <h2>Customer details</h2>
-                <p>Use a customer account or continue as guest.</p>
-              </div>
-            </div>
-            <div className="checkout-form-grid">
-              <label>
-                Full name
-                <input required value={form.customerName} onChange={(event) => updateForm("customerName", event.target.value)} placeholder="Your name" />
-              </label>
-              <label>
-                Email
-                <input required type="email" value={form.customerEmail} onChange={(event) => updateForm("customerEmail", event.target.value)} placeholder="name@example.com" />
-              </label>
-              <label>
-                Phone / WhatsApp
-                <input required value={form.phone} onChange={(event) => updateForm("phone", event.target.value)} placeholder="+971..." />
-              </label>
-              <label>
-                Delivery address
-                <input required value={form.deliveryAddress} onChange={(event) => updateForm("deliveryAddress", event.target.value)} placeholder="Area, street, building, city" />
-              </label>
-            </div>
-          </section>
-
-          <section className="checkout-form-card">
-            <div className="checkout-card-heading">
-              <span>2</span>
-              <div>
-                <h2>Delivery and gift details</h2>
-                <p>Important for cakes, sweets, and gift boxes.</p>
-              </div>
-            </div>
-            <div className="checkout-form-grid">
-              <label>
-                Delivery date
-                <input type="date" value={form.deliveryDate} onChange={(event) => updateForm("deliveryDate", event.target.value)} />
-              </label>
-              <label>
-                Delivery time
-                <input type="time" value={form.deliveryTime} onChange={(event) => updateForm("deliveryTime", event.target.value)} />
-              </label>
-              <label className="checkout-field-wide">
-                Gift message
-                <textarea value={form.giftMessage} onChange={(event) => updateForm("giftMessage", event.target.value)} placeholder="Write a message for the card" rows="3" />
-              </label>
-              <label className="checkout-field-wide">
-                Special instructions
-                <textarea value={form.notes} onChange={(event) => updateForm("notes", event.target.value)} placeholder="Cake writing, delivery notes, allergies, or timing requests" rows="3" />
-              </label>
-            </div>
-          </section>
-
-          <section className="checkout-form-card">
-            <div className="checkout-card-heading">
-              <span>3</span>
-              <div>
-                <h2>Payment method</h2>
-                <p>Cash on delivery is the only active payment method for this launch.</p>
-              </div>
-            </div>
-            <div className="payment-method-grid" role="radiogroup" aria-label="Payment method">
-              <button
-                aria-checked={paymentMethod === "card"}
-                aria-pressed={paymentMethod === "card"}
-                className={paymentMethod === "card" ? "payment-method active" : "payment-method"}
-                disabled
-                role="radio"
-                type="button"
-              >
-                <CreditCard size={20} aria-hidden="true" />
-                <strong>Card payment unavailable</strong>
-                <span>Online payment will return after a verified gateway is integrated.</span>
-              </button>
-              <button
-                aria-checked={paymentMethod === "cod"}
-                aria-pressed={paymentMethod === "cod"}
-                className={paymentMethod === "cod" ? "payment-method active" : "payment-method"}
-                onClick={() => setPaymentMethod("cod")}
-                role="radio"
-                type="button"
-              >
-                <WalletCards size={20} aria-hidden="true" />
-                <strong>Cash on delivery</strong>
-                <span>Pay the driver when your order arrives.</span>
-              </button>
-            </div>
-          </section>
-
-          <div aria-atomic="true" aria-live="polite" role="status">
-            {orderError ? (
-              <p className="error-state checkout-error">
-                {orderError}
-                {orderError.includes("retry") ? " Use the button below to try again — your cart is still intact." : ""}
-              </p>
-            ) : null}
+      {/* Compact checkout header */}
+      <div className="tuti-cart__hero">
+        <div className="tuti-cart__hero-inner">
+          <div className="tuti-cart__hero-text">
+            <span className="tuti-cart__eyebrow">Your Tuti cart</span>
+            <h1>Review &amp; place your order</h1>
+            <p>Cash on delivery · Verified boutiques · Gift-ready packaging</p>
           </div>
-        </form>
+          <TutiTrustStrip items={CART_TRUST_ITEMS} variant="inline" className="tuti-cart__hero-trust" />
+        </div>
+      </div>
 
-        <aside className="checkout-summary-card">
-          <h2>Order summary</h2>
-          <div className="cart-items">
+      {/* Main two-column layout */}
+      <div className="tuti-cart__shell">
+
+        {/* ── Left: items + checkout form ── */}
+        <div className="tuti-cart__panel">
+
+          {/* Cart items */}
+          <section className="tuti-cart__items" aria-label="Cart items">
+            <div className="tuti-cart__section-heading">
+              <h2>Cart items</h2>
+              <span>{cart.length} item{cart.length !== 1 ? "s" : ""}</span>
+            </div>
             {cart.map((item) => (
-              <div className="cart-item" key={getCartLineKey(item)}>
-                <BottleArt product={item} compact />
-                <div>
-                  <strong>{item.name}</strong>
-                  <span>{formatCurrency(item.price)} · Qty {item.quantity}</span>
-                  <ItemFacts item={item} />
-                  <ItemConfigurationSummary item={item} />
-                  {(isCakeLikeItem(item) || isGiftLikeItem(item)) ? (
-                    <div className="checkout-item-metadata-fields">
-                      {isCakeLikeItem(item) ? (
-                        <>
-                          <label>
-                            Cake writing / custom message
-                            <input
-                              value={item.metadata?.cakeWriting || ""}
-                              onChange={(event) => updateMetadata(getCartLineKey(item), "cakeWriting", event.target.value)}
-                              placeholder="Happy birthday, name, or short message"
-                            />
-                          </label>
-                          <label>
-                            Allergy note
-                            <input
-                              value={item.metadata?.allergyNote || ""}
-                              onChange={(event) => updateMetadata(getCartLineKey(item), "allergyNote", event.target.value)}
-                              placeholder="Optional allergy or dietary note"
-                            />
-                          </label>
-                        </>
-                      ) : null}
-                      {isGiftLikeItem(item) ? (
-                        <>
-                          <label>
-                            Gift card message
-                            <input
-                              value={item.metadata?.itemMessage || ""}
-                              onChange={(event) => updateMetadata(getCartLineKey(item), "itemMessage", event.target.value)}
-                              placeholder="Message for this gift box"
-                            />
-                          </label>
-                          <label className="checkout-item-checkbox">
-                            <input
-                              checked={Boolean(item.metadata?.giftWrap)}
-                              onChange={(event) => updateMetadata(getCartLineKey(item), "giftWrap", event.target.checked)}
-                              type="checkbox"
-                            />
-                            Add gift wrap
-                          </label>
-                        </>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-                <div className="cart-item-actions">
-                  <div className="cart-quantity" role="group" aria-label={`Quantity for ${item.name}`}>
-                    <button
-                      aria-label={`Decrease quantity of ${item.name}`}
-                      className="cart-quantity-btn"
-                      onClick={() => updateCartQuantity(getCartLineKey(item), item.quantity - 1)}
-                      type="button"
-                    >
-                      <Minus size={14} aria-hidden="true" />
-                    </button>
-                    <span aria-live="polite" className="cart-quantity-value">{item.quantity}</span>
-                    <button
-                      aria-label={`Increase quantity of ${item.name}`}
-                      className="cart-quantity-btn"
-                      onClick={() => updateCartQuantity(getCartLineKey(item), item.quantity + 1)}
-                      type="button"
-                    >
-                      <Plus size={14} aria-hidden="true" />
-                    </button>
+              <div className="tuti-cart__item" key={getCartLineKey(item)}>
+                <TutiCartItem
+                  item={item}
+                  onQuantityChange={(_itemId, nextQty, cartItem) => updateCartQuantity(getCartLineKey(cartItem), nextQty)}
+                  onRemove={(_itemId, cartItem) => updateCartQuantity(getCartLineKey(cartItem), 0)}
+                />
+                {item.shopName || item.sellerName ? (
+                  <p className="tuti-cart__item-shop">From {item.shopName || item.sellerName}</p>
+                ) : null}
+                {(isCakeLikeItem(item) || isGiftLikeItem(item)) ? (
+                  <div className="tuti-cart__item-meta">
+                    {isCakeLikeItem(item) ? (
+                      <>
+                        <label>
+                          Cake writing
+                          <input
+                            value={item.metadata?.cakeWriting || ""}
+                            onChange={(e) => updateMetadata(getCartLineKey(item), "cakeWriting", e.target.value)}
+                            placeholder="Happy birthday, name, or short message"
+                          />
+                        </label>
+                        <label>
+                          Allergy note
+                          <input
+                            value={item.metadata?.allergyNote || ""}
+                            onChange={(e) => updateMetadata(getCartLineKey(item), "allergyNote", e.target.value)}
+                            placeholder="Optional allergy or dietary note"
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                    {isGiftLikeItem(item) ? (
+                      <>
+                        <label>
+                          Gift card message
+                          <input
+                            value={item.metadata?.itemMessage || ""}
+                            onChange={(e) => updateMetadata(getCartLineKey(item), "itemMessage", e.target.value)}
+                            placeholder="Message for this gift box"
+                          />
+                        </label>
+                        <label className="tuti-cart__item-meta-check">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(item.metadata?.giftWrap)}
+                            onChange={(e) => updateMetadata(getCartLineKey(item), "giftWrap", e.target.checked)}
+                          />
+                          Add gift wrap
+                        </label>
+                      </>
+                    ) : null}
+                    <ItemFacts item={item} />
+                    <ItemConfigurationSummary item={item} />
                   </div>
-                  <button
-                    aria-label={`Remove ${item.name} from cart`}
-                    className="icon-button danger cart-remove-btn"
-                    onClick={() => updateCartQuantity(getCartLineKey(item), 0)}
-                    type="button"
-                  >
-                    <Trash2 size={15} aria-hidden="true" />
-                  </button>
-                </div>
+                ) : null}
               </div>
             ))}
-          </div>
-          <div className="checkout-box">
-            <div className="summary-line"><span>Items</span><strong>{formatCurrency(cartTotal)}</strong></div>
-            <div className="summary-line"><span>Delivery</span><strong>{checkoutMode === "guest" ? "Choose a slot" : "Saved with your account"}</strong></div>
-            <div className="summary-line strong"><span>Total</span><strong>{formatCurrency(cartTotal)}</strong></div>
-            <button className="primary-action full-width" disabled={!cart.length || isPlacingOrder} form="checkout-form" type="submit">
-              {paymentMethod === "card" ? <CreditCard size={18} /> : <WalletCards size={18} />}
-              {isPlacingOrder ? "Placing order..." : paymentMethod === "card" ? "Authorize card order" : "Place COD order"}
+          </section>
+
+          {/* Checkout form */}
+          <form className="tuti-checkout" id="checkout-form" onSubmit={placeOrder} noValidate={false}>
+
+            {/* Step 1 — Customer mode */}
+            <section className="tuti-checkout__panel" aria-label="Checkout identity">
+              <div className="tuti-checkout__panel-heading">
+                <span className="tuti-checkout__step" aria-hidden="true">1</span>
+                <div>
+                  <h2>How would you like to checkout?</h2>
+                </div>
+              </div>
+              <div className="tuti-checkout__steps" role="radiogroup" aria-label="Checkout mode">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isAccountCheckout}
+                  aria-pressed={isAccountCheckout}
+                  className={`tuti-checkout__mode-card${isAccountCheckout ? " is-active" : ""}${!isAuthenticated() ? " is-locked" : ""}`}
+                  disabled={!isAuthenticated()}
+                  onClick={() => setCheckoutMode("account")}
+                >
+                  <User size={19} aria-hidden="true" />
+                  <div>
+                    <strong>Client account</strong>
+                    <span>
+                      {isAuthenticated()
+                        ? `Ordering as ${user?.name || user?.email}`
+                        : "Sign in to save your orders and addresses"}
+                    </span>
+                  </div>
+                  {!isAuthenticated() ? <span className="tuti-checkout__mode-lock">Sign in first</span> : null}
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={!isAccountCheckout}
+                  aria-pressed={!isAccountCheckout}
+                  className={`tuti-checkout__mode-card${!isAccountCheckout ? " is-active" : ""}${isAuthenticated() ? " is-locked" : ""}`}
+                  disabled={isAuthenticated()}
+                  onClick={() => setCheckoutMode("guest")}
+                >
+                  <ShoppingBag size={19} aria-hidden="true" />
+                  <div>
+                    <strong>Guest checkout</strong>
+                    <span>
+                      {isAuthenticated()
+                        ? "Unavailable while signed in."
+                        : "No account needed. Confirmation sent by email."}
+                    </span>
+                  </div>
+                </button>
+              </div>
+              {isAuthenticated() ? (
+                <p className="tuti-checkout__auth-note">Your order will be saved to your account automatically.</p>
+              ) : (
+                <button type="button" className="tuti-checkout__login-link" onClick={requestLogin}>
+                  <User size={14} aria-hidden="true" />
+                  Sign in instead
+                </button>
+              )}
+            </section>
+
+            {/* Step 2 — Customer details */}
+            <section className="tuti-checkout__panel">
+              <div className="tuti-checkout__panel-heading">
+                <span className="tuti-checkout__step" aria-hidden="true">2</span>
+                <div>
+                  <h2>Customer details</h2>
+                </div>
+              </div>
+              <div className="tuti-checkout__form-grid">
+                <label>
+                  Full name
+                  <input
+                    required
+                    value={form.customerName}
+                    onChange={(e) => updateForm("customerName", e.target.value)}
+                    placeholder="Your name"
+                    autoComplete="name"
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    required
+                    type="email"
+                    value={form.customerEmail}
+                    onChange={(e) => updateForm("customerEmail", e.target.value)}
+                    placeholder="name@example.com"
+                    autoComplete="email"
+                  />
+                </label>
+                <label>
+                  Phone / WhatsApp
+                  <input
+                    required
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => updateForm("phone", e.target.value)}
+                    placeholder="+971..."
+                    autoComplete="tel"
+                  />
+                </label>
+                <label className="tuti-checkout__field-wide">
+                  Delivery address
+                  <input
+                    required
+                    value={form.deliveryAddress}
+                    onChange={(e) => updateForm("deliveryAddress", e.target.value)}
+                    placeholder="Area, street, building, city"
+                    autoComplete="street-address"
+                  />
+                </label>
+              </div>
+            </section>
+
+            {/* Step 3 — Delivery & gift details */}
+            <section className="tuti-checkout__panel">
+              <div className="tuti-checkout__panel-heading">
+                <span className="tuti-checkout__step" aria-hidden="true">3</span>
+                <div>
+                  <h2>Delivery &amp; gift details</h2>
+                  <p>Required for cakes, desserts, and gift boxes.</p>
+                </div>
+              </div>
+              <div className="tuti-checkout__form-grid">
+                <label>
+                  Delivery date
+                  <input
+                    type="date"
+                    value={form.deliveryDate}
+                    onChange={(e) => updateForm("deliveryDate", e.target.value)}
+                  />
+                </label>
+                <label>
+                  Preferred time
+                  <input
+                    type="time"
+                    value={form.deliveryTime}
+                    onChange={(e) => updateForm("deliveryTime", e.target.value)}
+                  />
+                </label>
+                <label className="tuti-checkout__field-wide">
+                  Gift message
+                  <textarea
+                    value={form.giftMessage}
+                    onChange={(e) => updateForm("giftMessage", e.target.value)}
+                    placeholder="Write a message for the gift card"
+                    rows="3"
+                  />
+                </label>
+                <label className="tuti-checkout__field-wide">
+                  Special instructions
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) => updateForm("notes", e.target.value)}
+                    placeholder="Cake writing, delivery notes, allergies, or timing requests"
+                    rows="3"
+                  />
+                </label>
+              </div>
+            </section>
+
+            {/* Step 4 — Payment */}
+            <section className="tuti-checkout__panel">
+              <div className="tuti-checkout__panel-heading">
+                <span className="tuti-checkout__step" aria-hidden="true">4</span>
+                <div>
+                  <h2>Payment method</h2>
+                </div>
+              </div>
+              <div className="tuti-checkout__payment" role="radiogroup" aria-label="Payment method">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={paymentMethod === "cod"}
+                  aria-pressed={paymentMethod === "cod"}
+                  className={`tuti-checkout__pay-card${paymentMethod === "cod" ? " is-active" : ""}`}
+                  onClick={() => setPaymentMethod("cod")}
+                >
+                  <WalletCards size={22} aria-hidden="true" />
+                  <div>
+                    <strong>Cash on delivery</strong>
+                    <span>Pay cash on delivery. Online card payments will be added later.</span>
+                  </div>
+                  <span className="tuti-checkout__pay-badge">Active</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={false}
+                  aria-pressed={false}
+                  aria-disabled="true"
+                  className="tuti-checkout__pay-card tuti-checkout__pay-card--disabled"
+                  disabled
+                >
+                  <CreditCard size={22} aria-hidden="true" />
+                  <div>
+                    <strong>Card payment</strong>
+                    <span>Coming soon — a verified payment gateway is being integrated.</span>
+                  </div>
+                  <span className="tuti-checkout__pay-badge tuti-checkout__pay-badge--soon">Coming soon</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Error */}
+            <div aria-atomic="true" aria-live="polite" role="status">
+              {orderError ? (
+                <p className="tuti-checkout__error">
+                  {orderError}
+                  {orderError.includes("retry") ? " Use the button below to try again — your cart is still intact." : ""}
+                </p>
+              ) : null}
+            </div>
+
+          </form>
+        </div>
+
+        {/* ── Right: Order summary (sticky on desktop, first on mobile via CSS order) ── */}
+        <aside className="tuti-cart__summary" aria-label="Order summary">
+          <div className="tuti-cart__summary-inner">
+            <h2>Order summary</h2>
+
+            {/* Item list */}
+            <div className="tuti-cart__summary-items" aria-label="Items in your order">
+              {cart.map((item) => (
+                <div className="tuti-cart__summary-item" key={getCartLineKey(item)}>
+                  <span className="tuti-cart__summary-item-name">{item.name}</span>
+                  <span className="tuti-cart__summary-item-qty" aria-label={`Quantity ${item.quantity}`}>×{item.quantity}</span>
+                  <span className="tuti-cart__summary-item-price">{formatCurrency(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Totals */}
+            <div className="tuti-cart__summary-lines">
+              <div className="tuti-cart__summary-line">
+                <span>Subtotal</span>
+                <strong>{formatCurrency(cartTotal)}</strong>
+              </div>
+              <div className="tuti-cart__summary-line">
+                <span>Delivery</span>
+                <strong>Arranged at checkout</strong>
+              </div>
+              <div className="tuti-cart__summary-line tuti-cart__summary-line--total">
+                <span>Total</span>
+                <strong>{formatCurrency(cartTotal)}</strong>
+              </div>
+            </div>
+
+            {/* Place order CTA */}
+            <button
+              className="tuti-cart__place-order"
+              disabled={!cart.length || isPlacingOrder}
+              form="checkout-form"
+              type="submit"
+            >
+              {isPlacingOrder ? (
+                "Placing order…"
+              ) : (
+                <>
+                  <WalletCards size={17} aria-hidden="true" />
+                  Place COD order
+                </>
+              )}
             </button>
-            <p className="checkout-method-note">
-              {paymentMethod === "card"
-                ? "Card payment is currently disabled."
-                : "No online payment is taken. The seller prepares your order after confirmation, and you pay on delivery."}
+
+            <p className="tuti-cart__summary-cod-note">
+              No online payment is taken. Your order is confirmed after the seller accepts it, and you pay cash on delivery.
+            </p>
+            <p className="tuti-cart__summary-support">
+              Questions? <a href="/info/support">Contact support</a>
             </p>
           </div>
         </aside>
-      </section>
+
+      </div>
     </main>
   );
 }
