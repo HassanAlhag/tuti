@@ -126,6 +126,39 @@ export function hasItemConfiguration(item) {
   return item?.configuration?.type === "build_your_box";
 }
 
+export function isCustomizedGiftItem(item) {
+  return item?.configuration?.type === "build_gift" || item?.metadata?.source === "build_gift";
+}
+
+export function BuildGiftCartSummary({ item }) {
+  const cfg = item?.configuration || {};
+  const meta = item?.metadata || {};
+  const occasion = cfg.occasionLabel || meta.occasionLabel;
+  const giftType = cfg.giftTypeLabel || meta.giftTypeLabel;
+  const message = cfg.giftMessage || meta.giftMessage;
+  const wrap = cfg.giftWrap ?? meta.giftWrap;
+  const selectedItems = cfg.selectedItems || [];
+  return (
+    <div className="tuti-cart__build-gift-summary">
+      {occasion || giftType ? (
+        <div className="tuti-cart__build-gift-tags">
+          {occasion ? <span>{occasion}</span> : null}
+          {giftType ? <span>{giftType}</span> : null}
+          {wrap ? <span>Gift wrap</span> : null}
+        </div>
+      ) : null}
+      {selectedItems.length ? (
+        <ul className="tuti-cart__build-gift-items">
+          {selectedItems.map((si) => (
+            <li key={si.productId || si.name}>{si.name}{si.price ? ` · ${formatCurrency(si.price)}` : ""}</li>
+          ))}
+        </ul>
+      ) : null}
+      {message ? <p className="tuti-cart__build-gift-message">&ldquo;{message}&rdquo;</p> : null}
+    </div>
+  );
+}
+
 export function getConfiguredBoxParts(item) {
   if (!hasItemConfiguration(item)) return null;
   const configuration = item.configuration || {};

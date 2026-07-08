@@ -5,7 +5,7 @@ export const shopCategories = [
     path: "/shop",
     label: "All",
     title: "All products",
-    description: "Browse every live product from Tuti shops — perfumes, cakes, desserts, and gift sets.",
+    description: "Browse every live product from Tuti shops — perfumes, cakes, desserts, and gift boxes.",
   },
   {
     id: "cake",
@@ -93,7 +93,7 @@ export const collectionCategories = [
 ];
 
 export const giftCategories = [
-  { title: "Gift Boxes", path: "/shop/gift-sets", text: "Ready-to-wrap gift boxes and curated discovery pairings." },
+  { title: "Gift Boxes", path: "/shop?c=gift_box", text: "Ready-made gift boxes and curated occasion packages from boutiques." },
   { title: "Gifts for Her", path: "/shop/women", text: "Rose, musk, floral, and elegant daily perfumes." },
   { title: "Gifts for Him", path: "/shop/men", text: "Fresh woods, oud, citrus, and confident evening scents." },
   { title: "Luxury Gifts", path: "/collections", text: "Premium edits with stronger projection and richer notes." },
@@ -175,7 +175,7 @@ export const journalArticles = [
     slug: "build-a-box-guide",
     category: "gifting",
     title: "How to Build the Perfect Gift Box on Tuti",
-    summary: "A step-by-step guide to using Build a Gift — choosing a perfume, pairing a cake or dessert, and adding a gift message.",
+    summary: "A step-by-step guide to using Build a Gift — selecting your products from one boutique and adding a personal message.",
     readMins: 3,
     date: "2026-06-08",
     path: "/journal/build-a-box-guide",

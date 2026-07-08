@@ -75,7 +75,7 @@ const OCCASION_CARDS = [
     badge: "Perfume edit",
   },
   {
-    title: "Ready gift sets",
+    title: "Ready gift boxes",
     text: "Premium boxes with room for messages and thoughtful add-ons.",
     category: "gift_box",
     badge: "Gift-ready",
@@ -138,7 +138,7 @@ function Hero({ goToBuildBox, goToFragranceFinder, goToShop }) {
             Shop gifts
           </TutiButton>
           <TutiButton variant="soft" size="lg" onClick={goToBuildBox}>
-            Build a box
+            Build a Gift
           </TutiButton>
           <TutiButton variant="ghost" size="lg" onClick={goToFragranceFinder}>
             Find a scent
@@ -228,15 +228,15 @@ function MomentStorySection({ goToBuildBox, goToShop }) {
         <TutiBadge tone="champagne">Curated moment</TutiBadge>
         <h2 id="home-moment-title">For the moments that deserve more than a message.</h2>
         <p>
-          Perfume, cake and a personal note can become one polished gift flow, ready for the next celebration.
+          A ready-made gift box or a personalised gift built from one boutique — polished and ready for the next celebration.
         </p>
-        <div className="home-image-story__mini-grid" aria-label="Gift composition highlights">
-          <span><strong>01</strong> Choose the scent</span>
-          <span><strong>02</strong> Pair the treat</span>
+        <div className="home-image-story__mini-grid" aria-label="Gift options highlights">
+          <span><strong>01</strong> Choose your gift</span>
+          <span><strong>02</strong> Personalise &amp; send</span>
         </div>
         <div className="home-image-story__actions">
-          <TutiButton size="md" onClick={goToBuildBox}>Build a box</TutiButton>
-          <TutiButton variant="ghost" size="md" onClick={() => goToShop?.("gift_box")}>Shop gift sets</TutiButton>
+          <TutiButton size="md" onClick={goToBuildBox}>Build a Gift</TutiButton>
+          <TutiButton variant="ghost" size="md" onClick={() => goToShop?.("gift_box")}>Shop gift boxes</TutiButton>
         </div>
       </div>
     </section>

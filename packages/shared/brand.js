@@ -5,7 +5,7 @@ export const brand = {
   origin: "Luxury gifting boutique · UAE",
   taglines: {
     hero:    "Scented moments. Sweet memories.",
-    sub:     "Perfumes, cakes, and beautifully crafted gift sets — curated for every occasion.",
+    sub:     "Perfumes, cakes, and beautifully crafted gift boxes — curated for every occasion.",
     gifting: "The most thoughtful gifts start here.",
   },
   categories: {

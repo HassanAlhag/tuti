@@ -77,7 +77,7 @@ const CATEGORY_STORIES = {
   },
   gift_box: {
     eyebrow: "Gift Boxes",
-    description: "Considered combinations, premium presentation and gifts designed to make the moment easier.",
+    description: "Browse ready-made graduation gifts, occasion boxes, curated packages, and boutique gift sets.",
   },
 };
 
@@ -189,7 +189,7 @@ function getEmptyState({ activeCategory, hasActiveFilters, hasAnyLiveProducts, h
   if (activeCategory === "gift_box") {
     return {
       title: "No gift boxes available yet",
-      text: "Explore all products or build a more personal gift with perfume, cake, and a message.",
+      text: "Explore all products or build a personalised gift through Build a Gift.",
       primaryAction: hasActiveFilters ? "Clear filters" : "Build a gift",
       secondaryAction: "Browse all products",
     };
@@ -285,9 +285,9 @@ function BuildBoxInsertion({ onNavigatePath }) {
     <TutiCard as="article" variant="section" padding="none" className="shop-build-insert">
       <div className="shop-build-insert-copy">
         <span className="eyebrow">Only at Tuti</span>
-        <h3>Pair a scent with something sweet.</h3>
+        <h3>Build a personalised gift from one boutique.</h3>
         <p>
-          Choose a perfume, add a cake or dessert, and include your personal message in one considered gift.
+          Select your products from one boutique, add a personal message, and create one complete gift item.
         </p>
         <TutiButton variant="secondary" onClick={() => onNavigatePath("/build-a-box")} icon={<ArrowRight size={16} />} iconPosition="right">
           Build a gift
