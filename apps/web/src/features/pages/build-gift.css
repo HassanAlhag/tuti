@@ -31,33 +31,72 @@
     linear-gradient(180deg, var(--porcelain) 0%, var(--warm) 100%);
 }
 
-/* ─── Hero ───────────────────────────────────────────────────────────────── */
+/* Override page-shell width constraint so hero can go full-bleed */
+main.tuti-build-gift {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Hero — full-bleed navy ─────────────────────────────────────────── */
 
 .tuti-build-gift__hero {
-  background: var(--navy);
-  padding: 2.75rem 2rem 2rem;
+  width: 100%;
   position: relative;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(184, 138, 46, 0.12), transparent 28rem),
+    linear-gradient(150deg, #0b2348 0%, #071b3a 58%, #061426 100%);
+  color: #f7f1e8;
 }
 
 .tuti-build-gift__hero::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 55% 80% at 78% 50%, rgba(184, 138, 46, 0.09) 0%, transparent 100%),
-    radial-gradient(circle at 4% 96%, rgba(11, 42, 85, 0.7) 0%, transparent 38%);
+  z-index: 0;
+  top: 3rem;
+  left: -13rem;
+  width: 30rem;
+  height: 30rem;
+  border-radius: 50%;
+  filter: blur(50px);
+  background: radial-gradient(circle, rgba(7, 27, 58, 0.32), transparent 64%);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.tuti-build-gift__hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  right: -14rem;
+  bottom: 0;
+  width: 32rem;
+  height: 32rem;
+  border-radius: 50%;
+  filter: blur(46px);
+  background: radial-gradient(circle, rgba(184, 138, 46, 0.28), transparent 66%);
+  opacity: 0.5;
   pointer-events: none;
 }
 
 .tuti-build-gift__hero-inner {
-  max-width: 82rem;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 2rem;
   position: relative;
+  z-index: 1;
+  width: min(92rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(2.5rem, 4.5vw, 3.75rem) 0 clamp(3rem, 5.2vw, 4.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(26rem, 0.58fr);
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.tuti-build-gift__hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .tuti-build-gift__hero-eyebrow {
@@ -67,24 +106,26 @@
   text-transform: uppercase;
   color: var(--gold-light);
   display: block;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.6rem;
 }
 
 .tuti-build-gift__hero h1 {
-  font-size: clamp(1.9rem, 4vw, 2.9rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
+  font-size: clamp(2.8rem, 5.2vw, 5.2rem);
+  font-weight: 920;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
   color: #ffffff;
-  margin: 0 0 0.65rem;
+  margin: 0 0 0.75rem;
+  max-width: 14ch;
 }
 
 .tuti-build-gift__hero-sub {
-  font-size: 1rem;
+  font-size: clamp(1rem, 1.15vw, 1.08rem);
   color: rgba(255, 255, 255, 0.76);
-  line-height: 1.55;
-  margin: 0 0 0.8rem;
-  max-width: 38rem;
+  line-height: 1.65;
+  margin: 0 0 0.85rem;
+  max-width: 36rem;
+  letter-spacing: -0.01em;
 }
 
 .tuti-build-gift__hero-note {
@@ -92,35 +133,115 @@
   align-items: center;
   gap: 0.38rem;
   font-size: 0.77rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.48);
   font-weight: 500;
 }
 
-.tuti-build-gift__hero-img {
-  width: 8.5rem;
-  height: 8.5rem;
+/* ─── Hero visual card (right side) ─────────────────────────────────── */
+
+.tuti-build-gift__hero-visual {
+  position: relative;
+  height: clamp(18rem, 26vw, 28rem);
+  background:
+    radial-gradient(ellipse 60% 55% at 52% 42%, rgba(255, 255, 255, 0.06), transparent 100%),
+    rgba(255, 255, 255, 0.032);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: calc(var(--r-lg) + 0.5rem);
+  box-shadow:
+    0 0 0 1px rgba(184, 138, 46, 0.12),
+    0 32px 72px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.tuti-build-gift__hero-visual img {
+  width: 70%;
+  height: 78%;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.52));
+}
+
+.tuti-build-gift__hero-visual-caption {
+  position: absolute;
+  bottom: 1rem;
+  left: 1.1rem;
+  right: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+/* ─── Trust cards strip ──────────────────────────────────────────────── */
+
+.tuti-build-gift__trust-strip {
+  position: relative;
+  z-index: 2;
+  width: min(92rem, calc(100% - 2rem));
+  margin: -2.5rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.tuti-build-gift__trust-card {
+  background: rgba(255, 253, 248, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: var(--r-lg);
+  padding: 1.15rem 1.3rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 18px 44px rgba(7, 27, 58, 0.1),
+    0 4px 10px rgba(7, 27, 58, 0.06);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.tuti-build-gift__trust-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--r-sm);
+  background: rgba(7, 27, 58, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
   flex-shrink: 0;
 }
 
-.tuti-build-gift__hero-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.42));
+.tuti-build-gift__trust-card strong {
+  display: block;
+  font-size: 0.83rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 0.22rem;
 }
 
-/* ─── Workspace (two-column layout) ─────────────────────────────────────── */
+.tuti-build-gift__trust-card p {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ─── Workspace (two-column layout) ─────────────────────────────────── */
 
 .tuti-build-gift__workspace {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1.5rem 1.5rem 0;
+  width: min(92rem, calc(100% - 2rem));
+  margin: 2rem auto 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(20rem, 22rem);
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(24rem, 26rem);
+  gap: 1.75rem;
   align-items: start;
 }
 
@@ -130,7 +251,7 @@
   min-width: 0;
 }
 
-/* ─── Builder card — single connected surface ────────────────────────────── */
+/* ─── Builder card — single connected surface ────────────────────────── */
 
 .tuti-build-gift__builder {
   background: var(--card-bg);
@@ -142,17 +263,17 @@
 
 /* Controls area: cream background, occasion + type stacked */
 .tuti-build-gift__builder-controls {
-  padding: 1.25rem 1.5rem 1.1rem;
+  padding: 1.5rem 1.75rem 1.25rem;
   background: var(--porcelain);
   border-bottom: 1px solid rgba(26, 20, 16, 0.06);
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1.25rem;
 }
 
 /* Products area: white background */
 .tuti-build-gift__builder-products {
-  padding: 1.1rem 1.5rem 1.5rem;
+  padding: 1.25rem 1.75rem 1.75rem;
   transition: opacity var(--ease);
 }
 
@@ -162,12 +283,12 @@
   user-select: none;
 }
 
-/* ─── Chips group (occasion row, type row) ───────────────────────────────── */
+/* ─── Chips group (occasion row, type row) ───────────────────────────── */
 
 .tuti-build-gift__chips-group {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.65rem;
   transition: opacity var(--ease);
 }
 
@@ -181,9 +302,9 @@
   display: flex;
   align-items: center;
   gap: 0.42rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-dark);
 }
@@ -201,12 +322,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background: var(--gold);
   color: #ffffff;
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   font-weight: 800;
   flex-shrink: 0;
   letter-spacing: 0;
@@ -223,8 +344,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
-  font-size: 0.75rem;
+  padding: 0.32rem 0.75rem 0.32rem 0.6rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-muted);
   background: rgba(26, 20, 16, 0.06);
@@ -248,20 +369,20 @@
   color: #ffffff;
 }
 
-/* ─── Gift type cards (compact flex row) ─────────────────────────────────── */
+/* ─── Gift type cards (compact flex row) ─────────────────────────────── */
 
 .tuti-build-gift__types {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .tuti-build-gift__type-card {
   flex: 1;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.32rem 0.5rem;
+  gap: 0.35rem 0.55rem;
   align-items: center;
-  padding: 0.65rem 0.75rem 0.6rem;
+  padding: 0.75rem 0.85rem 0.7rem;
   background: rgba(26, 20, 16, 0.04);
   border: 1.5px solid transparent;
   border-radius: var(--r);
@@ -287,8 +408,8 @@
 }
 
 .tuti-build-gift__type-icon {
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: var(--r-sm);
   background: #ede3d1;
   display: flex;
@@ -305,7 +426,7 @@
 }
 
 .tuti-build-gift__type-label {
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   font-weight: 800;
   color: var(--text-dark);
   line-height: 1.2;
@@ -328,29 +449,29 @@
 
 .tuti-build-gift__type-card.is-selected .tuti-build-gift__type-copy { color: rgba(255, 255, 255, 0.62); }
 
-/* ─── Products section header ────────────────────────────────────────────── */
+/* ─── Products section header ────────────────────────────────────────── */
 
 .tuti-build-gift__products-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 .tuti-build-gift__products-label {
   display: flex;
   align-items: center;
   gap: 0.42rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--text-dark);
 }
 
 .tuti-build-gift__products-context {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--text-faint);
   text-transform: none;
@@ -364,7 +485,7 @@
   flex-shrink: 0;
 }
 
-/* ─── Recommendations / counts ───────────────────────────────────────────── */
+/* ─── Recommendations / counts ───────────────────────────────────────── */
 
 .tuti-build-gift__recs-count {
   font-size: 0.74rem;
@@ -377,15 +498,15 @@
   color: var(--navy);
 }
 
-/* ─── Product grid ───────────────────────────────────────────────────────── */
+/* ─── Product grid ───────────────────────────────────────────────────── */
 
 .tuti-build-gift__product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.7rem;
+  gap: 0.85rem;
 }
 
-/* ─── Product card ───────────────────────────────────────────────────────── */
+/* ─── Product card ───────────────────────────────────────────────────── */
 
 .tuti-build-gift__product {
   background:
@@ -422,7 +543,7 @@
 .tuti-build-gift__product-thumb {
   position: relative;
   width: 100%;
-  height: 8.25rem;
+  height: 11rem;
   background:
     radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.92), transparent 32%),
     linear-gradient(145deg, #fffdf8, #f2e6cf);
@@ -440,7 +561,7 @@
 }
 
 .tuti-build-gift__product-body {
-  padding: 0.8rem 0.85rem 0.6rem;
+  padding: 0.85rem 0.9rem 0.65rem;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -456,7 +577,7 @@
 }
 
 .tuti-build-gift__product-name {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-dark);
   line-height: 1.22;
@@ -490,14 +611,14 @@
 }
 
 .tuti-build-gift__product-price {
-  font-size: 0.87rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-dark);
   margin-top: 0.4rem;
 }
 
 .tuti-build-gift__product-actions {
-  padding: 0 0.85rem 0.85rem;
+  padding: 0 0.9rem 0.9rem;
   display: flex;
   gap: 0.4rem;
 }
@@ -539,8 +660,8 @@
 /* Toggle button: Select / Remove */
 .tuti-build-gift__product-toggle {
   flex: 1;
-  padding: 0.48rem 0.6rem;
-  font-size: 0.74rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--navy);
   background: rgba(7, 27, 58, 0.07);
@@ -575,11 +696,11 @@
   opacity: 0.38;
 }
 
-/* ─── Empty state ────────────────────────────────────────────────────────── */
+/* ─── Empty state ────────────────────────────────────────────────────── */
 
 .tuti-build-gift__empty {
   grid-column: 1 / -1;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
   text-align: center;
 }
 
@@ -628,11 +749,11 @@
 
 .tuti-build-gift__empty-link:hover { background: rgba(7, 27, 58, 0.12); }
 
-/* ─── Right: sticky unified panel ───────────────────────────────────────── */
+/* ─── Right: sticky unified panel ───────────────────────────────────── */
 
 .tuti-build-gift__summary {
   position: sticky;
-  top: 1rem;
+  top: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -653,7 +774,7 @@
 }
 
 .tuti-build-gift__intent-head {
-  padding: 1.1rem 1.3rem 0.85rem;
+  padding: 1.25rem 1.4rem 0.9rem;
   border-bottom: 1px solid rgba(184, 138, 46, 0.1);
 }
 
@@ -664,21 +785,21 @@
   text-transform: uppercase;
   color: var(--gold-light);
   display: block;
-  margin-bottom: 0.18rem;
+  margin-bottom: 0.2rem;
 }
 
 .tuti-build-gift__intent-head h2 {
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #ffffff;
   margin: 0;
 }
 
 .tuti-build-gift__intent-rows {
-  padding: 0.8rem 1.3rem;
+  padding: 0.85rem 1.4rem;
   display: flex;
   flex-direction: column;
-  gap: 0.42rem;
+  gap: 0.45rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -697,14 +818,14 @@
 }
 
 .tuti-build-gift__intent-val {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.84);
 }
 
 .tuti-build-gift__intent-val.is-dim { color: rgba(255, 255, 255, 0.34); }
 
 .tuti-build-gift__boutique-note {
-  padding: 0.65rem 1.3rem;
+  padding: 0.65rem 1.4rem;
   font-size: 0.72rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.48);
@@ -716,10 +837,10 @@
 
 .tuti-build-gift__boutique-note svg { flex-shrink: 0; margin-top: 0.1rem; }
 
-/* ─── Selected items list (navy background) ──────────────────────────────── */
+/* ─── Selected items list (navy background) ──────────────────────────── */
 
 .tuti-build-gift__selected-items {
-  padding: 0.45rem 1.3rem;
+  padding: 0.45rem 1.4rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -735,7 +856,7 @@
 }
 
 .tuti-build-gift__selected-item-name {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   color: rgba(255, 255, 255, 0.82);
   white-space: nowrap;
   overflow: hidden;
@@ -743,7 +864,7 @@
 }
 
 .tuti-build-gift__selected-item-price {
-  font-size: 0.73rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: var(--gold-light);
   white-space: nowrap;
@@ -770,14 +891,14 @@
 }
 
 .tuti-build-gift__selected-empty {
-  padding: 0.6rem 1.3rem;
+  padding: 0.6rem 1.4rem;
   font-size: 0.73rem;
   color: rgba(255, 255, 255, 0.3);
   font-style: italic;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* ─── Personalize card (white block below navy) ──────────────────────────── */
+/* ─── Personalize card (white block below navy) ──────────────────────── */
 
 .tuti-build-gift__personalize {
   background: var(--card-bg);
@@ -795,7 +916,7 @@
 }
 
 .tuti-build-gift__personalize-head {
-  padding: 1rem 1.3rem 0.75rem;
+  padding: 1.1rem 1.4rem 0.8rem;
   border-bottom: 1px solid rgba(26, 20, 16, 0.05);
 }
 
@@ -810,20 +931,20 @@
 }
 
 .tuti-build-gift__personalize-head h3 {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--text-dark);
   margin: 0;
 }
 
 .tuti-build-gift__personalize-body {
-  padding: 0.9rem 1.3rem 1.1rem;
+  padding: 1rem 1.4rem 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
 
-/* ─── Form fields ────────────────────────────────────────────────────────── */
+/* ─── Form fields ────────────────────────────────────────────────────── */
 
 .tuti-build-gift__field {
   display: flex;
@@ -944,16 +1065,16 @@
   margin-bottom: 0.1rem;
 }
 
-/* ─── Price summary ──────────────────────────────────────────────────────── */
+/* ─── Price summary ──────────────────────────────────────────────────── */
 
 .tuti-build-gift__price-summary {
   background: var(--porcelain);
   border: 1px solid rgba(26, 20, 16, 0.08);
   border-radius: var(--r-sm);
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.3rem;
 }
 
 .tuti-build-gift__price-row {
@@ -979,22 +1100,23 @@
 }
 
 .tuti-build-gift__price-row.is-total {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--text-dark);
 }
 
 .tuti-build-gift__price-row.is-total > span:last-child {
   color: var(--navy);
-  font-size: 0.96rem;
+  font-size: 1rem;
 }
 
-/* ─── Add to cart CTA ────────────────────────────────────────────────────── */
+/* ─── Add to cart CTA ────────────────────────────────────────────────── */
 
 .tuti-build-gift__add-btn {
   width: 100%;
-  padding: 0.78rem 1rem;
-  font-size: 0.87rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #ffffff;
   background: linear-gradient(135deg, var(--navy), var(--royal));
@@ -1016,17 +1138,17 @@
   cursor: not-allowed;
 }
 
-/* ─── Success state ──────────────────────────────────────────────────────── */
+/* ─── Success state ──────────────────────────────────────────────────── */
 
 .tuti-build-gift__success {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.75rem 0.9rem;
   background: rgba(7, 27, 58, 0.07);
   border: 1.5px solid rgba(7, 27, 58, 0.14);
   border-radius: var(--r);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--navy);
 }
@@ -1047,7 +1169,7 @@
 
 .tuti-build-gift__success-link:hover { color: #9a7423; }
 
-/* ─── Ghost button ───────────────────────────────────────────────────────── */
+/* ─── Ghost button ───────────────────────────────────────────────────── */
 
 .tuti-build-gift__ghost-btn {
   display: inline-flex;
@@ -1068,12 +1190,12 @@
 
 .tuti-build-gift__ghost-btn:hover { border-color: var(--navy); color: var(--text-dark); }
 
-/* ─── Closing reassurance strip ──────────────────────────────────────────── */
+/* ─── Closing reassurance strip ──────────────────────────────────────── */
 
 .tuti-build-gift__assurance {
-  max-width: 72rem;
-  margin: 1.5rem auto 0;
-  padding: 0 1.5rem 2.5rem;
+  width: min(92rem, calc(100% - 2rem));
+  margin: 2rem auto 0;
+  padding: 0 0 4rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1085,7 +1207,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--text-faint);
   padding: 0 0.5rem;
@@ -1100,12 +1222,35 @@
   font-size: 1rem;
 }
 
-/* ─── Responsive ─────────────────────────────────────────────────────────── */
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .tuti-build-gift__hero-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.5fr);
+  }
+
+  .tuti-build-gift__hero-visual {
+    height: clamp(16rem, 22vw, 24rem);
+  }
+}
 
 @media (max-width: 960px) {
+  .tuti-build-gift__hero-inner {
+    grid-template-columns: 1fr;
+    padding-bottom: clamp(4rem, 7vw, 5.5rem);
+  }
+
+  .tuti-build-gift__hero-visual { display: none; }
+
+  .tuti-build-gift__trust-strip {
+    grid-template-columns: 1fr;
+    margin-top: -1.75rem;
+    width: calc(100% - 2rem);
+  }
+
   .tuti-build-gift__workspace {
     grid-template-columns: 1fr;
-    padding: 1.25rem 1rem 0;
+    width: calc(100% - 2rem);
   }
 
   .tuti-build-gift__summary {
@@ -1113,36 +1258,91 @@
     order: 2;
   }
 
-  .tuti-build-gift__hero-inner { grid-template-columns: 1fr; }
-  .tuti-build-gift__hero-img { display: none; }
-
   .tuti-build-gift__product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .tuti-build-gift__assurance {
-    max-width: 100%;
+    width: calc(100% - 2rem);
     gap: 1.25rem;
   }
 }
 
 @media (max-width: 640px) {
-  .tuti-build-gift__hero { padding: 1.9rem 1rem 1.6rem; }
+  .tuti-build-gift__hero {
+    overflow: hidden;
+  }
 
-  .tuti-build-gift__workspace { padding: 1rem 0.85rem 0; gap: 1rem; }
+  .tuti-build-gift__hero h1 {
+    font-size: clamp(2.2rem, 9vw, 2.9rem);
+    max-width: none;
+  }
 
-  .tuti-build-gift__builder-controls { padding: 1rem 1.1rem 0.9rem; gap: 0.85rem; }
-  .tuti-build-gift__builder-products { padding: 0.9rem 1.1rem 1.25rem; }
+  .tuti-build-gift__hero-sub {
+    font-size: 0.97rem;
+  }
+
+  .tuti-build-gift__hero-inner {
+    width: calc(100% - 1.75rem);
+    padding: 2rem 0 3.5rem;
+  }
+
+  .tuti-build-gift__trust-strip {
+    margin-top: -1.5rem;
+    gap: 0.75rem;
+    width: calc(100% - 1.75rem);
+  }
+
+  .tuti-build-gift__trust-card {
+    padding: 0.9rem 1rem;
+  }
+
+  .tuti-build-gift__workspace {
+    gap: 0.85rem;
+    width: calc(100% - 1.75rem);
+  }
+
+  .tuti-build-gift__builder-controls {
+    padding: 1.1rem 1.25rem 1rem;
+    gap: 1rem;
+  }
+
+  .tuti-build-gift__builder-products {
+    padding: 1rem 1.25rem 1.4rem;
+  }
 
   .tuti-build-gift__types { flex-direction: column; gap: 0.4rem; }
   .tuti-build-gift__type-card { flex: none; }
 
   .tuti-build-gift__product-grid { grid-template-columns: 1fr; }
-  .tuti-build-gift__product-thumb { height: 7.6rem; }
+  .tuti-build-gift__product-thumb { height: 9rem; }
 
   .tuti-build-gift__assurance {
+    width: calc(100% - 1.75rem);
     justify-content: flex-start;
-    padding: 0.75rem 1rem 2rem;
+    padding: 0 0 3rem;
     gap: 0.9rem;
   }
 
   .tuti-build-gift__assurance span + span::before { display: none; }
+}
+
+@media (max-width: 390px) {
+  .tuti-build-gift__hero h1 {
+    font-size: 2.1rem;
+  }
+
+  .tuti-build-gift__hero-inner {
+    width: calc(100% - 1.5rem);
+  }
+
+  .tuti-build-gift__trust-strip {
+    width: calc(100% - 1.5rem);
+  }
+
+  .tuti-build-gift__workspace {
+    width: calc(100% - 1.5rem);
+  }
+
+  .tuti-build-gift__assurance {
+    width: calc(100% - 1.5rem);
+  }
 }

@@ -342,20 +342,49 @@ export function BuildYourBoxPage({ onAddToCart, products, getShop, onNavigate })
       {/* ── Hero ── */}
       <div className="tuti-build-gift__hero" aria-labelledby="build-gift-title">
         <div className="tuti-build-gift__hero-inner">
-          <div>
+          <div className="tuti-build-gift__hero-copy">
             <span className="tuti-build-gift__hero-eyebrow">A Tuti exclusive</span>
-            <h1 id="build-gift-title">Build a Gift</h1>
+            <h1 id="build-gift-title">Build a gift from one boutique.</h1>
             <p className="tuti-build-gift__hero-sub">
-              Choose the occasion, pick the gift style, select items, and personalize.
-              Your customized gift goes to cart with all your preferences.
+              Choose the occasion, select items from one boutique, add your message and finishing touches, and send a customized gift with confidence.
             </p>
             <p className="tuti-build-gift__hero-note">
               <Store size={13} aria-hidden="true" />
               Each boutique prepares its own gifts and packaging.
             </p>
           </div>
-          <div className="tuti-build-gift__hero-img" aria-hidden="true">
+          <div className="tuti-build-gift__hero-visual" aria-hidden="true">
             <img src={buildBoxHeroImage} alt="" />
+            <div className="tuti-build-gift__hero-visual-caption">
+              <span>Customized gift</span>
+              <span>·</span>
+              <span>One boutique</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Trust cards ── */}
+      <div className="tuti-build-gift__trust-strip" aria-label="Build a Gift assurances">
+        <div className="tuti-build-gift__trust-card">
+          <div className="tuti-build-gift__trust-icon"><Store size={18} aria-hidden="true" /></div>
+          <div>
+            <strong>One boutique prepares it</strong>
+            <p>All items are from the same seller, packed and delivered together.</p>
+          </div>
+        </div>
+        <div className="tuti-build-gift__trust-card">
+          <div className="tuti-build-gift__trust-icon"><PackageCheck size={18} aria-hidden="true" /></div>
+          <div>
+            <strong>Customization saved to cart</strong>
+            <p>Occasion, message, and packaging preferences stay with the cart item.</p>
+          </div>
+        </div>
+        <div className="tuti-build-gift__trust-card">
+          <div className="tuti-build-gift__trust-icon"><Sparkles size={18} aria-hidden="true" /></div>
+          <div>
+            <strong>VAT shown before checkout</strong>
+            <p>5% VAT calculated and shown in the price summary before you confirm.</p>
           </div>
         </div>
       </div>
