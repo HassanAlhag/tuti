@@ -7,12 +7,11 @@ import { TutiCartItem } from "../../../ui/customer/commerce/TutiCartItem.jsx";
 import { TutiTrustStrip } from "../../../ui/customer/commerce/TutiTrustStrip.jsx";
 import "../cart-checkout.css";
 import {
-  ItemConfigurationSummary,
+  BuildGiftCartSummary,
   ItemFacts,
   compactOrderItem,
   getCartLineKey,
-  isCakeLikeItem,
-  isGiftLikeItem,
+  isCustomizedGiftItem,
 } from "./sitemapPageShared.jsx";
 
 const CART_TRUST_ITEMS = [
@@ -195,50 +194,9 @@ export function CartCheckoutPage({ cart, cartTotal, clearCart, onNavigate, platf
                 {item.shopName || item.sellerName ? (
                   <p className="tuti-cart__item-shop">From {item.shopName || item.sellerName}</p>
                 ) : null}
-                {(isCakeLikeItem(item) || isGiftLikeItem(item)) ? (
+                {isCustomizedGiftItem(item) ? (
                   <div className="tuti-cart__item-meta">
-                    {isCakeLikeItem(item) ? (
-                      <>
-                        <label>
-                          Cake writing
-                          <input
-                            value={item.metadata?.cakeWriting || ""}
-                            onChange={(e) => updateMetadata(getCartLineKey(item), "cakeWriting", e.target.value)}
-                            placeholder="Happy birthday, name, or short message"
-                          />
-                        </label>
-                        <label>
-                          Allergy note
-                          <input
-                            value={item.metadata?.allergyNote || ""}
-                            onChange={(e) => updateMetadata(getCartLineKey(item), "allergyNote", e.target.value)}
-                            placeholder="Optional allergy or dietary note"
-                          />
-                        </label>
-                      </>
-                    ) : null}
-                    {isGiftLikeItem(item) ? (
-                      <>
-                        <label>
-                          Gift card message
-                          <input
-                            value={item.metadata?.itemMessage || ""}
-                            onChange={(e) => updateMetadata(getCartLineKey(item), "itemMessage", e.target.value)}
-                            placeholder="Message for this gift box"
-                          />
-                        </label>
-                        <label className="tuti-cart__item-meta-check">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(item.metadata?.giftWrap)}
-                            onChange={(e) => updateMetadata(getCartLineKey(item), "giftWrap", e.target.checked)}
-                          />
-                          Add gift wrap
-                        </label>
-                      </>
-                    ) : null}
-                    <ItemFacts item={item} />
-                    <ItemConfigurationSummary item={item} />
+                    <BuildGiftCartSummary item={item} />
                   </div>
                 ) : null}
               </div>

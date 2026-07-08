@@ -1,17 +1,17 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
+  Baby,
+  Briefcase,
   Cake,
   Check,
-  CheckCircle2,
   Gem,
   Gift,
+  Heart,
   HeartHandshake,
-  MessageSquare,
+  Info,
   MoonStar,
-  Package,
   PackageCheck,
-  ShoppingBag,
   Sparkles,
   Store,
   X,
@@ -19,951 +19,730 @@ import {
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import buildBoxHeroImage from "../../assets/home-ch4-complete.png";
+import "./build-gift.css";
 
-const OCCASION_OPTIONS = [
+// ─── Pricing ──────────────────────────────────────────────────────────────────
+
+const VAT_RATE = 0.05;
+const PRICE_GIFT_WRAP = 15;
+const PRICE_CAKE_WRITING = 10;
+
+// ─── Occasions ────────────────────────────────────────────────────────────────
+
+const OCCASIONS = [
+  { id: "birthday",    label: "Birthday",      hint: "Celebrate the day",         icon: Cake,           keywords: ["birthday", "celebration", "bday"] },
+  { id: "graduation",  label: "Graduation",    hint: "Mark the milestone",        icon: Sparkles,       keywords: ["graduation", "graduate", "congrats", "achievement"] },
+  { id: "anniversary", label: "Anniversary",   hint: "Love and milestones",       icon: HeartHandshake, keywords: ["anniversary", "love", "romance"] },
+  { id: "thank-you",   label: "Thank You",     hint: "A genuine gesture",         icon: Heart,          keywords: ["thank", "gratitude", "appreciation"] },
+  { id: "corporate",   label: "Corporate",     hint: "Professional gifting",      icon: Briefcase,      keywords: ["corporate", "business", "professional", "office"] },
+  { id: "new-baby",    label: "New Baby",      hint: "Welcome the little one",    icon: Baby,           keywords: ["baby", "newborn", "birth", "infant"] },
+  { id: "eid",         label: "Eid & Ramadan", hint: "Celebrate the season",      icon: MoonStar,       keywords: ["eid", "ramadan", "mubarak"] },
+  { id: "apology",     label: "Apology",       hint: "Thoughtful, flowers-style", icon: Gift,           keywords: ["apology", "sorry", "forgive", "floral", "flower"] },
+];
+
+// ─── Gift types ───────────────────────────────────────────────────────────────
+
+const GIFT_TYPES = [
   {
-    id: "birthday",
-    label: "Birthday",
-    icon: Cake,
-    suggestion: "Happy Birthday. Wishing you a beautiful day and something sweet to celebrate.",
-  },
-  {
-    id: "eid",
-    label: "Eid",
-    icon: MoonStar,
-    suggestion: "Eid Mubarak. Wishing you joy, peace, and sweetness in every moment.",
-  },
-  {
-    id: "wedding",
-    label: "Wedding",
+    id: "perfume",
+    label: "Perfume Gift",
     icon: Gem,
-    suggestion: "Congratulations on your special day. Wishing you a beautiful beginning together.",
+    copy: "Find perfumes and perfume boxes from perfume boutiques.",
+    categories: ["perfume"],
   },
   {
-    id: "anniversary",
-    label: "Anniversary",
-    icon: HeartHandshake,
-    suggestion: "Happy Anniversary. Wishing you love, warmth, and a beautiful celebration.",
+    id: "cake",
+    label: "Cake & Dessert Gift",
+    icon: Cake,
+    copy: "Choose cakes, dessert sets, and celebration treats.",
+    categories: ["cake", "dessert"],
   },
   {
-    id: "thank-you",
-    label: "Thank You",
-    icon: Sparkles,
-    suggestion: "Thank you for your kindness. I hope this gift brings a little joy to your day.",
-  },
-  {
-    id: "just-because",
-    label: "Just Because",
+    id: "gift-box",
+    label: "Ready Gift Box",
     icon: Gift,
-    suggestion: "Thinking of you and sending something thoughtful, simply because you deserve it.",
+    copy: "Explore graduation gifts, flowers, chocolate boxes, and curated occasion packages.",
+    categories: ["gift_box", "bundle"],
   },
 ];
 
-function compactConfiguredProduct(product) {
-  if (!product) return null;
-  return {
-    productId: product.id,
-    name: product.name,
-    shopId: product.shopId,
-    category: product.category || "perfume",
-    price: product.price,
-    family: product.family,
-    gender: product.gender,
-    size: product.size,
-    cakeType: product.cakeType,
-    flavors: product.flavors,
-    servings: product.servings,
-    allergens: product.allergens,
-    leadTimeDays: product.leadTimeDays,
-  };
+// ─── Filtering + scoring ──────────────────────────────────────────────────────
+
+function filterByType(products, typeId) {
+  const typeConf = GIFT_TYPES.find((t) => t.id === typeId);
+  if (!typeConf) return [];
+  return products.filter((p) => typeConf.categories.includes(p.category));
 }
 
-function normalizeOccasionLabel(occasionId) {
-  return OCCASION_OPTIONS.find((option) => option.id === occasionId)?.label || "";
-}
-
-function getTreatLabel(product) {
-  return product.category === "dessert" ? "Dessert" : "Cake";
-}
-
-function getLeadTimeLabel(days) {
-  if (!days) return "";
-  if (days === 1) return "Prepared with 24-hour notice";
-  return `Prepared with ${days}-day notice`;
-}
-
-function buildPerfumeLine(product) {
-  const notePyramid = product?.notePyramid || {};
-  const notes = [
-    ...(Array.isArray(notePyramid.top) ? notePyramid.top : []),
-    ...(Array.isArray(product?.notes) ? product.notes : []),
-  ].filter(Boolean);
-  if (notes.length) return notes.slice(0, 3).join(", ");
-  return product?.description || "Selected for gifting, layering, and memorable moments.";
-}
-
-function buildTreatLine(product) {
-  if (Array.isArray(product?.flavors) && product.flavors.length) {
-    return product.flavors.slice(0, 2).join(" · ");
+function scoreForOccasion(product, occasionId) {
+  const occ = OCCASIONS.find((o) => o.id === occasionId);
+  if (!occ) return 0;
+  const haystack = [
+    ...(Array.isArray(product.occasionTags) ? product.occasionTags : []),
+    ...(Array.isArray(product.tags) ? product.tags : []),
+    product.family || "",
+    product.productType || "",
+    product.name || "",
+    product.description || "",
+  ].join(" ").toLowerCase();
+  let score = 0;
+  for (const kw of occ.keywords) {
+    if (haystack.includes(kw)) score += 2;
   }
-  return product?.cakeType || "Prepared for celebrations, milestones, and thoughtful gifting.";
+  if (occasionId === "eid" && (haystack.includes("oud") || haystack.includes("oriental") || haystack.includes("arabic"))) {
+    score += 1;
+  }
+  return score;
 }
 
-function getAllergenHint(product) {
-  if (!Array.isArray(product?.allergens) || !product.allergens.length) return "";
-  if (product.allergens.includes("Nuts")) return "Contains nuts";
-  return `Allergens: ${product.allergens.slice(0, 2).join(", ")}`;
-}
-
-function sortProducts(products, counterpartCounts = {}) {
-  return [...products].sort((left, right) => {
-    const pairableDiff = Number(counterpartCounts[right.shopId] || 0) - Number(counterpartCounts[left.shopId] || 0);
-    if (pairableDiff !== 0) return pairableDiff;
-    const ratingDiff = Number(right.rating || 0) - Number(left.rating || 0);
-    if (ratingDiff !== 0) return ratingDiff;
-    return String(left.name || "").localeCompare(String(right.name || ""));
+function sortRecommendations(products, occasionId) {
+  if (!occasionId) return products;
+  return [...products].sort((a, b) => {
+    const diff = scoreForOccasion(b, occasionId) - scoreForOccasion(a, occasionId);
+    if (diff !== 0) return diff;
+    return Number(b.rating || 0) - Number(a.rating || 0);
   });
 }
 
-function TreatVisual({ product, compact = false }) {
-  const className = compact ? "build-box-treat-art compact" : "build-box-treat-art";
-  const treatClass = product?.category === "dessert"
-    ? "build-box-treat-art-body build-box-treat-art-body--dessert"
-    : "build-box-treat-art-body";
+// ─── Thumbnails ───────────────────────────────────────────────────────────────
 
+function TreatThumb({ product }) {
   return (
     <div
-      className={className}
+      className="build-box-treat-art compact"
       style={{ "--treat-base": product?.color || "#d9c7a8", "--treat-accent": product?.accent || "#d7b56d" }}
       aria-hidden="true"
     >
       <span className="build-box-treat-plate" />
-      <span className={treatClass} />
+      <span className={product?.category === "dessert" ? "build-box-treat-art-body build-box-treat-art-body--dessert" : "build-box-treat-art-body"} />
       <span className="build-box-treat-detail" />
     </div>
   );
 }
 
-function SelectionVisual({ product, compact = false }) {
-  if (!product) return null;
+function ProductThumb({ product }) {
   if (product.imagePath) {
-    return (
-      <div className={compact ? "build-box-choice-media compact" : "build-box-choice-media"}>
-        <img src={product.imagePath} alt="" loading="lazy" decoding="async" />
-      </div>
-    );
+    return <img src={product.imagePath} alt="" loading="lazy" decoding="async" />;
   }
   if (product.category === "cake" || product.category === "dessert") {
-    return (
-      <div className={compact ? "build-box-choice-media compact" : "build-box-choice-media"}>
-        <TreatVisual compact={compact} product={product} />
-      </div>
-    );
+    return <TreatThumb product={product} />;
   }
-  return (
-    <div className={compact ? "build-box-choice-media compact" : "build-box-choice-media"}>
-      <BottleArt compact={compact} product={product} />
-    </div>
-  );
+  return <BottleArt product={product} compact />;
 }
 
-function PreviewSlot({ label, product, title, subtitle, emptyText, compact = false }) {
+// ─── Product card (multi-selectable) ─────────────────────────────────────────
+
+function ProductCard({ getShop, isDisabled, isSelected, onToggle, product }) {
+  const shop = getShop(product.shopId);
+  const tags = [
+    product.family,
+    product.size,
+    product.cakeType,
+    product.servings ? `Serves ${product.servings}` : "",
+    Array.isArray(product.flavors) && product.flavors.length ? product.flavors.slice(0, 2).join(" · ") : "",
+  ].filter(Boolean).slice(0, 3);
+
+  function handleToggle() {
+    if (!isDisabled) onToggle(product);
+  }
+
   return (
-    <div className={product ? "build-box-preview-slot active" : "build-box-preview-slot"}>
-      <span className="build-box-preview-slot-label">{label}</span>
-      {product ? (
-        <div className="build-box-preview-slot-body">
-          <SelectionVisual compact={compact} product={product} />
-          <div className="build-box-preview-slot-copy">
-            <strong>{title}</strong>
-            {subtitle ? <span>{subtitle}</span> : null}
+    <div className={`tuti-build-gift__product${isSelected ? " is-selected" : ""}${isDisabled ? " is-disabled" : ""}`}>
+      <div className="tuti-build-gift__product-thumb">
+        <ProductThumb product={product} />
+        {isSelected ? (
+          <div className="tuti-build-gift__product-selected-badge" aria-hidden="true">
+            <Check size={10} strokeWidth={3.5} />
           </div>
-        </div>
-      ) : (
-        <div className="build-box-preview-slot-empty">
-          <span>{emptyText}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GiftPreview({
-  cardMessage,
-  canAddBox,
-  giftWrap,
-  occasion,
-  selectedPerfume,
-  selectedShop,
-  selectedTreat,
-  totalPrice,
-}) {
-  const state = !selectedPerfume && !selectedTreat
-    ? "empty"
-    : selectedPerfume && !selectedTreat
-      ? "perfume"
-      : canAddBox && (cardMessage.trim() || giftWrap)
-        ? "complete"
-        : "paired";
-  const occasionLabel = normalizeOccasionLabel(occasion);
-  const packagingLabel = giftWrap ? "Gift wrapped" : "Tuti presentation";
-
-  return (
-    <section className="build-box-preview-card" aria-labelledby="build-box-preview-title">
-      <div className="build-box-preview-head">
-        <div>
-          <span className="eyebrow">Live preview</span>
-          <h2 id="build-box-preview-title">Your Tuti gift</h2>
-        </div>
-        <span className="build-box-preview-state" aria-live="polite">
-          {state === "empty"
-            ? "Waiting"
-            : state === "perfume"
-              ? "Perfume selected"
-              : state === "paired"
-                ? "Gift taking shape"
-                : "Ready to present"}
-        </span>
-      </div>
-
-      <div className={`build-box-preview-stage build-box-preview-stage--${state}`}>
-        <div className="build-box-preview-ribbon" aria-hidden="true" />
-        <div className="build-box-preview-box">
-          <PreviewSlot
-            label="Perfume"
-            product={selectedPerfume}
-            title={selectedPerfume?.name}
-            subtitle={selectedPerfume ? `${selectedPerfume.family || "Boutique fragrance"} · ${formatCurrency(selectedPerfume.price)}` : ""}
-            emptyText="Choose the scent that starts your gift."
-          />
-          <PreviewSlot
-            label="Sweet"
-            product={selectedTreat}
-            title={selectedTreat?.name}
-            subtitle={selectedTreat ? `${getTreatLabel(selectedTreat)} · ${formatCurrency(selectedTreat.price)}` : ""}
-            emptyText="Add a cake or dessert from the same boutique."
-          />
-          <div className={state === "complete" ? "build-box-preview-note active" : "build-box-preview-note"}>
-            <span className="build-box-preview-slot-label">Message card</span>
-            {state === "complete" ? (
-              <div className="build-box-preview-note-card">
-                <strong>{occasionLabel || "Your gift card"}</strong>
-                <p>{cardMessage.trim() || "A finishing note can still be added before checkout."}</p>
-                <small>{packagingLabel}</small>
-              </div>
-            ) : (
-              <div className="build-box-preview-slot-empty">
-                <span>Your message is waiting to come together.</span>
-              </div>
-            )}
+        ) : null}
+        {isDisabled ? (
+          <div className="tuti-build-gift__product-locked-label" aria-hidden="true">
+            Locked
           </div>
-        </div>
-      </div>
-
-      <div className="build-box-preview-foot">
-        <div className="build-box-preview-foot-copy">
-          <strong>
-            {occasionLabel ? `${occasionLabel} gift` : "Coordinated gift"}
-          </strong>
-          <span>
-            {selectedShop?.name
-              ? `Prepared by ${selectedShop.name}`
-              : "Your gift is waiting to come together."}
-          </span>
-        </div>
-        <strong className="build-box-preview-total">
-          {totalPrice ? formatCurrency(totalPrice) : "Add items to see the total"}
-        </strong>
-      </div>
-    </section>
-  );
-}
-
-function SameBoutiqueStrip() {
-  return (
-    <section className="build-box-promise" aria-labelledby="build-box-promise-title">
-      <div className="build-box-promise-copy">
-        <span className="eyebrow">Why one boutique?</span>
-        <h2 id="build-box-promise-title">Your gift arrives as one coordinated experience.</h2>
-        <p>
-          Your perfume and sweet are prepared by one Tuti seller, packaged together and handed over as one coordinated gift.
-        </p>
-      </div>
-      <div className="build-box-promise-points" aria-label="Same boutique benefits">
-        <span><Store size={16} /> One quality standard</span>
-        <span><Package size={16} /> One package</span>
-        <span><ShoppingBag size={16} /> One delivery</span>
-      </div>
-    </section>
-  );
-}
-
-function OccasionSelector({ occasion, onSelect }) {
-  return (
-    <section className="build-box-occasion" aria-labelledby="build-box-occasion-title">
-      <div className="build-box-occasion-head">
-        <div>
-          <span className="eyebrow">Optional occasion</span>
-          <h2 id="build-box-occasion-title">Choose the moment you are gifting for.</h2>
-        </div>
-        {occasion ? (
-          <button className="ghost-action compact" type="button" onClick={() => onSelect("")}>
-            <X size={15} />
-            Clear
-          </button>
         ) : null}
       </div>
-      <div className="build-box-occasion-grid" role="list" aria-label="Occasion options">
-        {OCCASION_OPTIONS.map((option) => {
-          const Icon = option.icon;
-          return (
-            <button
-              key={option.id}
-              className={occasion === option.id ? "build-box-occasion-chip active" : "build-box-occasion-chip"}
-              type="button"
-              aria-pressed={occasion === option.id}
-              onClick={() => onSelect(option.id)}
-            >
-              <span className="build-box-occasion-icon" aria-hidden="true">
-                <Icon size={18} strokeWidth={1.75} />
-              </span>
-              <span className="build-box-occasion-copy">
-                <strong>{option.label}</strong>
-                <span>{option.id === "thank-you" ? "Warm gratitude" : option.id === "just-because" ? "A thoughtful surprise" : "Suggested message available"}</span>
-              </span>
-            </button>
-          );
-        })}
+      <div className="tuti-build-gift__product-body">
+        {shop?.name ? (
+          <div className="tuti-build-gift__product-boutique">{shop.name}</div>
+        ) : null}
+        <div className="tuti-build-gift__product-name">{product.name}</div>
+        {product.description ? (
+          <div className="tuti-build-gift__product-desc">{product.description}</div>
+        ) : null}
+        {tags.length ? (
+          <div className="tuti-build-gift__product-tags">
+            {tags.map((t) => (
+              <span className="tuti-build-gift__product-tag" key={t}>{t}</span>
+            ))}
+          </div>
+        ) : null}
+        <div className="tuti-build-gift__product-price">{formatCurrency(product.price)}</div>
       </div>
-    </section>
-  );
-}
-
-function ProductChoiceCard({
-  active,
-  helper,
-  label,
-  meta,
-  onSelect,
-  product,
-  sellerName,
-  summary,
-}) {
-  return (
-    <button
-      className={active ? "build-box-choice-card active" : "build-box-choice-card"}
-      type="button"
-      role="radio"
-      aria-checked={active}
-      onClick={() => onSelect(product)}
-    >
-      <SelectionVisual product={product} />
-      <div className="build-box-choice-copy">
-        <div className="build-box-choice-copy-head">
-          <span className="build-box-choice-eyebrow">{label}</span>
-          {helper ? <span className="build-box-choice-helper">{helper}</span> : null}
-        </div>
-        <h3>{product.name}</h3>
-        <p>{summary}</p>
-        <div className="build-box-choice-meta">
-          <span>{sellerName}</span>
-          {meta.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
-        <strong className="build-box-choice-price">{formatCurrency(product.price)}</strong>
-      </div>
-      <span className="build-box-choice-check" aria-hidden="true">
-        {active ? <CheckCircle2 size={18} /> : <Check size={16} />}
-      </span>
-    </button>
-  );
-}
-
-function EmptyState({ ctaLabel, onAction, text, title }) {
-  return (
-    <div className="build-box-empty-state" role="status" aria-live="polite">
-      <PackageCheck size={20} />
-      <strong>{title}</strong>
-      <p>{text}</p>
-      {onAction ? (
-        <button className="secondary-action compact" type="button" onClick={onAction}>
-          {ctaLabel}
+      <div className="tuti-build-gift__product-actions">
+        <button
+          className={`tuti-build-gift__product-toggle${isSelected ? " is-selected" : ""}`}
+          type="button"
+          onClick={handleToggle}
+          disabled={isDisabled}
+        >
+          {isSelected ? (
+            <><X size={11} aria-hidden="true" /> Remove</>
+          ) : (
+            <>Select for gift</>
+          )}
         </button>
-      ) : null}
-    </div>
-  );
-}
-
-function MessageSuggestion({ occasion, onUse }) {
-  const suggestion = OCCASION_OPTIONS.find((option) => option.id === occasion)?.suggestion || "";
-  if (!suggestion) return null;
-  return (
-    <div className="build-box-suggestion">
-      <div>
-        <strong>Suggested message</strong>
-        <p>{suggestion}</p>
       </div>
-      <button className="ghost-action compact" type="button" onClick={() => onUse(suggestion)}>
-        Use suggestion
-      </button>
     </div>
   );
 }
 
-export function BuildYourBoxPage({ products, getShop, onAddToCart, onNavigate }) {
-  const perfumeSectionRef = useRef(null);
-  const builderSectionRef = useRef(null);
-  const treatSectionRef = useRef(null);
-  const summarySectionRef = useRef(null);
+// ─── Page component ───────────────────────────────────────────────────────────
 
-  const [selectedPerfumeId, setSelectedPerfumeId] = useState("");
-  const [selectedTreatId, setSelectedTreatId] = useState("");
-  const [giftWrap, setGiftWrap] = useState(false);
-  const [cardMessage, setCardMessage] = useState("");
-  const [allergyNote, setAllergyNote] = useState("");
-  const [occasion, setOccasion] = useState("");
-  const [notice, setNotice] = useState("");
+export function BuildYourBoxPage({ onAddToCart, products, getShop, onNavigate }) {
+  const [selectedOccasion, setSelectedOccasion] = useState("");
+  const [selectedType, setSelectedType]         = useState("");
+  const [selectedItems, setSelectedItems]       = useState([]);
+  const [giftMessage, setGiftMessage]           = useState("");
+  const [cakeWriting, setCakeWriting]           = useState("");
+  const [allergyNote, setAllergyNote]           = useState("");
+  const [giftWrap, setGiftWrap]                 = useState(false);
+  const [addedToCart, setAddedToCart]           = useState(false);
 
   const liveProducts = useMemo(
-    () => products.filter((product) => product.status === "Live"),
+    () => products.filter((p) => p.status === "Live"),
     [products]
   );
 
-  const perfumes = useMemo(
-    () => liveProducts.filter((product) => !product.category || product.category === "perfume"),
-    [liveProducts]
-  );
+  const recommendations = useMemo(() => {
+    if (!selectedType) return [];
+    const byType = filterByType(liveProducts, selectedType);
+    return sortRecommendations(byType, selectedOccasion);
+  }, [liveProducts, selectedType, selectedOccasion]);
 
-  const treats = useMemo(
-    () => liveProducts.filter((product) => product.category === "cake" || product.category === "dessert"),
-    [liveProducts]
-  );
+  const occasionLabel = OCCASIONS.find((o) => o.id === selectedOccasion)?.label || "";
+  const typeLabel     = GIFT_TYPES.find((t) => t.id === selectedType)?.label || "";
+  const isCakeType    = selectedType === "cake";
 
-  const treatCountsByShop = useMemo(() => {
-    const counts = {};
-    treats.forEach((product) => {
-      counts[product.shopId] = (counts[product.shopId] || 0) + 1;
+  // First selected item's shopId locks the boutique for the whole gift
+  const lockedShopId = selectedItems.length > 0 ? selectedItems[0].shopId : null;
+  const lockedShop   = lockedShopId ? getShop(lockedShopId) : null;
+
+  // Pricing
+  const itemsSubtotal = selectedItems.reduce((sum, p) => sum + (p.price || 0), 0);
+  const customizationSubtotal =
+    (giftWrap ? PRICE_GIFT_WRAP : 0) +
+    (isCakeType && cakeWriting.trim() ? PRICE_CAKE_WRITING : 0);
+  const subtotalBeforeVat = itemsSubtotal + customizationSubtotal;
+  const vatAmount  = Math.round(subtotalBeforeVat * VAT_RATE);
+  const totalPrice = subtotalBeforeVat + vatAmount;
+
+  function pickOccasion(id) {
+    setSelectedOccasion(id);
+    setSelectedType("");
+    setSelectedItems([]);
+    setAddedToCart(false);
+  }
+
+  function pickType(id) {
+    setSelectedType(id);
+    setSelectedItems([]);
+    setAddedToCart(false);
+    if (id !== "cake") {
+      setCakeWriting("");
+      setAllergyNote("");
+    }
+  }
+
+  function toggleItem(product) {
+    setSelectedItems((prev) => {
+      const idx = prev.findIndex((p) => p.id === product.id);
+      if (idx >= 0) return prev.filter((p) => p.id !== product.id);
+      // Reject cross-boutique additions at state level (defence-in-depth; UI also disables the button)
+      const lockedId = prev.length > 0 ? prev[0].shopId : null;
+      if (lockedId && product.shopId !== lockedId) return prev;
+      return [...prev, product];
     });
-    return counts;
-  }, [treats]);
-
-  const pairablePerfumes = useMemo(
-    () => sortProducts(perfumes, treatCountsByShop),
-    [perfumes, treatCountsByShop]
-  );
-
-  const selectedPerfume = pairablePerfumes.find((product) => product.id === selectedPerfumeId) || null;
-  const selectedTreat = treats.find((product) => product.id === selectedTreatId) || null;
-
-  const availableTreats = useMemo(() => {
-    if (!selectedPerfume) return [];
-    return sortProducts(
-      treats.filter((product) => product.shopId === selectedPerfume.shopId)
-    );
-  }, [selectedPerfume, treats]);
-
-  const selectedShop = selectedPerfume && selectedTreat && selectedPerfume.shopId === selectedTreat.shopId
-    ? getShop(selectedPerfume.shopId)
-    : selectedPerfume
-      ? getShop(selectedPerfume.shopId)
-      : selectedTreat
-        ? getShop(selectedTreat.shopId)
-        : null;
-
-  const totalPrice = (selectedPerfume?.price || 0) + (selectedTreat?.price || 0);
-  const leadTimeDays = Math.max(
-    Number(selectedPerfume?.leadTimeDays || 0),
-    Number(selectedTreat?.leadTimeDays || 0)
-  );
-  const canAddBox = Boolean(
-    selectedPerfume && selectedTreat && selectedPerfume.shopId === selectedTreat.shopId
-  );
-  const hasAnyCompletePair = pairablePerfumes.some((product) => Number(treatCountsByShop[product.shopId] || 0) > 0);
-
-  function resetNotice() {
-    if (notice) setNotice("");
+    setAddedToCart(false);
   }
 
-  function scrollToRef(ref) {
-    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function selectPerfume(product) {
-    resetNotice();
-    setSelectedPerfumeId(product.id);
-    if (selectedTreat && selectedTreat.shopId !== product.shopId) {
-      setSelectedTreatId("");
-    }
-  }
-
-  function selectTreat(product) {
-    resetNotice();
-    setSelectedTreatId(product.id);
-    if (selectedPerfume && selectedPerfume.shopId !== product.shopId) {
-      setSelectedPerfumeId("");
-    }
-  }
-
-  function changePerfume() {
-    resetNotice();
-    setSelectedPerfumeId("");
-    setSelectedTreatId("");
-    scrollToRef(perfumeSectionRef);
-  }
-
-  function clearAllSelections() {
-    setNotice("");
-    setSelectedPerfumeId("");
-    setSelectedTreatId("");
-    setGiftWrap(false);
-    setCardMessage("");
+  function clearAll() {
+    setSelectedOccasion("");
+    setSelectedType("");
+    setSelectedItems([]);
+    setGiftMessage("");
+    setCakeWriting("");
     setAllergyNote("");
-    setOccasion("");
-    scrollToRef(builderSectionRef);
+    setGiftWrap(false);
+    setAddedToCart(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function applySuggestedMessage(nextMessage) {
-    if (cardMessage.trim() && cardMessage.trim() !== nextMessage) {
-      const shouldReplace = window.confirm("Replace your current message with the suggested one?");
-      if (!shouldReplace) return;
-    }
-    resetNotice();
-    setCardMessage(nextMessage);
-  }
-
-  function addConfiguredBox() {
-    if (!canAddBox) return;
-    const itemMessage = cardMessage.trim();
-    const allergy = allergyNote.trim();
-    const configuredBox = {
-      id: "build-box",
-      productName: "Build Your Box",
-      name: "Build Your Box",
+  function addCustomizedGiftToCart() {
+    if (!selectedItems.length) return;
+    const timestamp = Date.now();
+    const maxLead = selectedItems.reduce((m, p) => Math.max(m, p.leadTimeDays || 0), 0);
+    const cartItem = {
+      id: `build-gift-${timestamp}`,
+      cartLineId: `build-gift-${timestamp}`,
+      name: "Customized gift",
       category: "bundle",
-      shopId: selectedPerfume.shopId,
       price: totalPrice,
       quantity: 1,
-      bundledProductIds: [selectedPerfume.id, selectedTreat.id],
-      includes: [selectedPerfume.name, selectedTreat.name],
-      allergens: selectedTreat.allergens || [],
-      leadTimeDays,
+      shopId: lockedShop?.id || null,
+      shopName: lockedShop?.name || null,
+      sellerName: lockedShop?.name || null,
+      bundledProductIds: selectedItems.map((p) => p.id),
+      includes: selectedItems.map((p) => p.name),
+      allergens: [...new Set(selectedItems.flatMap((p) => p.allergens || []))],
+      ...(maxLead > 0 ? { leadTimeDays: maxLead } : {}),
       metadata: {
-        itemMessage,
-        allergyNote: allergy,
+        source: "build_gift",
+        occasion: selectedOccasion,
+        occasionLabel,
+        giftType: selectedType,
+        giftTypeLabel: typeLabel,
+        giftMessage: giftMessage.trim(),
         giftWrap,
+        ...(isCakeType ? { cakeWriting: cakeWriting.trim(), allergyNote: allergyNote.trim() } : {}),
+        customizationPrice: customizationSubtotal,
+        vatAmount,
+        itemsSubtotal,
+        totalPrice,
       },
       configuration: {
-        type: "build_your_box",
+        type: "build_gift",
         version: 1,
-        selectedPerfume: compactConfiguredProduct(selectedPerfume),
-        selectedTreat: compactConfiguredProduct(selectedTreat),
+        occasion: selectedOccasion,
+        occasionLabel,
+        giftType: selectedType,
+        giftTypeLabel: typeLabel,
+        selectedItems: selectedItems.map((p) => ({
+          productId: p.id,
+          name: p.name,
+          price: p.price,
+          shopId: p.shopId,
+          category: p.category,
+        })),
+        giftMessage: giftMessage.trim(),
         giftWrap,
-        cardMessage: itemMessage,
-        allergyNote: allergy,
+        ...(isCakeType ? { cakeWriting: cakeWriting.trim(), allergyNote: allergyNote.trim() } : {}),
+        customizationPrice: customizationSubtotal,
+        vatAmount,
+        itemsSubtotal,
         totalPrice,
       },
     };
-
-    onAddToCart?.(configuredBox, 1, { separateLine: true });
-    setNotice("Your gift has been added to cart.");
-    scrollToRef(summarySectionRef);
+    onAddToCart?.(cartItem, 1, { separateLine: true });
+    setAddedToCart(true);
   }
 
-  const selectedSellerName = selectedShop?.name || "Selected boutique";
-  const packagingLabel = giftWrap ? "Gift wrapped" : "Tuti presentation";
-  const messageStatus = cardMessage.trim() ? "Message added" : "No message yet";
-  const buildInstruction = !selectedPerfume
-    ? "Choose a perfume to begin"
-    : !selectedTreat
-      ? "Add a cake or dessert to complete your gift"
-      : "Your gift is ready to add to cart";
-
   return (
-    <main className="page-shell build-box-page build-box-page--reconstructed">
-      <section className="build-box-intro" aria-labelledby="build-box-title">
-        <div className="build-box-intro-copy">
-          <span className="eyebrow">A Tuti exclusive</span>
-          <h1 id="build-box-title">One perfume. One sweet. One unforgettable gift.</h1>
-          <p>
-            Choose a fragrance and a cake or dessert from the same boutique. Add your message, select the finishing touches,
-            and we will bring it together beautifully.
-          </p>
-          <div className="build-box-intro-actions">
-            <button className="primary-action" type="button" onClick={() => scrollToRef(perfumeSectionRef)}>
-              <Sparkles size={18} />
-              Start with a perfume
-            </button>
-            <button className="ghost-action" type="button" onClick={() => onNavigate("/cart")}>
-              <ShoppingBag size={18} />
-              View cart
-            </button>
+    <main className="page-shell tuti-build-gift">
+
+      {/* ── Hero ── */}
+      <div className="tuti-build-gift__hero" aria-labelledby="build-gift-title">
+        <div className="tuti-build-gift__hero-inner">
+          <div>
+            <span className="tuti-build-gift__hero-eyebrow">A Tuti exclusive</span>
+            <h1 id="build-gift-title">Build a Gift</h1>
+            <p className="tuti-build-gift__hero-sub">
+              Choose the occasion, pick the gift style, select items, and personalize.
+              Your customized gift goes to cart with all your preferences.
+            </p>
+            <p className="tuti-build-gift__hero-note">
+              <Store size={13} aria-hidden="true" />
+              Each boutique prepares its own gifts and packaging.
+            </p>
           </div>
-          {!hasAnyCompletePair ? (
-            <div className="build-box-data-note" role="status" aria-live="polite">
-              <strong>Pairings are being refreshed.</strong>
-              <p>
-                Some boutiques currently have perfumes without matching sweets. Explore the available options below,
-                or browse curated gift sets while new pairings go live.
-              </p>
-              <button className="secondary-action compact" type="button" onClick={() => onNavigate("/shop?c=gift_box")}>
-                Explore gift boxes
-              </button>
-            </div>
-          ) : null}
+          <div className="tuti-build-gift__hero-img" aria-hidden="true">
+            <img src={buildBoxHeroImage} alt="" />
+          </div>
         </div>
+      </div>
 
-        <div className="build-box-intro-media">
-          <img src={buildBoxHeroImage} alt="Tuti gift box with perfume, cake and message card" />
-        </div>
-      </section>
+      {/* ── Builder workspace ── */}
+      <div className="tuti-build-gift__workspace">
 
-      <SameBoutiqueStrip />
-      <OccasionSelector
-        occasion={occasion}
-        onSelect={(nextOccasion) => {
-          resetNotice();
-          setOccasion(nextOccasion);
-        }}
-      />
+        {/* ── Left: one connected builder card ── */}
+        <div className="tuti-build-gift__workspace-left">
+          <div className="tuti-build-gift__builder">
 
-      <section className="build-box-workspace" ref={builderSectionRef}>
-        <div className="build-box-main">
-          <section className="build-box-step" ref={perfumeSectionRef} aria-labelledby="build-box-step-perfume">
-            <div className="build-box-step-head">
-              <div>
-                <span className="eyebrow">Step 1</span>
-                <h2 id="build-box-step-perfume">Choose a perfume</h2>
-                <p>Start with the scent. Your cake or dessert options will follow the same boutique.</p>
+            {/* Controls: occasion chips + type cards on cream background */}
+            <div className="tuti-build-gift__builder-controls">
+
+              {/* Occasion chips */}
+              <div className="tuti-build-gift__chips-group">
+                <div className="tuti-build-gift__chips-label">
+                  <span className="tuti-build-gift__step-badge">1</span>
+                  Choose occasion
+                </div>
+                <div className="tuti-build-gift__chips" role="radiogroup" aria-label="Occasion">
+                  {OCCASIONS.map((occ) => {
+                    const Icon = occ.icon;
+                    return (
+                      <button
+                        key={occ.id}
+                        className={`tuti-build-gift__chip${selectedOccasion === occ.id ? " is-selected" : ""}`}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedOccasion === occ.id}
+                        onClick={() => pickOccasion(occ.id)}
+                      >
+                        <Icon size={12} strokeWidth={2} aria-hidden="true" />
+                        {occ.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              {selectedPerfume || selectedTreat ? (
-                <button className="ghost-action compact" type="button" onClick={clearAllSelections}>
-                  <X size={15} />
-                  Start over
-                </button>
-              ) : null}
+
+              {/* Type cards */}
+              <div className={`tuti-build-gift__chips-group${!selectedOccasion ? " is-locked" : ""}`}>
+                <div className="tuti-build-gift__chips-label">
+                  <span className="tuti-build-gift__step-badge">2</span>
+                  Gift type
+                  {!selectedOccasion ? (
+                    <span className="tuti-build-gift__chips-hint"> — choose an occasion first</span>
+                  ) : null}
+                </div>
+                <div className="tuti-build-gift__types" role="radiogroup" aria-label="Gift type">
+                  {GIFT_TYPES.map((t) => {
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        className={`tuti-build-gift__type-card${selectedType === t.id ? " is-selected" : ""}`}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedType === t.id}
+                        onClick={() => pickType(t.id)}
+                        disabled={!selectedOccasion}
+                      >
+                        <div className="tuti-build-gift__type-icon" aria-hidden="true">
+                          <Icon size={17} strokeWidth={1.75} />
+                        </div>
+                        <div className="tuti-build-gift__type-label">{t.label}</div>
+                        <div className="tuti-build-gift__type-copy">{t.copy}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="build-box-choice-grid" role="radiogroup" aria-label="Perfume selection">
-              {pairablePerfumes.length ? pairablePerfumes.map((product) => {
-                const sellerName = getShop(product.shopId)?.name || "Boutique seller";
-                const pairCount = Number(treatCountsByShop[product.shopId] || 0);
-                const helper = pairCount
-                  ? `${pairCount} sweet${pairCount === 1 ? "" : "s"} available`
-                  : "No sweets currently";
-                const meta = [product.family || "Perfume", product.size, getLeadTimeLabel(product.leadTimeDays)].filter(Boolean);
-                return (
-                  <ProductChoiceCard
-                    active={product.id === selectedPerfumeId}
-                    helper={helper}
-                    key={product.id}
-                    label="Boutique fragrance"
-                    meta={meta}
-                    onSelect={selectPerfume}
-                    product={product}
-                    sellerName={sellerName}
-                    summary={buildPerfumeLine(product)}
-                  />
-                );
-              }) : (
-                <EmptyState
-                  title="No perfumes are currently available for Build a Gift."
-                  text="Please check back soon or browse the wider perfume catalogue."
-                  ctaLabel="Browse perfumes"
-                  onAction={() => onNavigate("/shop?c=perfume")}
-                />
+            {/* Products area */}
+            <div className={`tuti-build-gift__builder-products${!selectedType ? " is-locked" : ""}`}>
+              <div className="tuti-build-gift__products-header">
+                <div className="tuti-build-gift__products-label">
+                  <span className="tuti-build-gift__step-badge">3</span>
+                  {selectedType ? typeLabel : "Select items"}
+                  {selectedType && occasionLabel ? (
+                    <span className="tuti-build-gift__products-context"> · {occasionLabel}</span>
+                  ) : null}
+                  {selectedType && lockedShopId ? (
+                    <span className="tuti-build-gift__products-context"> · {lockedShop?.name}</span>
+                  ) : null}
+                </div>
+                <div className="tuti-build-gift__products-meta">
+                  {recommendations.length > 0 ? (
+                    <span className="tuti-build-gift__recs-count">
+                      {recommendations.length} available
+                    </span>
+                  ) : null}
+                  {selectedItems.length > 0 ? (
+                    <span className="tuti-build-gift__recs-selected">
+                      {selectedItems.length} selected
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              {selectedType && recommendations.length > 0 ? (
+                <div className="tuti-build-gift__product-grid">
+                  {recommendations.map((product) => {
+                    const isSelected = selectedItems.some((p) => p.id === product.id);
+                    const isDisabled = lockedShopId !== null && product.shopId !== lockedShopId && !isSelected;
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        getShop={getShop}
+                        isDisabled={isDisabled}
+                        isSelected={isSelected}
+                        onToggle={toggleItem}
+                        product={product}
+                      />
+                    );
+                  })}
+                </div>
+              ) : selectedType ? (
+                <div className="tuti-build-gift__product-grid">
+                  <div className="tuti-build-gift__empty">
+                    <div className="tuti-build-gift__empty-icon">
+                      <PackageCheck size={18} />
+                    </div>
+                    <strong>No {typeLabel.toLowerCase()} products yet</strong>
+                    <p>
+                      New boutiques and products are added regularly. Browse the full shop while new gifts go live.
+                    </p>
+                    <button
+                      className="tuti-build-gift__empty-link"
+                      type="button"
+                      onClick={() => onNavigate?.("/shop")}
+                    >
+                      Browse all gifts <ArrowRight size={12} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="tuti-build-gift__product-grid">
+                  <div className="tuti-build-gift__empty">
+                    <div className="tuti-build-gift__empty-icon">
+                      <Gift size={18} />
+                    </div>
+                    <strong>Choose a gift type to browse</strong>
+                    <p>Select occasion and gift type above to see matching products from our boutiques.</p>
+                  </div>
+                </div>
               )}
             </div>
-          </section>
+          </div>
+        </div>
 
-          <section className="build-box-step" ref={treatSectionRef} aria-labelledby="build-box-step-treat">
-            <div className="build-box-step-head">
-              <div>
-                <span className="eyebrow">Step 2</span>
-                <h2 id="build-box-step-treat">Add a cake or dessert</h2>
-                <p>
-                  {selectedPerfume
-                    ? `Showing cakes and desserts available from ${selectedSellerName}.`
-                    : "Choose a perfume first to unlock sweets from the same boutique."}
-                </p>
+        {/* ── Right: unified selection summary + personalization ── */}
+        <aside className="tuti-build-gift__summary" aria-label="Gift selection and personalization">
+
+          {/* Navy gift summary */}
+          <div className="tuti-build-gift__intent">
+            <div className="tuti-build-gift__intent-head">
+              <span className="tuti-build-gift__intent-eyebrow">Your gift</span>
+              <h2>Gift builder</h2>
+            </div>
+            <div className="tuti-build-gift__intent-rows" aria-live="polite">
+              <div className="tuti-build-gift__intent-row">
+                <span className="tuti-build-gift__intent-lbl">Occasion</span>
+                <span className={`tuti-build-gift__intent-val${!occasionLabel ? " is-dim" : ""}`}>
+                  {occasionLabel || "Not chosen yet"}
+                </span>
               </div>
-              {selectedPerfume ? (
-                <button className="ghost-action compact" type="button" onClick={changePerfume}>
-                  Change perfume
-                </button>
-              ) : null}
+              <div className="tuti-build-gift__intent-row">
+                <span className="tuti-build-gift__intent-lbl">Gift type</span>
+                <span className={`tuti-build-gift__intent-val${!typeLabel ? " is-dim" : ""}`}>
+                  {typeLabel || "Not chosen yet"}
+                </span>
+              </div>
+              <div className="tuti-build-gift__intent-row">
+                <span className="tuti-build-gift__intent-lbl">Boutique</span>
+                <span className={`tuti-build-gift__intent-val${!lockedShop ? " is-dim" : ""}`}>
+                  {lockedShop?.name || "Select items first"}
+                </span>
+              </div>
+              <div className="tuti-build-gift__intent-row">
+                <span className="tuti-build-gift__intent-lbl">Items</span>
+                <span className={`tuti-build-gift__intent-val${!selectedItems.length ? " is-dim" : ""}`}>
+                  {selectedItems.length ? `${selectedItems.length} selected` : "None yet"}
+                </span>
+              </div>
             </div>
 
-            {!selectedPerfume ? (
-              <EmptyState
-                title="Choose a perfume to continue."
-                text="Once you select the scent, we will show cakes and desserts from the same boutique."
-                ctaLabel="Start with Step 1"
-                onAction={() => scrollToRef(perfumeSectionRef)}
-              />
-            ) : availableTreats.length ? (
-              <div className="build-box-choice-grid" role="radiogroup" aria-label="Cake and dessert selection">
-                {availableTreats.map((product) => {
-                  const sellerName = getShop(product.shopId)?.name || "Boutique seller";
-                  const meta = [
-                    getTreatLabel(product),
-                    product.servings ? `Serves ${product.servings}` : "",
-                    getLeadTimeLabel(product.leadTimeDays),
-                    getAllergenHint(product),
-                  ].filter(Boolean);
-                  return (
-                    <ProductChoiceCard
-                      active={product.id === selectedTreatId}
-                      helper={product.customMessageAvailable ? "Message-friendly" : ""}
-                      key={product.id}
-                      label={getTreatLabel(product)}
-                      meta={meta}
-                      onSelect={selectTreat}
-                      product={product}
-                      sellerName={sellerName}
-                      summary={buildTreatLine(product)}
-                    />
-                  );
-                })}
+            {selectedItems.length > 0 ? (
+              <div className="tuti-build-gift__selected-items" aria-label="Selected items">
+                {selectedItems.map((item) => (
+                  <div className="tuti-build-gift__selected-item" key={item.id}>
+                    <span className="tuti-build-gift__selected-item-name">{item.name}</span>
+                    <span className="tuti-build-gift__selected-item-price">{formatCurrency(item.price)}</span>
+                    <button
+                      className="tuti-build-gift__selected-item-remove"
+                      type="button"
+                      onClick={() => toggleItem(item)}
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ))}
               </div>
             ) : (
-              <EmptyState
-                title="No sweets are currently available from this boutique."
-                text="Choose another perfume to see more cake and dessert options."
-                ctaLabel="Change perfume"
-                onAction={changePerfume}
-              />
+              <div className="tuti-build-gift__selected-empty">
+                Select products from the grid to add them to your gift.
+              </div>
             )}
-          </section>
 
-          <section className="build-box-step" aria-labelledby="build-box-step-message">
-            <div className="build-box-step-head">
-              <div>
-                <span className="eyebrow">Personal message and packaging</span>
-                <h2 id="build-box-step-message">Add the finishing touches.</h2>
-                <p>Your message is for the recipient. Preparation notes stay separate for the boutique team.</p>
-              </div>
+            <div className="tuti-build-gift__boutique-note">
+              <Info size={13} aria-hidden="true" />
+              All selected items must be from the same boutique.
             </div>
+          </div>
 
-            <div className="build-box-message-grid">
-              <div className="build-box-message-card">
-                <label className="build-box-field" htmlFor="build-box-message">
-                  <span>Your message</span>
-                  <textarea
-                    id="build-box-message"
-                    rows="5"
-                    maxLength={240}
-                    placeholder="Write the note your recipient will see."
-                    value={cardMessage}
-                    onChange={(event) => {
-                      resetNotice();
-                      setCardMessage(event.target.value);
-                    }}
-                  />
+          {/* Personalize + pricing + CTA */}
+          <div className={`tuti-build-gift__personalize${!selectedItems.length ? " is-locked" : ""}`}>
+            <div className="tuti-build-gift__personalize-head">
+              <span className="tuti-build-gift__personalize-eyebrow">Personalize</span>
+              <h3>Add finishing touches</h3>
+            </div>
+            <div className="tuti-build-gift__personalize-body">
+
+              {/* Gift message */}
+              <div className="tuti-build-gift__field">
+                <label className="tuti-build-gift__field-label" htmlFor="build-gift-message">
+                  Gift message <span className="tuti-build-gift__field-hint">(free · seen by recipient)</span>
                 </label>
-                <div className="build-box-field-meta">
-                  <span>{cardMessage.length}/240</span>
-                  <span>{occasion ? `${normalizeOccasionLabel(occasion)} message idea available` : "Optional"}</span>
-                </div>
-                <MessageSuggestion occasion={occasion} onUse={applySuggestedMessage} />
+                <textarea
+                  className="tuti-build-gift__textarea"
+                  id="build-gift-message"
+                  maxLength={240}
+                  placeholder="Write the note your recipient will see…"
+                  value={giftMessage}
+                  onChange={(e) => setGiftMessage(e.target.value)}
+                />
+                <div className="tuti-build-gift__char-count">{giftMessage.length} / 240</div>
               </div>
 
-              <div className="build-box-preparation-card">
-                <label className="build-box-field" htmlFor="build-box-allergy">
-                  <span>Allergy or preparation note</span>
-                  <input
-                    id="build-box-allergy"
-                    maxLength={240}
-                    placeholder="Optional allergy or preparation note for the boutique"
-                    value={allergyNote}
-                    onChange={(event) => {
-                      resetNotice();
-                      setAllergyNote(event.target.value);
-                    }}
-                  />
-                </label>
-
-                <fieldset className="build-box-packaging">
-                  <legend>Packaging</legend>
-                  <label className={giftWrap ? "build-box-packaging-option" : "build-box-packaging-option active"}>
+              {/* Packaging */}
+              <div className="tuti-build-gift__field">
+                <div className="tuti-build-gift__field-label" id="bg-packaging">Packaging</div>
+                <div className="tuti-build-gift__packaging-opts" role="radiogroup" aria-labelledby="bg-packaging">
+                  <label className={`tuti-build-gift__packaging-opt${!giftWrap ? " is-active" : ""}`}>
                     <input
                       checked={!giftWrap}
-                      name="build-box-packaging"
+                      name="build-gift-packaging"
                       type="radio"
-                      onChange={() => {
-                        resetNotice();
-                        setGiftWrap(false);
-                      }}
+                      onChange={() => setGiftWrap(false)}
                     />
                     <span>
-                      <strong>Tuti presentation</strong>
-                      <small>Presented beautifully in the standard Tuti gift style.</small>
+                      <strong>Standard presentation</strong>
+                      <small>Boutique gift packaging, included.</small>
                     </span>
+                    <span className="tuti-build-gift__packaging-price">Free</span>
                   </label>
-
-                  <label className={giftWrap ? "build-box-packaging-option active" : "build-box-packaging-option"}>
+                  <label className={`tuti-build-gift__packaging-opt${giftWrap ? " is-active" : ""}`}>
                     <input
                       checked={giftWrap}
-                      name="build-box-packaging"
+                      name="build-gift-packaging"
                       type="radio"
-                      onChange={() => {
-                        resetNotice();
-                        setGiftWrap(true);
-                      }}
+                      onChange={() => setGiftWrap(true)}
                     />
                     <span>
                       <strong>Gift wrapped</strong>
-                      <small>Add an extra wrapped presentation for the final handover.</small>
+                      <small>Extra wrapping and ribbon.</small>
                     </span>
+                    <span className="tuti-build-gift__packaging-price">+AED {PRICE_GIFT_WRAP}</span>
                   </label>
-                </fieldset>
+                </div>
               </div>
-            </div>
-          </section>
 
-          <section className="build-box-closing" aria-labelledby="build-box-next-steps">
-            <span className="eyebrow">Reassurance and next steps</span>
-            <h2 id="build-box-next-steps">We keep the final handover simple.</h2>
-            <div className="build-box-closing-grid">
-              <div>
-                <strong>Cash on delivery</strong>
-                <p>Review your gift at checkout and complete your order with straightforward delivery options.</p>
-              </div>
-              <div>
-                <strong>Prepared with care</strong>
-                <p>Your perfume, sweet, and note stay with one boutique so the presentation feels coordinated.</p>
-              </div>
-              <div>
-                <strong>Need a ready-made option?</strong>
-                <p>Browse curated gift sets if you want something complete without building from scratch.</p>
-              </div>
-            </div>
-          </section>
-        </div>
+              {/* Cake-specific fields */}
+              {isCakeType ? (
+                <>
+                  <hr className="tuti-build-gift__cake-divider" />
+                  <div className="tuti-build-gift__field">
+                    <div className="tuti-build-gift__cake-badge">
+                      <Cake size={11} aria-hidden="true" /> Cake &amp; dessert options
+                    </div>
+                    <label className="tuti-build-gift__field-label" htmlFor="build-gift-writing">
+                      Cake writing <span className="tuti-build-gift__field-hint">(+AED {PRICE_CAKE_WRITING} if filled)</span>
+                    </label>
+                    <input
+                      className="tuti-build-gift__input"
+                      id="build-gift-writing"
+                      maxLength={80}
+                      placeholder="E.g. Happy Birthday Sarah"
+                      value={cakeWriting}
+                      onChange={(e) => setCakeWriting(e.target.value)}
+                    />
+                  </div>
+                  <div className="tuti-build-gift__field">
+                    <label className="tuti-build-gift__field-label" htmlFor="build-gift-allergy">
+                      Allergy note <span className="tuti-build-gift__field-hint">(free · seen only by boutique)</span>
+                    </label>
+                    <input
+                      className="tuti-build-gift__input"
+                      id="build-gift-allergy"
+                      maxLength={240}
+                      placeholder="Any allergies or preparation requests"
+                      value={allergyNote}
+                      onChange={(e) => setAllergyNote(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : null}
 
-        <aside className="build-box-sidebar" ref={summarySectionRef}>
-          <GiftPreview
-            cardMessage={cardMessage}
-            canAddBox={canAddBox}
-            giftWrap={giftWrap}
-            occasion={occasion}
-            selectedPerfume={selectedPerfume}
-            selectedShop={selectedShop}
-            selectedTreat={selectedTreat}
-            totalPrice={totalPrice}
-          />
-
-          <section className="build-box-summary-card" aria-labelledby="build-box-summary-title">
-            <div className="build-box-summary-head">
-              <div>
-                <span className="eyebrow">Gift summary</span>
-                <h2 id="build-box-summary-title">What is in your box</h2>
-              </div>
-              {canAddBox ? <span className="build-box-summary-ready">Ready</span> : null}
-            </div>
-
-            <div className="build-box-summary-lines">
-              <div>
-                <strong>Perfume</strong>
-                <span>{selectedPerfume?.name || "Choose a perfume to begin"}</span>
-              </div>
-              <div>
-                <strong>Sweet</strong>
-                <span>{selectedTreat?.name || "Add a cake or dessert"}</span>
-              </div>
-              <div>
-                <strong>Boutique</strong>
-                <span>{selectedShop?.name || "Selected after both items match"}</span>
-              </div>
-              {occasion ? (
-                <div>
-                  <strong>Occasion</strong>
-                  <span>{normalizeOccasionLabel(occasion)}</span>
+              {/* Price summary */}
+              {selectedItems.length > 0 ? (
+                <div className="tuti-build-gift__price-summary">
+                  <div className="tuti-build-gift__price-row">
+                    <span>Items subtotal</span>
+                    <span>{formatCurrency(itemsSubtotal)}</span>
+                  </div>
+                  {giftWrap ? (
+                    <div className="tuti-build-gift__price-row">
+                      <span>Gift wrapping</span>
+                      <span>{formatCurrency(PRICE_GIFT_WRAP)}</span>
+                    </div>
+                  ) : null}
+                  {isCakeType && cakeWriting.trim() ? (
+                    <div className="tuti-build-gift__price-row">
+                      <span>Cake writing</span>
+                      <span>{formatCurrency(PRICE_CAKE_WRITING)}</span>
+                    </div>
+                  ) : null}
+                  <div className="tuti-build-gift__price-row is-vat">
+                    <span>VAT (5%)</span>
+                    <span>{formatCurrency(vatAmount)}</span>
+                  </div>
+                  <div className="tuti-build-gift__price-row is-total">
+                    <span>Total</span>
+                    <span>{formatCurrency(totalPrice)}</span>
+                  </div>
                 </div>
               ) : null}
-              <div>
-                <strong>Message</strong>
-                <span>{messageStatus}</span>
-              </div>
-              <div>
-                <strong>Packaging</strong>
-                <span>{packagingLabel}</span>
-              </div>
-              {leadTimeDays ? (
-                <div>
-                  <strong>Preparation</strong>
-                  <span>{getLeadTimeLabel(leadTimeDays)}</span>
-                </div>
-              ) : null}
-            </div>
 
-            <div className="build-box-total">
-              <div className="summary-line">
-                <span>Perfume</span>
-                <strong>{formatCurrency(selectedPerfume?.price || 0)}</strong>
-              </div>
-              <div className="summary-line">
-                <span>Sweet</span>
-                <strong>{formatCurrency(selectedTreat?.price || 0)}</strong>
-              </div>
-              <div className="summary-line strong">
-                <span>Total gift</span>
-                <strong>{formatCurrency(totalPrice)}</strong>
-              </div>
-            </div>
-
-            {canAddBox ? (
-              <button
-                className="primary-action full-width"
-                type="button"
-                onClick={addConfiguredBox}
-                disabled={Boolean(notice)}
-              >
-                <ShoppingBag size={18} />
-                {notice ? "Added to cart" : `Add gift to cart — ${formatCurrency(totalPrice)}`}
-              </button>
-            ) : (
-              <div className="build-box-summary-instruction" role="status" aria-live="polite">
-                <strong>{buildInstruction}</strong>
-                <p>
-                  {!selectedPerfume
-                    ? "Start with a perfume, then choose a cake or dessert from the same boutique."
-                    : "Your gift will become available once both items come from one boutique."}
-                </p>
-                <div className="build-box-summary-actions">
-                  {!selectedPerfume ? (
-                    <button className="secondary-action compact" type="button" onClick={() => scrollToRef(perfumeSectionRef)}>
-                      Choose a perfume
-                    </button>
-                  ) : (
-                    <button className="secondary-action compact" type="button" onClick={() => scrollToRef(treatSectionRef)}>
-                      Add a sweet
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {notice ? (
-              <div className="build-box-success-card">
-                <CheckCircle2 size={18} />
-                <div>
-                  <strong>{notice}</strong>
-                  <p>Your configured gift stays together as one cart line item.</p>
-                </div>
-                <div className="build-box-success-actions">
-                  <button className="secondary-action compact" type="button" onClick={() => onNavigate("/cart")}>
-                    View cart
-                  </button>
-                  <button className="ghost-action compact" type="button" onClick={clearAllSelections}>
-                    Build another gift
+              {/* CTA */}
+              {addedToCart ? (
+                <div className="tuti-build-gift__success">
+                  <PackageCheck size={15} aria-hidden="true" />
+                  Gift added to cart
+                  <button
+                    className="tuti-build-gift__success-link"
+                    type="button"
+                    onClick={() => onNavigate?.("/cart")}
+                  >
+                    View cart →
                   </button>
                 </div>
-              </div>
-            ) : null}
-          </section>
+              ) : (
+                <button
+                  className="tuti-build-gift__add-btn"
+                  type="button"
+                  disabled={!selectedItems.length}
+                  onClick={addCustomizedGiftToCart}
+                >
+                  <Gift size={15} aria-hidden="true" />
+                  Add customized gift to cart
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Start over */}
+          {(selectedOccasion || selectedType || selectedItems.length > 0) ? (
+            <button
+              className="tuti-build-gift__ghost-btn"
+              type="button"
+              style={{ width: "100%", justifyContent: "center" }}
+              onClick={clearAll}
+            >
+              <X size={13} /> Start over
+            </button>
+          ) : null}
         </aside>
-      </section>
+      </div>
+
+      {/* ── Closing reassurance strip ── */}
+      <div className="tuti-build-gift__assurance" aria-label="Build a Gift reassurance">
+        <span>Prepared by one boutique</span>
+        <span>Customization saved to cart</span>
+        <span>VAT shown before checkout</span>
+      </div>
     </main>
   );
 }

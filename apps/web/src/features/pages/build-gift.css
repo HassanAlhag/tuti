@@ -1,0 +1,1148 @@
+/* ─── Build a Gift — Guided Discovery ───────────────────────────────────
+   Namespace: .tuti-build-gift
+   Premium interactive gift builder — one connected workspace.
+   Do not append to storefront.css.
+   Tokens aligned with cart-checkout.css for visual consistency.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.tuti-build-gift {
+  --navy:       #071b3a;
+  --royal:      #0b2a55;
+  --gold:       #b88a2e;
+  --gold-light: #d6b46a;
+  --gold-dim:   rgba(184, 138, 46, 0.15);
+  --porcelain:  #fbf8f1;
+  --warm:       #f3e9d6;
+  --card-bg:    #ffffff;
+  --card-border: rgba(26, 20, 16, 0.08);
+  --card-shadow: 0 1px 2px rgba(7, 27, 58, 0.04), 0 12px 30px rgba(7, 27, 58, 0.07);
+  --card-shadow-strong: 0 20px 48px rgba(7, 27, 58, 0.13);
+  --text-dark:  #1a1410;
+  --text-mid:   #4a3c28;
+  --text-muted: #6b5c42;
+  --text-faint: #9b8d7a;
+  --r-sm:  0.5rem;
+  --r:     0.75rem;
+  --r-lg:  1rem;
+  --ease:  180ms ease;
+
+  background:
+    radial-gradient(circle at 14% 0%, rgba(214, 180, 106, 0.1) 0%, transparent 22rem),
+    linear-gradient(180deg, var(--porcelain) 0%, var(--warm) 100%);
+}
+
+/* ─── Hero ───────────────────────────────────────────────────────────────── */
+
+.tuti-build-gift__hero {
+  background: var(--navy);
+  padding: 2.75rem 2rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tuti-build-gift__hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 80% at 78% 50%, rgba(184, 138, 46, 0.09) 0%, transparent 100%),
+    radial-gradient(circle at 4% 96%, rgba(11, 42, 85, 0.7) 0%, transparent 38%);
+  pointer-events: none;
+}
+
+.tuti-build-gift__hero-inner {
+  max-width: 82rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+}
+
+.tuti-build-gift__hero-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  display: block;
+  margin-bottom: 0.55rem;
+}
+
+.tuti-build-gift__hero h1 {
+  font-size: clamp(1.9rem, 4vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: #ffffff;
+  margin: 0 0 0.65rem;
+}
+
+.tuti-build-gift__hero-sub {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.55;
+  margin: 0 0 0.8rem;
+  max-width: 38rem;
+}
+
+.tuti-build-gift__hero-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-size: 0.77rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.tuti-build-gift__hero-img {
+  width: 8.5rem;
+  height: 8.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tuti-build-gift__hero-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.42));
+}
+
+/* ─── Workspace (two-column layout) ─────────────────────────────────────── */
+
+.tuti-build-gift__workspace {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 22rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.tuti-build-gift__workspace-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ─── Builder card — single connected surface ────────────────────────────── */
+
+.tuti-build-gift__builder {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* Controls area: cream background, occasion + type stacked */
+.tuti-build-gift__builder-controls {
+  padding: 1.25rem 1.5rem 1.1rem;
+  background: var(--porcelain);
+  border-bottom: 1px solid rgba(26, 20, 16, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+/* Products area: white background */
+.tuti-build-gift__builder-products {
+  padding: 1.1rem 1.5rem 1.5rem;
+  transition: opacity var(--ease);
+}
+
+.tuti-build-gift__builder-products.is-locked {
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ─── Chips group (occasion row, type row) ───────────────────────────────── */
+
+.tuti-build-gift__chips-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: opacity var(--ease);
+}
+
+.tuti-build-gift__chips-group.is-locked {
+  opacity: 0.38;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tuti-build-gift__chips-label {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dark);
+}
+
+.tuti-build-gift__chips-hint {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Step number badge (1 / 2 / 3) */
+.tuti-build-gift__step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+
+/* Occasion chip row */
+.tuti-build-gift__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.tuti-build-gift__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(26, 20, 16, 0.06);
+  border: 1.5px solid transparent;
+  border-radius: 2rem;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all var(--ease);
+}
+
+.tuti-build-gift__chip:hover {
+  background: #ede3d1;
+  border-color: rgba(184, 138, 46, 0.28);
+  color: var(--text-dark);
+}
+
+.tuti-build-gift__chip.is-selected {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #ffffff;
+}
+
+/* ─── Gift type cards (compact flex row) ─────────────────────────────────── */
+
+.tuti-build-gift__types {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tuti-build-gift__type-card {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.32rem 0.5rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem 0.6rem;
+  background: rgba(26, 20, 16, 0.04);
+  border: 1.5px solid transparent;
+  border-radius: var(--r);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color var(--ease), background var(--ease), box-shadow var(--ease);
+}
+
+.tuti-build-gift__type-card:hover {
+  background: #f0e9d8;
+  border-color: rgba(184, 138, 46, 0.3);
+}
+
+.tuti-build-gift__type-card.is-selected {
+  background: var(--navy);
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(7, 27, 58, 0.1), 0 4px 18px rgba(7, 27, 58, 0.15);
+}
+
+.tuti-build-gift__type-card:disabled {
+  pointer-events: none;
+}
+
+.tuti-build-gift__type-icon {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: var(--r-sm);
+  background: #ede3d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: background var(--ease), color var(--ease);
+}
+
+.tuti-build-gift__type-card.is-selected .tuti-build-gift__type-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--gold-light);
+}
+
+.tuti-build-gift__type-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.2;
+  transition: color var(--ease);
+}
+
+.tuti-build-gift__type-card.is-selected .tuti-build-gift__type-label { color: #ffffff; }
+
+.tuti-build-gift__type-copy {
+  grid-column: 2;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  transition: color var(--ease);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tuti-build-gift__type-card.is-selected .tuti-build-gift__type-copy { color: rgba(255, 255, 255, 0.62); }
+
+/* ─── Products section header ────────────────────────────────────────────── */
+
+.tuti-build-gift__products-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.tuti-build-gift__products-label {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dark);
+}
+
+.tuti-build-gift__products-context {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tuti-build-gift__products-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* ─── Recommendations / counts ───────────────────────────────────────────── */
+
+.tuti-build-gift__recs-count {
+  font-size: 0.74rem;
+  color: var(--text-faint);
+}
+
+.tuti-build-gift__recs-selected {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ─── Product grid ───────────────────────────────────────────────────────── */
+
+.tuti-build-gift__product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+/* ─── Product card ───────────────────────────────────────────────────────── */
+
+.tuti-build-gift__product {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 253, 248, 0.94));
+  border: 1px solid rgba(7, 27, 58, 0.12);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-shadow: 0 8px 22px rgba(7, 27, 58, 0.055);
+  transition: border-color var(--ease), box-shadow var(--ease), transform var(--ease), opacity var(--ease);
+}
+
+.tuti-build-gift__product:hover {
+  transform: translateY(-1px);
+  border-color: rgba(184, 138, 46, 0.34);
+  box-shadow: 0 12px 28px rgba(7, 27, 58, 0.085);
+}
+
+.tuti-build-gift__product.is-selected {
+  border-color: var(--navy);
+  background: rgba(7, 27, 58, 0.04);
+  box-shadow: inset 0 0 0 2px rgba(184, 138, 46, 0.28), 0 14px 32px rgba(7, 27, 58, 0.12);
+}
+
+.tuti-build-gift__product.is-disabled {
+  opacity: 0.58;
+  pointer-events: none;
+  user-select: none;
+  filter: saturate(0.72);
+}
+
+.tuti-build-gift__product-thumb {
+  position: relative;
+  width: 100%;
+  height: 8.25rem;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.92), transparent 32%),
+    linear-gradient(145deg, #fffdf8, #f2e6cf);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.tuti-build-gift__product-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tuti-build-gift__product-body {
+  padding: 0.8rem 0.85rem 0.6rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.tuti-build-gift__product-boutique {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.tuti-build-gift__product-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  line-height: 1.22;
+  margin: 0.1rem 0;
+}
+
+.tuti-build-gift__product-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tuti-build-gift__product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+  margin-top: 0.32rem;
+}
+
+.tuti-build-gift__product-tag {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(26, 20, 16, 0.06);
+  border-radius: 0.2rem;
+  padding: 0.09rem 0.35rem;
+}
+
+.tuti-build-gift__product-price {
+  font-size: 0.87rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-top: 0.4rem;
+}
+
+.tuti-build-gift__product-actions {
+  padding: 0 0.85rem 0.85rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Checkmark badge on selected product thumbnail */
+.tuti-build-gift__product-selected-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--navy), var(--royal));
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+
+/* "Locked" overlay on boutique-locked products */
+.tuti-build-gift__product-locked-label {
+  position: absolute;
+  left: 0.45rem;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  background: rgba(255, 253, 248, 0.88);
+  color: rgba(7, 27, 58, 0.66);
+  border: 1px solid rgba(7, 27, 58, 0.12);
+  border-radius: 999px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-align: center;
+  padding: 0.22rem 0.45rem;
+  box-shadow: 0 6px 14px rgba(7, 27, 58, 0.08);
+}
+
+/* Toggle button: Select / Remove */
+.tuti-build-gift__product-toggle {
+  flex: 1;
+  padding: 0.48rem 0.6rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--navy);
+  background: rgba(7, 27, 58, 0.07);
+  border: 1.5px solid rgba(7, 27, 58, 0.12);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transition: background var(--ease), color var(--ease), border-color var(--ease);
+}
+
+.tuti-build-gift__product-toggle:hover {
+  background: rgba(7, 27, 58, 0.12);
+}
+
+.tuti-build-gift__product-toggle.is-selected {
+  background: var(--navy);
+  color: #ffffff;
+  border-color: var(--navy);
+}
+
+.tuti-build-gift__product-toggle.is-selected:hover {
+  background: #102f63;
+  border-color: #102f63;
+}
+
+.tuti-build-gift__product-toggle:disabled {
+  pointer-events: none;
+  opacity: 0.38;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+
+.tuti-build-gift__empty {
+  grid-column: 1 / -1;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.tuti-build-gift__empty-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #ede3d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.8rem;
+  color: #c9b89a;
+}
+
+.tuti-build-gift__empty strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 0.3rem;
+}
+
+.tuti-build-gift__empty p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.tuti-build-gift__empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--navy);
+  background: rgba(7, 27, 58, 0.07);
+  border: 1.5px solid rgba(7, 27, 58, 0.12);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--ease);
+}
+
+.tuti-build-gift__empty-link:hover { background: rgba(7, 27, 58, 0.12); }
+
+/* ─── Right: sticky unified panel ───────────────────────────────────────── */
+
+.tuti-build-gift__summary {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(7, 27, 58, 0.13);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: var(--card-shadow-strong);
+}
+
+/* Navy intent block */
+.tuti-build-gift__intent {
+  background: var(--navy);
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.tuti-build-gift__intent-head {
+  padding: 1.1rem 1.3rem 0.85rem;
+  border-bottom: 1px solid rgba(184, 138, 46, 0.1);
+}
+
+.tuti-build-gift__intent-eyebrow {
+  font-size: 0.63rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  display: block;
+  margin-bottom: 0.18rem;
+}
+
+.tuti-build-gift__intent-head h2 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.tuti-build-gift__intent-rows {
+  padding: 0.8rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tuti-build-gift__intent-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.tuti-build-gift__intent-lbl {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.42);
+  white-space: nowrap;
+}
+
+.tuti-build-gift__intent-val {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.tuti-build-gift__intent-val.is-dim { color: rgba(255, 255, 255, 0.34); }
+
+.tuti-build-gift__boutique-note {
+  padding: 0.65rem 1.3rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.48);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.38rem;
+  line-height: 1.45;
+}
+
+.tuti-build-gift__boutique-note svg { flex-shrink: 0; margin-top: 0.1rem; }
+
+/* ─── Selected items list (navy background) ──────────────────────────────── */
+
+.tuti-build-gift__selected-items {
+  padding: 0.45rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tuti-build-gift__selected-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.22rem 0;
+}
+
+.tuti-build-gift__selected-item-name {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tuti-build-gift__selected-item-price {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  white-space: nowrap;
+}
+
+.tuti-build-gift__selected-item-remove {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  padding: 0;
+  transition: background var(--ease), color var(--ease);
+}
+
+.tuti-build-gift__selected-item-remove:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.tuti-build-gift__selected-empty {
+  padding: 0.6rem 1.3rem;
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-style: italic;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Personalize card (white block below navy) ──────────────────────────── */
+
+.tuti-build-gift__personalize {
+  background: var(--card-bg);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  transition: opacity var(--ease);
+}
+
+.tuti-build-gift__personalize.is-locked {
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tuti-build-gift__personalize-head {
+  padding: 1rem 1.3rem 0.75rem;
+  border-bottom: 1px solid rgba(26, 20, 16, 0.05);
+}
+
+.tuti-build-gift__personalize-eyebrow {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.tuti-build-gift__personalize-head h3 {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.tuti-build-gift__personalize-body {
+  padding: 0.9rem 1.3rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* ─── Form fields ────────────────────────────────────────────────────────── */
+
+.tuti-build-gift__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.tuti-build-gift__field-label {
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.tuti-build-gift__field-hint {
+  font-size: 0.71rem;
+  font-weight: 400;
+  color: var(--text-faint);
+}
+
+.tuti-build-gift__textarea,
+.tuti-build-gift__input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--porcelain);
+  border: 1.5px solid rgba(26, 20, 16, 0.1);
+  border-radius: var(--r-sm);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: var(--text-dark);
+  line-height: 1.5;
+  transition: border-color var(--ease);
+  resize: none;
+}
+
+.tuti-build-gift__textarea:focus,
+.tuti-build-gift__input:focus {
+  outline: none;
+  border-color: var(--navy);
+  background: #ffffff;
+}
+
+.tuti-build-gift__textarea { min-height: 4.5rem; }
+
+.tuti-build-gift__char-count {
+  font-size: 0.68rem;
+  color: var(--text-faint);
+  text-align: right;
+}
+
+.tuti-build-gift__packaging-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.tuti-build-gift__packaging-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--porcelain);
+  border: 1.5px solid rgba(26, 20, 16, 0.08);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: border-color var(--ease), background var(--ease);
+}
+
+.tuti-build-gift__packaging-opt.is-active {
+  border-color: var(--navy);
+  background: rgba(7, 27, 58, 0.04);
+}
+
+.tuti-build-gift__packaging-opt input[type="radio"] {
+  margin-top: 0.12rem;
+  accent-color: var(--navy);
+  flex-shrink: 0;
+}
+
+.tuti-build-gift__packaging-opt strong {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 0.07rem;
+}
+
+.tuti-build-gift__packaging-opt small {
+  font-size: 0.71rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.tuti-build-gift__packaging-price {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gold);
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.tuti-build-gift__cake-divider {
+  border: none;
+  border-top: 1px solid rgba(26, 20, 16, 0.07);
+  margin: 0.15rem 0;
+}
+
+.tuti-build-gift__cake-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.1rem;
+}
+
+/* ─── Price summary ──────────────────────────────────────────────────────── */
+
+.tuti-build-gift__price-summary {
+  background: var(--porcelain);
+  border: 1px solid rgba(26, 20, 16, 0.08);
+  border-radius: var(--r-sm);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.tuti-build-gift__price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.tuti-build-gift__price-row > span:last-child {
+  font-weight: 700;
+  color: var(--text-dark);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tuti-build-gift__price-row.is-vat {
+  border-top: 1px solid rgba(26, 20, 16, 0.07);
+  padding-top: 0.28rem;
+  margin-top: 0.06rem;
+}
+
+.tuti-build-gift__price-row.is-total {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.tuti-build-gift__price-row.is-total > span:last-child {
+  color: var(--navy);
+  font-size: 0.96rem;
+}
+
+/* ─── Add to cart CTA ────────────────────────────────────────────────────── */
+
+.tuti-build-gift__add-btn {
+  width: 100%;
+  padding: 0.78rem 1rem;
+  font-size: 0.87rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--navy), var(--royal));
+  border: none;
+  border-radius: var(--r);
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: background var(--ease), opacity var(--ease);
+}
+
+.tuti-build-gift__add-btn:hover:not(:disabled) { background: linear-gradient(135deg, #0b2a55, #123b72); }
+
+.tuti-build-gift__add-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ─── Success state ──────────────────────────────────────────────────────── */
+
+.tuti-build-gift__success {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 0.85rem;
+  background: rgba(7, 27, 58, 0.07);
+  border: 1.5px solid rgba(7, 27, 58, 0.14);
+  border-radius: var(--r);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.tuti-build-gift__success-link {
+  margin-left: auto;
+  font-size: 0.77rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  white-space: nowrap;
+  transition: color var(--ease);
+}
+
+.tuti-build-gift__success-link:hover { color: #9a7423; }
+
+/* ─── Ghost button ───────────────────────────────────────────────────────── */
+
+.tuti-build-gift__ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.36rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 1.5px solid rgba(26, 20, 16, 0.12);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color var(--ease), color var(--ease);
+}
+
+.tuti-build-gift__ghost-btn:hover { border-color: var(--navy); color: var(--text-dark); }
+
+/* ─── Closing reassurance strip ──────────────────────────────────────────── */
+
+.tuti-build-gift__assurance {
+  max-width: 72rem;
+  margin: 1.5rem auto 0;
+  padding: 0 1.5rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.tuti-build-gift__assurance span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  padding: 0 0.5rem;
+  position: relative;
+}
+
+.tuti-build-gift__assurance span + span::before {
+  content: "·";
+  position: absolute;
+  left: -1.25rem;
+  color: rgba(26, 20, 16, 0.22);
+  font-size: 1rem;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .tuti-build-gift__workspace {
+    grid-template-columns: 1fr;
+    padding: 1.25rem 1rem 0;
+  }
+
+  .tuti-build-gift__summary {
+    position: static;
+    order: 2;
+  }
+
+  .tuti-build-gift__hero-inner { grid-template-columns: 1fr; }
+  .tuti-build-gift__hero-img { display: none; }
+
+  .tuti-build-gift__product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .tuti-build-gift__assurance {
+    max-width: 100%;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .tuti-build-gift__hero { padding: 1.9rem 1rem 1.6rem; }
+
+  .tuti-build-gift__workspace { padding: 1rem 0.85rem 0; gap: 1rem; }
+
+  .tuti-build-gift__builder-controls { padding: 1rem 1.1rem 0.9rem; gap: 0.85rem; }
+  .tuti-build-gift__builder-products { padding: 0.9rem 1.1rem 1.25rem; }
+
+  .tuti-build-gift__types { flex-direction: column; gap: 0.4rem; }
+  .tuti-build-gift__type-card { flex: none; }
+
+  .tuti-build-gift__product-grid { grid-template-columns: 1fr; }
+  .tuti-build-gift__product-thumb { height: 7.6rem; }
+
+  .tuti-build-gift__assurance {
+    justify-content: flex-start;
+    padding: 0.75rem 1rem 2rem;
+    gap: 0.9rem;
+  }
+
+  .tuti-build-gift__assurance span + span::before { display: none; }
+}
