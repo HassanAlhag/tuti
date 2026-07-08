@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ChevronDown, Headphones, LogOut, Menu, Package,
-  Search, Settings, ShoppingBag,
-  Sparkles, X,
+  ChevronDown, ChevronRight, Headphones, LogOut, Menu, Package,
+  Search, Settings, ShoppingBag, Sparkles, X,
 } from "lucide-react";
 import { brand }            from "@tuti/shared/brand.js";
 import { useAuthStore }     from "@tuti/shared/store/authStore.js";
@@ -13,6 +12,12 @@ import { CookieConsent }     from "./CookieConsent.jsx";
 import { useCartStore }      from "../../store/cartStore.js";
 import { getPortalUrl }      from "./portalUrls.js";
 import { headerNavRoutes, mobileDrawerRoutes } from "../../config/customerRoutes.js";
+import {
+  customerMegaMenus,
+  MEGA_ROUTE_MAP,
+  mobileDrawerSubcategories,
+  CATEGORY_MOBILE_KEY,
+} from "../../config/customerMegaMenus.js";
 
 const SEARCH_CATEGORIES = [
   { value: "all",      label: "All" },
@@ -23,21 +28,191 @@ const SEARCH_CATEGORIES = [
   { value: "bundle",   label: "Gift Boxes" },
 ];
 
+const MEGA_FEATURE_POINTS = {
+  perfumes: ["Signature scents", "Oud & musk", "Gift-ready bottles"],
+  cakes: ["Celebration cakes", "Dessert boxes", "Same-day treats"],
+  giftBoxes: ["Graduation gifts", "Occasion boxes", "Boutique packages"],
+};
+
+const MEGA_PANEL_STEPS = ["Select items", "Add message", "Boutique prepares it"];
+
+// ─── Mega menu panel ─────────────────────────────────────────────────────────
+
+function MegaMenuPanel({ data, onNav }) {
+  if (!data) return null;
+
+  if (data.layout === "shop") {
+    return (
+      <div className="cl-mega-inner cl-mega-inner--shop">
+        {/* Left: editorial feature */}
+        <div className="cl-mega-feature">
+          <span className="cl-mega-eyebrow">{data.eyebrow}</span>
+          <div className="cl-mega-feature-title">{data.title}</div>
+          <p className="cl-mega-feature-body">{data.body}</p>
+          <p className="cl-mega-feature-desc">{data.description}</p>
+          <div className="cl-mega-feature-actions">
+            <button
+              className="cl-mega-cta cl-mega-cta--primary"
+              type="button"
+              onClick={() => onNav(data.primaryCta.routeId, data.primaryCta.category)}
+            >
+              {data.primaryCta.label}
+            </button>
+            <button
+              className="cl-mega-cta cl-mega-cta--ghost"
+              type="button"
+              onClick={() => onNav(data.secondaryCta.routeId, data.secondaryCta.category)}
+            >
+              {data.secondaryCta.label}
+            </button>
+          </div>
+        </div>
+
+        {/* Right: 2×2 category cards */}
+        <div className="cl-mega-cards">
+          {data.cards.map((card) => (
+            <button
+              key={card.key}
+              type="button"
+              className={`cl-mega-card cl-mega-card--${card.key}`}
+              onClick={() => onNav(card.routeId, card.category || undefined)}
+            >
+              <div className="cl-mega-card-icon">{card.icon}</div>
+              <div>
+                <div className="cl-mega-card-label">{card.label}</div>
+                <div className="cl-mega-card-desc">{card.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (data.layout === "category") {
+    return (
+      <div className="cl-mega-inner cl-mega-inner--category">
+        {/* Left: feature editorial */}
+        <div className="cl-mega-feature">
+          <span className="cl-mega-eyebrow">{data.featureEyebrow}</span>
+          <div className="cl-mega-feature-title">{data.featureTitle}</div>
+          <p className="cl-mega-feature-body">{data.featureBody}</p>
+          <div className="cl-mega-feature-actions">
+            <button
+              className="cl-mega-cta cl-mega-cta--primary"
+              type="button"
+              onClick={() => onNav(data.primaryCta.routeId, data.primaryCta.category)}
+            >
+              {data.primaryCta.label}
+            </button>
+            {data.secondaryCta ? (
+              <button
+                className="cl-mega-cta cl-mega-cta--ghost"
+                type="button"
+                onClick={() => onNav(data.secondaryCta.routeId, data.secondaryCta.category)}
+              >
+                {data.secondaryCta.label}
+              </button>
+            ) : null}
+          </div>
+          {MEGA_FEATURE_POINTS[data.key]?.length ? (
+            <div className="cl-mega-feature-points" aria-label={`${data.featureTitle} highlights`}>
+              {MEGA_FEATURE_POINTS[data.key].map((point) => (
+                <span className="cl-mega-feature-point" key={point}>
+                  {point}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Middle: subcategory links */}
+        <div className="cl-mega-sub">
+          <div className="cl-mega-sub-heading">{data.subcategoriesHeading}</div>
+          <p className="cl-mega-sub-helper">Explore popular ways to shop this category.</p>
+          <div className="cl-mega-sub-grid">
+            {data.subcategories.map((sub) => (
+              <button
+                key={sub.label}
+                type="button"
+                className="cl-mega-sub-link"
+                onClick={() => onNav(sub.routeId, sub.category)}
+              >
+                <span>{sub.label}</span>
+                <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Build a Gift highlight panel */}
+        <div className="cl-mega-panel">
+          <span className="cl-mega-panel-eyebrow">{data.panelEyebrow}</span>
+          <div className="cl-mega-panel-title">{data.panelTitle}</div>
+          <p className="cl-mega-panel-body">{data.panelBody}</p>
+          <div className="cl-mega-panel-steps" aria-label="Build a Gift steps">
+            {MEGA_PANEL_STEPS.map((step) => (
+              <span className="cl-mega-panel-step" key={step}>
+                {step}
+              </span>
+            ))}
+          </div>
+          <button
+            className="cl-mega-cta cl-mega-cta--primary"
+            type="button"
+            style={{ marginTop: "auto" }}
+            onClick={() => onNav(data.panelCta.routeId)}
+          >
+            {data.panelCta.label}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+// ─── Main layout ─────────────────────────────────────────────────────────────
+
 export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, children }) {
   const { user, isAuthenticated, clearAuth, isSeller, isAdmin } = useAuthStore();
   const { itemCount } = useCartStore();
 
-  const [showAuth,     setShowAuth]     = useState(false);
-  const [authDefaults, setAuthDefaults] = useState({ mode: "login" });
-  const [showMenu,     setShowMenu]     = useState(false);
-  const [showDrawer,   setShowDrawer]   = useState(false);
+  const [showAuth,      setShowAuth]      = useState(false);
+  const [authDefaults,  setAuthDefaults]  = useState({ mode: "login" });
+  const [showMenu,      setShowMenu]      = useState(false);
+  const [showDrawer,    setShowDrawer]    = useState(false);
   const [immersivePassed, setImmersivePassed] = useState(false);
-  const [searchQuery,  setSearchQuery]  = useState("");
-  const [searchCat,    setSearchCat]    = useState("all");
+  const [searchQuery,   setSearchQuery]   = useState("");
+  const [searchCat,     setSearchCat]     = useState("all");
+  const [activeMega,    setActiveMega]    = useState(null);
+  const [drawerExpanded, setDrawerExpanded] = useState({});
 
-  const menuRef   = useRef(null);
-  const drawerRef = useRef(null);
-  const cartCount = itemCount();
+  const menuRef     = useRef(null);
+  const drawerRef   = useRef(null);
+  const megaTimerRef = useRef(null);
+  const cartCount   = itemCount();
+
+  const currentMega = activeMega ? customerMegaMenus[activeMega] : null;
+
+  function openMega(key) {
+    clearTimeout(megaTimerRef.current);
+    setActiveMega(key);
+  }
+
+  function closeMegaDelayed() {
+    megaTimerRef.current = setTimeout(() => setActiveMega(null), 100);
+  }
+
+  function cancelMegaClose() {
+    clearTimeout(megaTimerRef.current);
+  }
+
+  function megaNav(routeId, category) {
+    setActiveMega(null);
+    onNavigate(routeId, category);
+  }
 
   // Open auth modal from custom events (used by product pages etc.)
   useEffect(() => {
@@ -58,9 +233,30 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
     return () => document.removeEventListener("mousedown", close);
   }, [showMenu]);
 
-  // Close drawer on Escape and lock body scroll while open
+  // Close mega menu on outside click
   useEffect(() => {
-    if (!showDrawer) return undefined;
+    if (!activeMega) return undefined;
+    function close(e) {
+      const topbar = document.querySelector(".cl-topbar");
+      if (topbar && !topbar.contains(e.target)) setActiveMega(null);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [activeMega]);
+
+  // Close mega on Escape
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape" && activeMega) setActiveMega(null); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [activeMega]);
+
+  // Close drawer on Escape, lock body scroll while open, reset expanded on close
+  useEffect(() => {
+    if (!showDrawer) {
+      setDrawerExpanded({});
+      return undefined;
+    }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(e) { if (e.key === "Escape") setShowDrawer(false); }
@@ -116,6 +312,10 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
     setShowDrawer(false);
   }
 
+  function toggleDrawerExpand(key) {
+    setDrawerExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   const accountName = user?.name?.split(" ")[0] || "Sign in";
   const isAuth = isAuthenticated();
   const immersiveRoute = route === "home";
@@ -141,7 +341,11 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
       >
         <div className="cl-bar1">
           {/* Logo */}
-          <button className="cl-logo" type="button" onClick={() => onNavigate("home")}>
+          <button
+            className="cl-logo"
+            type="button"
+            onClick={() => { setActiveMega(null); onNavigate("home"); }}
+          >
             <span className="cl-logo-mark">{brand.mark}</span>
             <span className="cl-logo-name">{brand.name}</span>
             <span className="cl-logo-tld">.ae</span>
@@ -254,9 +458,15 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
         </div>
 
         {/* ══ Row 2 — desktop category rail ═══════════════════════════ */}
-        <nav className="cl-bar2" aria-label="Product categories">
-          {headerNavRoutes.map(({ id, category, label, finder }) => {
-            const active = category
+        <nav
+          className="cl-bar2"
+          aria-label="Product categories"
+          onMouseLeave={closeMegaDelayed}
+        >
+          {headerNavRoutes.map(({ id, routeKey, category, label, finder }) => {
+            const megaKey = MEGA_ROUTE_MAP[routeKey];
+            const isOpen  = megaKey && activeMega === megaKey;
+            const active  = category
               ? route === "shop" && shopCategory === category
               : route === id && !(id === "shop" && shopCategory && shopCategory !== "all");
             return (
@@ -265,21 +475,46 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                 type="button"
                 className={[
                   "cl-rail-btn",
-                  active ? "active" : "",
-                  finder ? "cl-rail-btn--finder" : "",
+                  active    ? "active"              : "",
+                  finder    ? "cl-rail-btn--finder" : "",
+                  isOpen    ? "cl-rail-btn--mega-open" : "",
                 ].filter(Boolean).join(" ")}
                 aria-current={active ? "page" : undefined}
-                onClick={() => onNavigate(id, category)}
+                aria-haspopup={megaKey ? "true" : undefined}
+                aria-expanded={megaKey ? isOpen : undefined}
+                onClick={() => { setActiveMega(null); onNavigate(id, category); }}
+                onMouseEnter={() => megaKey ? openMega(megaKey) : setActiveMega(null)}
+                onFocus={() => megaKey ? openMega(megaKey) : undefined}
               >
                 {label}
+                {megaKey ? (
+                  <ChevronDown
+                    size={11}
+                    className="cl-rail-chevron"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </button>
             );
           })}
         </nav>
+
+        {/* ══ Mega menu panel ════════════════════════════════════════ */}
+        {currentMega ? (
+          <div
+            className={`cl-mega cl-mega--${activeMega}`}
+            role="navigation"
+            aria-label={`${currentMega.featureTitle || currentMega.title || ""} menu`}
+            onMouseEnter={cancelMegaClose}
+            onMouseLeave={closeMegaDelayed}
+          >
+            <MegaMenuPanel data={currentMega} onNav={megaNav} />
+          </div>
+        ) : null}
       </header>
 
       {/* Page body */}
-      <div className="cl-body" onClick={() => showMenu && setShowMenu(false)}>
+      <div className="cl-body" onClick={() => { showMenu && setShowMenu(false); activeMega && setActiveMega(null); }}>
         {children}
       </div>
 
@@ -328,24 +563,78 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                     const active = category
                       ? route === "shop" && shopCategory === category
                       : route === id && !(id === "shop" && shopCategory && shopCategory !== "all");
+                    const subKey = category ? CATEGORY_MOBILE_KEY[category] : null;
+                    const subs   = subKey ? mobileDrawerSubcategories[subKey] : null;
+                    const isExpanded = subKey ? Boolean(drawerExpanded[subKey]) : false;
+
                     if (portalKey && !portal) return null;
-                    return portal ? (
-                      <a
-                        key={label}
-                        href={portal}
-                        className="cl-drawer-link"
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => setShowDrawer(false)}
-                      >
-                        {label}
-                      </a>
-                    ) : (
+
+                    if (portal) {
+                      return (
+                        <a
+                          key={label}
+                          href={portal}
+                          className="cl-drawer-link"
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={() => setShowDrawer(false)}
+                        >
+                          {label}
+                        </a>
+                      );
+                    }
+
+                    if (subs) {
+                      return (
+                        <div key={label} className="cl-drawer-expandable">
+                          <div className="cl-drawer-expand-row">
+                            <button
+                              type="button"
+                              className={active ? "cl-drawer-link active" : "cl-drawer-link"}
+                              aria-current={active ? "page" : undefined}
+                              onClick={() => drawerNavigate(id, category)}
+                            >
+                              {label}
+                            </button>
+                            <button
+                              type="button"
+                              className="cl-drawer-expand-toggle"
+                              aria-expanded={isExpanded}
+                              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${label} subcategories`}
+                              onClick={() => toggleDrawerExpand(subKey)}
+                            >
+                              <ChevronRight
+                                size={14}
+                                className={isExpanded ? "cl-drawer-chevron cl-drawer-chevron--open" : "cl-drawer-chevron"}
+                                aria-hidden="true"
+                              />
+                            </button>
+                          </div>
+                          {isExpanded && (
+                            <div className="cl-drawer-subs">
+                              {subs.map((sub) => (
+                                <button
+                                  key={sub.label}
+                                  type="button"
+                                  className="cl-drawer-sub-link"
+                                  onClick={() => drawerNavigate(sub.routeId, sub.category)}
+                                >
+                                  {sub.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    return (
                       <button
                         key={label}
                         type="button"
                         className={active ? "cl-drawer-link active" : "cl-drawer-link"}
                         aria-current={active ? "page" : undefined}
+                        data-id={id}
                         onClick={() => drawerNavigate(id, category)}
                       >
                         {label}
