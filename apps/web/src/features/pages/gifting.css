@@ -1,0 +1,925 @@
+/* ═══════════════════════════════════════════════════════════════════
+   GIFT ADVISOR PAGE  —  .tuti-gifting namespace
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Page-shell reset ────────────────────────────────────────── */
+main.tuti-gifting {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Keyframe animations ─────────────────────────────────────── */
+@keyframes ga-result-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ga-insight-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tuti-gifting__result,
+  .tuti-gifting__mood-insight { animation: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HERO — full-bleed dark navy
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__hero {
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  background:
+    radial-gradient(ellipse 62% 72% at 82% 8%,  rgba(184, 138, 46, 0.22), transparent 68%),
+    radial-gradient(ellipse 40% 52% at 4%  88%,  rgba(11, 42, 85, 0.8),   transparent 65%),
+    linear-gradient(148deg, #0b2348 0%, #071b3a 55%, #061426 100%);
+  padding: clamp(4.5rem, 9vw, 8rem) 0 clamp(4rem, 8vw, 7.5rem);
+}
+.tuti-gifting__hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% -20%, rgba(184, 138, 46, 0.07), transparent 52%);
+  pointer-events: none;
+}
+
+.tuti-gifting__hero-inner {
+  position: relative;
+  z-index: 1;
+  width: min(66rem, calc(100% - 2rem));
+  margin: 0 auto;
+  display: grid;
+  gap: 1.55rem;
+}
+
+.tuti-gifting__hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #d6b46a;
+}
+
+.tuti-gifting__hero h1 {
+  font-size: clamp(3.2rem, 6.2vw, 6rem);
+  font-weight: 920;
+  letter-spacing: -0.055em;
+  line-height: 0.93;
+  color: #ffffff;
+  margin: 0;
+  max-width: 15ch;
+}
+
+.tuti-gifting__hero p {
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  color: rgba(255, 255, 255, 0.66);
+  max-width: 44rem;
+  line-height: 1.64;
+  margin: 0;
+}
+
+.tuti-gifting__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.45rem;
+}
+
+.tuti-gifting__hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.76rem 1.55rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 140ms, box-shadow 140ms, transform 110ms;
+  white-space: nowrap;
+}
+.tuti-gifting__hero-cta:hover { transform: translateY(-1px); }
+.tuti-gifting__hero-cta:focus-visible { outline: 2px solid #d6b46a; outline-offset: 3px; }
+
+.tuti-gifting__hero-cta--primary {
+  background: linear-gradient(135deg, #d6b46a, #b88a2e);
+  color: #061426;
+  box-shadow: 0 4px 20px rgba(184, 138, 46, 0.38);
+}
+.tuti-gifting__hero-cta--primary:hover {
+  background: linear-gradient(135deg, #e2c77a, #c49a38);
+  box-shadow: 0 6px 28px rgba(184, 138, 46, 0.48);
+}
+.tuti-gifting__hero-cta--secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(247, 232, 195, 0.28);
+}
+.tuti-gifting__hero-cta--secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(247, 232, 195, 0.5);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONTENT WRAPPER
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__content {
+  width: min(84rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3.5rem 0 5.5rem;
+  display: grid;
+  gap: 2.5rem;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ADVISOR PANEL
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__advisor-intro {
+  margin-bottom: 0.25rem;
+}
+.tuti-gifting__advisor-intro h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 900;
+  color: #071b3a;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+  margin: 0;
+}
+.tuti-gifting__advisor-intro p {
+  font-size: 0.88rem;
+  color: rgba(7, 27, 58, 0.52);
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+}
+
+.tuti-gifting__advisor {
+  background: linear-gradient(180deg, #faf7f0 0%, #fbf8f3 100%);
+  border: 1px solid rgba(7, 27, 58, 0.09);
+  border-radius: 1.35rem;
+  padding: 2.25rem 2.5rem;
+  display: grid;
+  gap: 2rem;
+}
+
+/* Step block */
+.tuti-gifting__step { display: grid; gap: 1rem; }
+
+.tuti-gifting__step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.tuti-gifting__step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: #071b3a;
+  color: #d6b46a;
+  font-size: 0.62rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.tuti-gifting__step-label {
+  font-size: 0.97rem;
+  font-weight: 800;
+  color: #071b3a;
+  letter-spacing: -0.01em;
+}
+
+/* ── Occasion chips ─────────────────────────────────────────── */
+.tuti-gifting__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.tuti-gifting__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.05rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(7, 27, 58, 0.16);
+  background: #ffffff;
+  color: rgba(7, 27, 58, 0.65);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 130ms, border-color 130ms, color 130ms, box-shadow 130ms;
+  white-space: nowrap;
+  min-height: 2.5rem;
+}
+.tuti-gifting__chip:hover {
+  border-color: rgba(184, 138, 46, 0.4);
+  color: #071b3a;
+}
+.tuti-gifting__chip:focus-visible { outline: 2px solid #b88a2e; outline-offset: 2px; }
+.tuti-gifting__chip--active {
+  background: #071b3a;
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 10px rgba(7, 27, 58, 0.22);
+}
+.tuti-gifting__chip--active:hover { background: #0b2a55; }
+
+/* ── Mood cards (2×2 on tablet, 4-in-row on desktop) ─────── */
+.tuti-gifting__moods {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.tuti-gifting__mood-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 1rem 1rem 0.9rem;
+  background: #ffffff;
+  border: 1.5px solid rgba(7, 27, 58, 0.12);
+  border-radius: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 130ms, border-color 140ms, box-shadow 130ms, transform 120ms;
+  min-height: 5.2rem;
+}
+.tuti-gifting__mood-card:hover {
+  border-color: rgba(184, 138, 46, 0.42);
+  background: #fdfaf4;
+  transform: translateY(-1px);
+}
+.tuti-gifting__mood-card:focus-visible { outline: 2px solid #b88a2e; outline-offset: 2px; }
+.tuti-gifting__mood-card--active {
+  background: #071b3a;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(7, 27, 58, 0.24);
+  transform: translateY(-1px);
+}
+.tuti-gifting__mood-card--active:hover { background: #0b2a55; }
+
+.tuti-gifting__mood-icon {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184, 138, 46, 0.1);
+  color: #b88a2e;
+  flex-shrink: 0;
+  margin-bottom: 0.1rem;
+  transition: background 130ms, color 130ms;
+}
+.tuti-gifting__mood-card--active .tuti-gifting__mood-icon {
+  background: rgba(214, 180, 106, 0.18);
+  color: #d6b46a;
+}
+.tuti-gifting__mood-label {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #071b3a;
+  line-height: 1.2;
+  transition: color 130ms;
+}
+.tuti-gifting__mood-card--active .tuti-gifting__mood-label { color: #ffffff; }
+.tuti-gifting__mood-desc {
+  font-size: 0.7rem;
+  color: rgba(7, 27, 58, 0.48);
+  line-height: 1.4;
+  transition: color 130ms;
+}
+.tuti-gifting__mood-card--active .tuti-gifting__mood-desc { color: rgba(255, 255, 255, 0.5); }
+
+/* ── Mood insight strip (Task C) ────────────────────────────── */
+.tuti-gifting__mood-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.82rem 1.1rem;
+  background: rgba(7, 27, 58, 0.04);
+  border-radius: 0.7rem;
+  border-left: 2.5px solid #b88a2e;
+  animation: ga-insight-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tuti-gifting__mood-insight-dot {
+  color: #b88a2e;
+  font-size: 0.62rem;
+  flex-shrink: 0;
+  margin-top: 0.18rem;
+  line-height: 1;
+}
+.tuti-gifting__mood-insight-text {
+  font-size: 0.84rem;
+  color: rgba(7, 27, 58, 0.72);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BEST MATCH RESULT PANEL  (Task A) — appears after mood chosen
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__result {
+  background: linear-gradient(135deg, #061426 0%, #0b2348 100%);
+  border: 1px solid rgba(184, 138, 46, 0.22);
+  border-left: 4px solid #b88a2e;
+  border-radius: 1.2rem;
+  padding: 2rem 2.5rem 2.1rem;
+  display: grid;
+  gap: 1rem;
+  box-shadow:
+    0 4px 24px rgba(6, 20, 38, 0.28),
+    0 12px 40px rgba(6, 20, 38, 0.18);
+  animation: ga-result-in 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tuti-gifting__result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.tuti-gifting__result-tag {
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #d6b46a;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.tuti-gifting__result-context {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.04em;
+}
+.tuti-gifting__result-context-sep {
+  color: rgba(184, 138, 46, 0.5);
+  margin: 0 0.15rem;
+}
+
+.tuti-gifting__result-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+}
+.tuti-gifting__result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.8rem;
+  background: rgba(184, 138, 46, 0.18);
+  border: 1px solid rgba(184, 138, 46, 0.28);
+  color: #d6b46a;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+.tuti-gifting__result-text { display: grid; gap: 0.3rem; }
+.tuti-gifting__result-heading {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 920;
+  color: #ffffff;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0;
+}
+.tuti-gifting__result-reason {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.52);
+  line-height: 1.56;
+  margin: 0;
+}
+
+.tuti-gifting__result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 0.3rem;
+}
+.tuti-gifting__result-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.45rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 130ms, box-shadow 130ms, transform 110ms;
+  white-space: nowrap;
+}
+.tuti-gifting__result-cta:hover { transform: translateY(-1px); }
+.tuti-gifting__result-cta:focus-visible { outline: 2px solid #d6b46a; outline-offset: 3px; }
+.tuti-gifting__result-cta--primary {
+  background: linear-gradient(135deg, #d6b46a, #b88a2e);
+  color: #061426;
+  box-shadow: 0 3px 14px rgba(184, 138, 46, 0.38);
+}
+.tuti-gifting__result-cta--primary:hover {
+  background: linear-gradient(135deg, #e2c77a, #c49a38);
+  box-shadow: 0 5px 22px rgba(184, 138, 46, 0.52);
+}
+.tuti-gifting__result-cta--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.tuti-gifting__result-cta--ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CARDS SECTION HEADING
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__cards-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.tuti-gifting__cards-heading h2 {
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-weight: 900;
+  color: #071b3a;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.tuti-gifting__cards-heading-sub {
+  font-size: 0.8rem;
+  color: rgba(7, 27, 58, 0.42);
+  font-weight: 500;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RECOMMENDATION CARDS  (Tasks B + D)
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  transition: gap 140ms;
+}
+
+/* Base card */
+.tuti-gifting__card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.35rem 1.25rem 1.2rem;
+  background: #ffffff;
+  border: 1px solid rgba(7, 27, 58, 0.1);
+  border-top: 3.5px solid var(--ga, #b88a2e);
+  border-radius: 0.95rem;
+  box-shadow:
+    0 1px 3px  rgba(7, 27, 58, 0.05),
+    0 4px 14px rgba(7, 27, 58, 0.07);
+  transition: box-shadow 150ms, transform 130ms, border-color 150ms, opacity 200ms;
+}
+.tuti-gifting__card:hover {
+  box-shadow:
+    0 4px 18px rgba(7, 27, 58, 0.11),
+    0 12px 32px rgba(7, 27, 58, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Colored gradient wash at top (Task D) */
+.tuti-gifting__card-wash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5rem;
+  border-radius: 0.95rem 0.95rem 0 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Card top row — rank badge or secondary label */
+.tuti-gifting__card-top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-height: 1.55rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Best match badge (inline, Task B) */
+.tuti-gifting__card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.62rem;
+  background: var(--ga, #b88a2e);
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 1px 6px rgba(7, 27, 58, 0.15);
+}
+
+/* Secondary rank label (Task B) */
+.tuti-gifting__card-rank {
+  font-size: 0.61rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(7, 27, 58, 0.32);
+}
+
+/* Featured card — ring highlight (Task B) */
+.tuti-gifting__card--featured {
+  background: #fbf8f1;
+  border-top-width: 3.5px;
+  border-color: var(--ga, #b88a2e);
+  box-shadow:
+    0 0 0 2px var(--ga, #b88a2e),
+    0 4px 20px rgba(7, 27, 58, 0.09),
+    0 14px 38px rgba(7, 27, 58, 0.08);
+}
+.tuti-gifting__card--featured:hover {
+  box-shadow:
+    0 0 0 2px var(--ga, #b88a2e),
+    0 8px 28px rgba(7, 27, 58, 0.12),
+    0 18px 44px rgba(7, 27, 58, 0.09);
+}
+
+/* Secondary card when mood is active and this card doesn't match */
+.tuti-gifting__card--secondary {
+  opacity: 0.72;
+  box-shadow:
+    0 1px 2px rgba(7, 27, 58, 0.04),
+    0 2px 8px rgba(7, 27, 58, 0.04);
+  border-color: rgba(7, 27, 58, 0.07);
+}
+.tuti-gifting__card--secondary:hover {
+  opacity: 1;
+  box-shadow:
+    0 4px 16px rgba(7, 27, 58, 0.09),
+    0 10px 28px rgba(7, 27, 58, 0.07);
+}
+
+/* Dark Build a Gift card */
+.tuti-gifting__card--build {
+  background: #071b3a;
+  border-color: rgba(184, 138, 46, 0.28);
+  border-top: 3.5px solid #b88a2e;
+  box-shadow:
+    0 2px 8px  rgba(7, 27, 58, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.tuti-gifting__card--build:hover {
+  box-shadow: 0 8px 32px rgba(7, 27, 58, 0.38);
+}
+.tuti-gifting__card--build.tuti-gifting__card--featured {
+  background: #071b3a;
+  border-color: #b88a2e;
+  box-shadow:
+    0 0 0 2px #b88a2e,
+    0 4px 20px rgba(7, 27, 58, 0.32),
+    0 14px 38px rgba(7, 27, 58, 0.22);
+}
+.tuti-gifting__card--build.tuti-gifting__card--secondary { opacity: 0.72; }
+
+/* Card icon circle */
+.tuti-gifting__card-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.7rem;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184, 138, 46, 0.08);
+  color: var(--ga, #b88a2e);
+  border: 1px solid rgba(184, 138, 46, 0.18);
+  flex-shrink: 0;
+  margin-bottom: 0.2rem;
+  transition: transform 130ms;
+}
+.tuti-gifting__card:hover .tuti-gifting__card-icon { transform: scale(1.06); }
+.tuti-gifting__card--build .tuti-gifting__card-icon {
+  background: rgba(184, 138, 46, 0.15);
+  color: #d6b46a;
+  border-color: rgba(184, 138, 46, 0.28);
+}
+
+/* Eyebrow */
+.tuti-gifting__card-eyebrow {
+  position: relative;
+  z-index: 1;
+  font-size: 0.59rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ga, #b88a2e);
+}
+.tuti-gifting__card--build .tuti-gifting__card-eyebrow { color: #d6b46a; }
+
+/* Title */
+.tuti-gifting__card-title {
+  position: relative;
+  z-index: 1;
+  font-size: 1rem;
+  font-weight: 900;
+  color: #071b3a;
+  line-height: 1.18;
+  letter-spacing: -0.018em;
+  margin: 0.06rem 0 0;
+}
+.tuti-gifting__card--build .tuti-gifting__card-title { color: #ffffff; }
+
+/* Best-for */
+.tuti-gifting__card-best {
+  position: relative;
+  z-index: 1;
+  font-size: 0.71rem;
+  color: rgba(7, 27, 58, 0.48);
+  line-height: 1.4;
+  margin: 0;
+}
+.tuti-gifting__card-best strong {
+  font-weight: 700;
+  color: rgba(7, 27, 58, 0.62);
+}
+.tuti-gifting__card--build .tuti-gifting__card-best       { color: rgba(255, 255, 255, 0.44); }
+.tuti-gifting__card--build .tuti-gifting__card-best strong { color: rgba(255, 255, 255, 0.58); }
+
+/* Body */
+.tuti-gifting__card-body {
+  position: relative;
+  z-index: 1;
+  font-size: 0.79rem;
+  color: rgba(7, 27, 58, 0.55);
+  line-height: 1.56;
+  margin: 0;
+  flex: 1;
+}
+.tuti-gifting__card--build .tuti-gifting__card-body { color: rgba(255, 255, 255, 0.5); }
+.tuti-gifting__card--secondary .tuti-gifting__card-body { color: rgba(7, 27, 58, 0.42); }
+
+/* Card CTA */
+.tuti-gifting__cta {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.58rem 1.1rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  border-radius: 999px;
+  border: 1.5px solid rgba(7, 27, 58, 0.18);
+  background: none;
+  color: #071b3a;
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  transition: background 130ms, border-color 130ms, color 130ms;
+  white-space: nowrap;
+}
+.tuti-gifting__cta:hover {
+  background: #071b3a;
+  color: #ffffff;
+  border-color: #071b3a;
+}
+.tuti-gifting__cta:focus-visible { outline: 2px solid #b88a2e; outline-offset: 2px; }
+.tuti-gifting__card--secondary .tuti-gifting__cta {
+  border-color: rgba(7, 27, 58, 0.11);
+  color: rgba(7, 27, 58, 0.5);
+}
+.tuti-gifting__card--build .tuti-gifting__cta {
+  background: linear-gradient(135deg, #d6b46a, #b88a2e);
+  color: #061426;
+  border-color: transparent;
+  box-shadow: 0 2px 10px rgba(184, 138, 46, 0.3);
+  align-self: stretch;
+  justify-content: center;
+  margin-top: auto;
+  padding: 0.68rem 1.1rem;
+}
+.tuti-gifting__card--build .tuti-gifting__cta:hover {
+  background: linear-gradient(135deg, #e2c77a, #c49a38);
+  box-shadow: 0 4px 18px rgba(184, 138, 46, 0.44);
+  border-color: transparent;
+  color: #061426;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EDITORIAL GUIDE  (Task E)
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__editorial {
+  display: grid;
+  gap: 0;
+  background: #ffffff;
+  border: 1px solid rgba(7, 27, 58, 0.09);
+  border-radius: 1.1rem;
+  overflow: hidden;
+  box-shadow:
+    0 1px 3px  rgba(7, 27, 58, 0.04),
+    0 4px 16px rgba(7, 27, 58, 0.05);
+}
+
+/* Featured advice block */
+.tuti-gifting__editorial-advice {
+  padding: 2rem 2.25rem 1.85rem;
+  background: linear-gradient(180deg, #fbf8f1 0%, #ffffff 80%);
+  border-bottom: 1px solid rgba(7, 27, 58, 0.08);
+  border-left: 4px solid #b88a2e;
+}
+.tuti-gifting__editorial-label {
+  display: block;
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #b88a2e;
+  margin-bottom: 0.75rem;
+}
+.tuti-gifting__editorial-advice-heading {
+  font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+  font-weight: 900;
+  color: #071b3a;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 0.6rem;
+  max-width: 42rem;
+}
+.tuti-gifting__editorial-advice-body {
+  font-size: 0.88rem;
+  color: rgba(7, 27, 58, 0.6);
+  line-height: 1.62;
+  margin: 0;
+  max-width: 56rem;
+}
+
+/* Three advice chips below */
+.tuti-gifting__editorial-chips {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+.tuti-gifting__editorial-chip {
+  padding: 1.35rem 1.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-right: 1px solid rgba(7, 27, 58, 0.08);
+}
+.tuti-gifting__editorial-chip:last-child { border-right: none; }
+
+.tuti-gifting__editorial-chip-label {
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #b88a2e;
+  display: block;
+}
+
+.tuti-gifting__editorial-chip-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.28rem;
+}
+.tuti-gifting__editorial-chip-items li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(7, 27, 58, 0.65);
+  line-height: 1.42;
+}
+.tuti-gifting__editorial-chip-items li::before {
+  content: "✦";
+  color: #b88a2e;
+  font-size: 0.5rem;
+  flex-shrink: 0;
+  margin-top: 0.3rem;
+  opacity: 0.75;
+}
+
+.tuti-gifting__editorial-chip-text {
+  font-size: 0.81rem;
+  color: rgba(7, 27, 58, 0.62);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   TRUST STRIP
+══════════════════════════════════════════════════════════════ */
+.tuti-gifting__trust {
+  border-top: 1px solid rgba(7, 27, 58, 0.09);
+  padding-top: 2.25rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+.tuti-gifting__trust-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+.tuti-gifting__trust-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.45rem;
+  background: rgba(184, 138, 46, 0.08);
+  border: 1px solid rgba(184, 138, 46, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b88a2e;
+  margin-bottom: 0.28rem;
+}
+.tuti-gifting__trust-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #071b3a;
+  line-height: 1.3;
+}
+.tuti-gifting__trust-desc {
+  font-size: 0.73rem;
+  color: rgba(7, 27, 58, 0.52);
+  line-height: 1.52;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .tuti-gifting__cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 960px) {
+  .tuti-gifting__advisor { padding: 1.75rem 1.5rem; }
+  .tuti-gifting__moods   { grid-template-columns: repeat(2, 1fr); }
+  .tuti-gifting__result  { padding: 1.75rem 1.75rem; }
+  .tuti-gifting__result-body { gap: 0.9rem; }
+  .tuti-gifting__editorial-chips { grid-template-columns: 1fr 1fr; }
+  .tuti-gifting__editorial-chip:nth-child(2)  { border-right: none; }
+  .tuti-gifting__editorial-chip:nth-child(3)  {
+    grid-column: 1 / -1;
+    border-right: none;
+    border-top: 1px solid rgba(7, 27, 58, 0.08);
+  }
+  .tuti-gifting__trust { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .tuti-gifting__cards        { grid-template-columns: 1fr; }
+  .tuti-gifting__advisor      { padding: 1.4rem 1.2rem; gap: 1.6rem; }
+  .tuti-gifting__result       { padding: 1.4rem 1.4rem 1.5rem; }
+  .tuti-gifting__result-body  { flex-direction: column; gap: 0.75rem; }
+  .tuti-gifting__result-icon  { width: 2.4rem; height: 2.4rem; }
+  .tuti-gifting__result-actions { flex-direction: column; align-items: stretch; }
+  .tuti-gifting__result-cta   { justify-content: center; }
+  .tuti-gifting__editorial-advice  { padding: 1.5rem 1.35rem 1.4rem; }
+  .tuti-gifting__editorial-chips   { grid-template-columns: 1fr; }
+  .tuti-gifting__editorial-chip    { border-right: none; border-bottom: 1px solid rgba(7, 27, 58, 0.08); padding: 1.1rem 1.35rem; }
+  .tuti-gifting__editorial-chip:last-child { border-bottom: none; }
+  .tuti-gifting__editorial-chip:nth-child(2) { border-right: none; }
+  .tuti-gifting__editorial-chip:nth-child(3) { grid-column: auto; border-top: none; }
+  .tuti-gifting__content { gap: 2rem; padding: 2.5rem 0 4rem; }
+  .tuti-gifting__cta { align-self: stretch; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .tuti-gifting__hero h1 { font-size: clamp(2.5rem, 12.5vw, 3.6rem); }
+  .tuti-gifting__hero-actions { flex-direction: column; align-items: flex-start; }
+  .tuti-gifting__trust { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+@media (max-width: 390px) {
+  .tuti-gifting__chip        { font-size: 0.79rem; padding: 0.44rem 0.88rem; min-height: 2.4rem; }
+  .tuti-gifting__mood-card   { padding: 0.88rem 0.9rem; }
+  .tuti-gifting__advisor     { padding: 1.2rem 1rem; }
+}
