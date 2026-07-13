@@ -21,7 +21,7 @@ const SHORTCUTS = [
   {
     id: "build-box",
     icon: Gift,
-    title: "Build a Gift Box",
+    title: "Build a Gift",
     helper: "Combine scent, sweets and a message",
     tone: "brand",
     action: "onBuildBox",

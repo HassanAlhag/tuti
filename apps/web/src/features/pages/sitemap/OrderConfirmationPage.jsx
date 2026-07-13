@@ -7,6 +7,7 @@ import { formatCurrency } from "@tuti/shared/utils/money.js";
 import {
   BuildGiftCartSummary,
   CustomerTimeline,
+  getCustomerOrderItemName,
   ItemFacts,
   PageHero,
   formatDeliverySummary,
@@ -187,7 +188,7 @@ export function OrderConfirmationPage({ onNavigate }) {
               return (
                 <div className="order-summary-item" key={`${order.orderId}-${item.productId}-${index}`}>
                   <div>
-                    <span>{item.productName}</span>
+                    <span>{getCustomerOrderItemName(item)}</span>
                     <ItemFacts item={item} />
                     {isGiftBuild ? (
                       <>

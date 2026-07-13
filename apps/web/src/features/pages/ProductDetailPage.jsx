@@ -365,7 +365,7 @@ export function ProductDetailPage({
   useSeoMeta({
     title: product ? `${product.name}${productShop?.name ? ` by ${productShop.name}` : ""}` : undefined,
     description: product
-      ? `${product.name} — ${product.description || (product.category === "perfume" ? "Luxury perfume" : product.category === "cake" ? "Custom cake" : "Premium gift set")}. Available on Tuti with cash on delivery.`
+      ? `${product.name} — ${product.description || (product.category === "perfume" ? "Luxury perfume" : product.category === "cake" ? "Custom cake" : "Premium Gift Box")}. Available on Tuti with cash on delivery.`
       : undefined,
     ogImage: product?.imagePath || undefined,
     canonical: product ? `https://tuti.ae/products/${product.slug || product.id}` : undefined,

@@ -10,6 +10,7 @@ import { formatCurrency } from "@tuti/shared/utils/money.js";
 import {
   BuildGiftCartSummary,
   CustomerTimeline,
+  getCustomerOrderItemName,
   ItemFacts,
   customerResolutionSummary,
   formatDeliverySummary,
@@ -1042,7 +1043,7 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
                               className="tuti-account__detail-item"
                             >
                               <div className="tuti-account__detail-item-info">
-                                <div className="tuti-account__detail-item-name">{item.productName}</div>
+                                <div className="tuti-account__detail-item-name">{getCustomerOrderItemName(item)}</div>
                                 <ItemFacts item={item} />
                                 {isGiftBuild ? (
                                   <>

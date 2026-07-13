@@ -25,7 +25,7 @@ const QUICK_ACTIONS = [
     Icon: Gift,
     label: "Build a Gift help",
     desc: "Questions about customization, gift messages, or boutique preparation for your gift build.",
-    action: (nav) => nav("/build-gift"),
+    action: (nav) => nav("/build-a-box"),
   },
   {
     Icon: HelpCircle,
@@ -56,8 +56,8 @@ const FAQ_SECTIONS = [
     heading: "Payments",
     items: [
       { q: "Is cash on delivery available?", a: "Yes. COD is available on all orders. You pay the driver when your order arrives." },
-      { q: "Can I pay by card?", a: "Card payment is available where indicated at checkout. VAT is shown before you confirm your order." },
-      { q: "How long do refunds take?", a: "Approved card refunds are processed within 5–10 business days. COD credits are settled by the seller or applied to your account." },
+      { q: "Can I pay online by card?", a: "Online card payments are not available yet. Cash on Delivery is available at launch, and VAT plus delivery fees are shown before you confirm your order." },
+      { q: "How long do refunds take?", a: "Approved refunds are handled according to the order payment method and support review. For COD orders, our team will confirm the refund or credit process with you." },
     ],
   },
   {

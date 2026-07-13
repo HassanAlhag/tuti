@@ -77,7 +77,7 @@ const CATEGORY_STORIES = {
   },
   gift_box: {
     eyebrow: "Gift Boxes",
-    description: "Browse ready-made graduation gifts, occasion boxes, curated packages, and boutique gift sets.",
+    description: "Browse ready-made graduation gifts, occasion boxes, curated packages, and boutique Gift Boxes.",
   },
 };
 

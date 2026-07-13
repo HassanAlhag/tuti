@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
-/* D1.3 — Gift Builder Preview. Four-step educational section explaining the Build Your Box flow.
+/* D1.3 — Gift Builder Preview. Four-step educational section explaining the Build a Gift flow.
    Positioned after D1.2 Path Selector per D0.3 §3. CSS: gift-preview- prefix in storefront.css.
    Primary CTA lives inside the head (visible before steps). Secondary CTA follows the steps. */
 
@@ -13,7 +13,7 @@ const GIFT_STEPS = [
   {
     num: "02",
     title: "Add something sweet",
-    body: "Pair it with an artisan cake or dessert made for the occasion.",
+    body: "Choose eligible add-ons and finishing touches from the same boutique.",
   },
   {
     num: "03",
@@ -23,7 +23,7 @@ const GIFT_STEPS = [
   {
     num: "04",
     title: "Gift it beautifully",
-    body: "One box, one delivery, one considered gift — ready for the moment.",
+    body: "One boutique prepares the customized gift — ready for the moment.",
   },
 ];
 

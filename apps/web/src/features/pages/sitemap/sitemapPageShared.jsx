@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, Gift, PackageCheck, PauseCircle, ShoppingBag, Sparkles, User } from "lucide-react";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
+import { normalizeCustomerProductName } from "../../../ui/customer/commerce/commerceUtils.js";
 
 export function PageHero({ kicker, title, text, children }) {
   return (
@@ -43,6 +44,10 @@ export function formatPaymentMethod(method) {
   if (method === "cod") return "Cash on delivery";
   if (method === "card") return "Card payment";
   return method || "Payment method pending";
+}
+
+export function getCustomerOrderItemName(item) {
+  return normalizeCustomerProductName(item?.productName || item?.name || item?.title || "Untitled product");
 }
 
 export function customerResolutionSummary(resolutionDecision) {

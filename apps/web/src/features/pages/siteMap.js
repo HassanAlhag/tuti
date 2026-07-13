@@ -188,7 +188,7 @@ export const supportSections = [
   { title: "FAQs", path: "/customer-service/faqs", text: "Fast answers for common shopping questions." },
   { title: "Shipping & Delivery", path: "/customer-service/shipping", text: "Delivery timing, fees, and regional coverage." },
   { title: "Returns & Exchange", path: "/customer-service/returns", text: "Return eligibility, exchange rules, and dispute handling." },
-  { title: "Payment Methods", path: "/customer-service/payment-methods", text: "Cards, wallet payments, authorization, COD, payout holds, and reserve logic." },
+  { title: "Payment Methods", path: "/customer-service/payment-methods", text: "Cash on Delivery at launch, VAT visibility, delivery fees, and refund handling." },
   { title: "Track Order", path: "/customer-service/track-order", text: "Order status and delivery timeline tracking." },
   { title: "Size Guide", path: "/customer-service/size-guide", text: "30ml, 50ml, 75ml, 100ml, and discovery sizes." },
 ];
@@ -263,7 +263,7 @@ export const legalContent = {
       },
       {
         heading: "Orders and payment",
-        body: "Orders placed through the platform constitute an offer to purchase. Boutiques may accept or decline orders. Cash on delivery is the primary payment method. Card payment is available where indicated. VAT and applicable fees are shown at checkout before you confirm.",
+        body: "Orders placed through the platform constitute an offer to purchase. Boutiques may accept or decline orders. Cash on Delivery is available at launch. Online card payments are not available yet. VAT, delivery fees, and applicable charges are shown at checkout before you confirm.",
       },
       {
         heading: "Returns and refunds",
@@ -327,7 +327,7 @@ export const legalContent = {
       },
       {
         heading: "Refund timeline",
-        body: "Approved refunds for card payments are processed within 5–10 business days. COD order credits are applied to your Tuti account or settled directly by the seller.",
+        body: "Approved refunds are handled according to the order payment method and support review. For COD orders, our team will confirm the refund or credit process with you.",
       },
       {
         heading: "Non-returnable items",

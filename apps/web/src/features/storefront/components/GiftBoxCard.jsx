@@ -82,7 +82,7 @@ export function GiftBoxCard({ product, shop, onAddToCart, onViewProduct }) {
       <div className="gift-card-body catalog-card-body">
         <div className="catalog-card-header">
           <span className="catalog-card-seller">{sellerName}</span>
-          <span className="catalog-card-chip">Gift set</span>
+          <span className="catalog-card-chip">Gift Box</span>
         </div>
         <h3 className="gift-card-name catalog-card-title">
           <button className="product-title-button catalog-card-title-button" onClick={viewProduct} type="button">

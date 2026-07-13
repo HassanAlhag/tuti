@@ -8,7 +8,7 @@ export function FinalCTA({ onBuildGift, onExploreGifts }) {
         <span className="eyebrow final-cta-eyebrow">Ready to gift?</span>
         <h2 id="final-cta-heading">Build something they'll remember.</h2>
         <p className="final-cta-sub">
-          A perfume, a cake and a personal message — gifted together in one box.
+          Choose from boutique gifts or personalize a Build a Gift order prepared by one trusted seller.
         </p>
         <div className="final-cta-actions">
           <button
@@ -23,7 +23,7 @@ export function FinalCTA({ onBuildGift, onExploreGifts }) {
             type="button"
             onClick={onExploreGifts}
           >
-            Explore gift sets
+            Explore Gift Boxes
           </button>
         </div>
       </div>

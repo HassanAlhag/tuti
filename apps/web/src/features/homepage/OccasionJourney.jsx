@@ -17,7 +17,7 @@ const OCCASIONS = [
     modifier: "occasion-panel--birthday",
     eyebrow: "Celebrate them",
     title: "Birthday",
-    desc: "Perfumes, cakes and gift sets that feel like they were chosen just for them.",
+    desc: "Perfumes, cakes and Gift Boxes that feel like they were chosen just for them.",
     cta: "Shop birthday gifts",
     image: cakeCategoryImage,
     imagePosition: "center",

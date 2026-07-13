@@ -370,7 +370,7 @@ export function ClientLayout({ route, shopCategory, onNavigate, onGoToSeller, ch
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search ${brand.name} for perfumes, cakes, gift sets…`}
+                placeholder="Search perfumes, cakes, Gift Boxes…"
                 aria-label="Search"
               />
               <button className="cl-search-btn" type="submit" aria-label="Search">

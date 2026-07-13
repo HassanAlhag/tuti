@@ -23,8 +23,14 @@ export function getProductId(product = {}) {
   return product.id || product._id || product.productId || product.slug || "";
 }
 
+export function normalizeCustomerProductName(value) {
+  const raw = String(value || "").trim();
+  if (/^(build your box|build a box|build-your-box)$/i.test(raw)) return "Build a Gift";
+  return raw;
+}
+
 export function getProductName(product = {}) {
-  return product.name || product.title || product.productName || "Untitled product";
+  return normalizeCustomerProductName(product.name || product.title || product.productName || "Untitled product");
 }
 
 export function getProductCategory(product = {}) {
@@ -66,7 +72,7 @@ export function getProductTypeLabel(product = {}) {
   if (product.collection) return product.collection;
 
   const category = getProductCategory(product);
-  if (category === "gift_box") return "Gift set";
+  if (category === "gift_box") return "Gift Box";
   if (category === "cake") return "Cake";
   if (category === "perfume") return "Perfume";
   return "Tuti pick";

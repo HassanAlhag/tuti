@@ -40,9 +40,9 @@ function getSellerAppUrl() {
 
 // ── Static content ───────────────────────────────────────────────────
 const SELLER_TYPES = [
-  { icon: Sparkles, title: "Perfume shops",    text: "Oud, musk, floral, fresh, amber, minis, and perfume gift sets." },
+  { icon: Sparkles, title: "Perfume shops",    text: "Oud, musk, floral, fresh, amber, minis, and perfume Gift Boxes." },
   { icon: Cake,     title: "Cake shops",        text: "Signature cakes, custom celebration cakes, cupcakes, and cheesecakes." },
-  { icon: Gift,     title: "Gift box makers",   text: "Perfume + cake bundles, Eid gifts, corporate gifting, and build-your-box offers." },
+  { icon: Gift,     title: "Gift box makers",   text: "Perfumes, cakes, desserts, and Gift Boxes prepared by your own boutique." },
 ];
 
 // Updated to reflect the new application-first flow
@@ -57,7 +57,7 @@ const CATEGORIES = [
   { value: "perfume",  label: "Perfume / oud / fragrance" },
   { value: "cake",     label: "Cakes & celebration" },
   { value: "dessert",  label: "Desserts & sweets" },
-  { value: "gift_box", label: "Gift boxes & bundles" },
+  { value: "gift_box", label: "Gift Boxes and boutique packages" },
   { value: "mixed",    label: "Mixed / multi-category" },
   { value: "other",    label: "Other" },
 ];
@@ -474,10 +474,10 @@ export function SellerLandingPage() {
         <aside className="seller-landing-card">
           <span className="seller-landing-card-icon"><WalletCards size={22} /></span>
           <h2>Payment designed for marketplace trust</h2>
-          <p>Customer pays Tuti, seller delivers, payout releases after delivery and admin reserve checks.</p>
+          <p>Customers pay Cash on Delivery at launch. Each boutique prepares its own products and packaging, with payout handled after delivery and admin checks.</p>
           <div className="seller-landing-flow">
-            <span>Authorize</span>
-            <span>Reserve</span>
+            <span>COD</span>
+            <span>Prepare</span>
             <span>Deliver</span>
             <span>Payout</span>
           </div>
@@ -552,8 +552,8 @@ export function SellerLandingPage() {
         <div className="seller-payment-grid">
           <article>
             <BadgeDollarSign size={20} />
-            <strong>Card orders</strong>
-            <p>Authorize payment, capture after stock confirmation, hold vendor net until delivery/reserve checks pass.</p>
+            <strong>Online payments</strong>
+            <p>Online card payments are not available yet. Launch orders use Cash on Delivery while payment gateway work remains pending.</p>
           </article>
           <article>
             <WalletCards size={20} />

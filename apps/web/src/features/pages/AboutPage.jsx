@@ -5,7 +5,7 @@ import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
 export function AboutPage({ roles }) {
   useSeoMeta({
     title: "Our Story — Tuti Marketplace",
-    description: "Tuti is a luxury marketplace for perfumes, cakes, and gift sets — named after Tuti Island where the Blue and White Nile meet.",
+    description: "Tuti is a luxury marketplace for perfumes, cakes, and Gift Boxes — named after Tuti Island where the Blue and White Nile meet.",
     canonical: "https://tuti.ae/about",
   });
   return (

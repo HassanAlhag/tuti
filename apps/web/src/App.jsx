@@ -351,7 +351,7 @@ export default function App() {
 
   function submitCheckout() {
     if (!items.length) return;
-    setCheckoutNote("Payment authorized. Vendor payout stays pending until delivery and reserve checks pass.");
+    setCheckoutNote("Cash on Delivery order received. Boutique payout stays pending until delivery and admin checks pass.");
   }
 
   // ── Render ──────────────────────────────────────────────────────

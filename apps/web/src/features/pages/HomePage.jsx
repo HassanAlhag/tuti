@@ -323,16 +323,16 @@ function BoutiqueSection({ goToSellerBrand, goToShops, shops = [] }) {
 }
 
 function BuildGiftSection({ goToBuildBox }) {
-  const steps = ["Choose perfume", "Add cake or treat", "Personalize", "Checkout COD"];
+  const steps = ["Choose a boutique", "Pick eligible items", "Personalize", "Checkout COD"];
 
   return (
     <section className="home-build-module" aria-labelledby="home-build-title">
       <TutiCard variant="commerce" padding="lg" className="home-build-card">
         <div className="home-build-card__copy">
           <TutiBadge tone="champagne">Build a gift</TutiBadge>
-          <h2 id="home-build-title">Create a premium box without guessing.</h2>
+          <h2 id="home-build-title">Create a premium gift without guessing.</h2>
           <p>
-            Start with a fragrance, pair it with a cake or dessert from the same boutique, add a note and move to checkout.
+            Start with one boutique, choose from its eligible products, add a note and finishing touches, then move to checkout.
           </p>
           <div className="home-build-card__steps">
             {steps.map((step, index) => (
@@ -340,7 +340,7 @@ function BuildGiftSection({ goToBuildBox }) {
             ))}
           </div>
           <TutiButton size="lg" onClick={goToBuildBox} icon={<ArrowRight size={18} />} iconPosition="right">
-            Build your box
+            Build a Gift
           </TutiButton>
         </div>
         <div className="home-build-card__visual" aria-hidden="true">
@@ -360,11 +360,11 @@ function FinalHomeCta({ goToBuildBox, goToShop }) {
         <div>
           <TutiBadge tone="cyan">Ready to gift</TutiBadge>
           <h2 id="home-final-cta-title">Start with the product. Finish with the moment.</h2>
-          <p>Browse premium gifts or build a coordinated box for the next delivery window.</p>
+          <p>Browse premium gifts or customize a Build a Gift order with one boutique for the next delivery window.</p>
         </div>
         <div className="home-final-cta__actions">
           <TutiButton size="lg" onClick={() => goToShop?.("all")}>Shop all gifts</TutiButton>
-          <TutiButton variant="ghost" size="lg" onClick={goToBuildBox}>Build a box</TutiButton>
+          <TutiButton variant="ghost" size="lg" onClick={goToBuildBox}>Build a Gift</TutiButton>
         </div>
       </TutiCard>
     </section>
