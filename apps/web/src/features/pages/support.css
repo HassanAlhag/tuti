@@ -1,0 +1,644 @@
+/* support.css — Premium trust center: Support, Contact, Legal (.tuti-support / .tuti-contact / .tuti-legal) */
+
+/* ── Design tokens ───────────────────────────────────────────────────── */
+:root {
+  --sc-navy: #071b3a;
+  --sc-royal: #0b2a55;
+  --sc-gold: #b88a2e;
+  --sc-gold-light: #d6b46a;
+  --sc-porcelain: #fbf8f1;
+  --sc-surface: #ffffff;
+  --sc-border: rgba(7, 27, 58, 0.08);
+  --sc-muted: rgba(7, 27, 58, 0.48);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SUPPORT PAGE  .tuti-support
+   ══════════════════════════════════════════════════════════════════════ */
+
+.tuti-support {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.tuti-support__body {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.tuti-support__hero {
+  background: linear-gradient(160deg, var(--sc-navy) 0%, var(--sc-royal) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.tuti-support__hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 80% at 80% 40%, rgba(184,138,46,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.tuti-support__hero-inner {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 2.75rem;
+}
+.tuti-support__hero-kicker {
+  display: block;
+  color: var(--sc-gold);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.tuti-support__hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--sc-porcelain);
+  line-height: 1.2;
+  margin: 0 0 0.6rem;
+}
+.tuti-support__hero-sub {
+  font-size: 0.88rem;
+  color: rgba(251,248,241,0.56);
+  max-width: 42rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Quick Actions ────────────────────────────────────────────────────── */
+.tuti-support__quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+}
+.tuti-support__quick-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem 1.1rem 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--sc-border);
+  background: var(--sc-surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tuti-support__quick-action:hover {
+  border-color: rgba(184,138,46,0.35);
+  box-shadow: 0 2px 10px rgba(184,138,46,0.08);
+}
+.tuti-support__quick-action-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: rgba(184,138,46,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sc-gold);
+  flex-shrink: 0;
+}
+.tuti-support__quick-action-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sc-navy);
+  line-height: 1.3;
+}
+.tuti-support__quick-action-desc {
+  font-size: 0.73rem;
+  color: var(--sc-muted);
+  line-height: 1.5;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────────────── */
+.tuti-support__faq {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+.tuti-support__faq-section {
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--sc-border);
+  background: var(--sc-surface);
+  padding: 1.25rem 1.25rem 1rem;
+}
+.tuti-support__faq-heading {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--sc-gold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin: 0 0 0.75rem;
+}
+.tuti-support__faq-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.tuti-support__faq-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(7,27,58,0.06);
+}
+.tuti-support__faq-item:last-child { border-bottom: none; }
+.tuti-support__faq-q {
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: var(--sc-navy);
+  line-height: 1.4;
+  margin: 0 0 0.2rem;
+}
+.tuti-support__faq-a {
+  font-size: 0.74rem;
+  color: var(--sc-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Sign-in prompt (unauthenticated, within support page) ────────────── */
+.tuti-support__signin {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  background: linear-gradient(160deg, var(--sc-navy) 0%, var(--sc-royal) 100%);
+  border-radius: 0.875rem;
+  padding: 1.75rem 2rem;
+  margin-top: 0.5rem;
+}
+.tuti-support__signin-text h3 {
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: var(--sc-porcelain);
+  margin: 0 0 0.35rem;
+}
+.tuti-support__signin-text p {
+  font-size: 0.78rem;
+  color: rgba(251,248,241,0.54);
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+.tuti-support__signin-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Ticket bridge (authenticated, above tickets) ─────────────────────── */
+.tuti-support__bridge {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid rgba(184,138,46,0.18);
+  background: rgba(184,138,46,0.04);
+  margin-bottom: 1.5rem;
+}
+.tuti-support__bridge-text strong {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--sc-navy);
+  margin-bottom: 0.2rem;
+}
+.tuti-support__bridge-text p {
+  font-size: 0.74rem;
+  color: var(--sc-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+.tuti-support__bridge-actions {
+  display: flex;
+  gap: 0.625rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONTACT PAGE  .tuti-contact
+   ══════════════════════════════════════════════════════════════════════ */
+
+.tuti-contact {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.tuti-contact__body {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.tuti-contact__hero {
+  background: linear-gradient(160deg, var(--sc-navy) 0%, var(--sc-royal) 100%);
+}
+.tuti-contact__hero-inner {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 2.75rem;
+}
+.tuti-contact__hero-kicker {
+  display: block;
+  color: var(--sc-gold);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.tuti-contact__hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--sc-porcelain);
+  margin: 0 0 0.6rem;
+  line-height: 1.2;
+}
+.tuti-contact__hero-sub {
+  font-size: 0.88rem;
+  color: rgba(251,248,241,0.56);
+  max-width: 40rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Contact cards ────────────────────────────────────────────────────── */
+.tuti-contact__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+.tuti-contact__card {
+  border-radius: 0.875rem;
+  border: 1.5px solid var(--sc-border);
+  background: var(--sc-surface);
+  padding: 1.4rem 1.4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.tuti-contact__card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  background: rgba(184,138,46,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sc-gold);
+}
+.tuti-contact__card-title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--sc-navy);
+  margin: 0;
+}
+.tuti-contact__card-desc {
+  font-size: 0.76rem;
+  color: var(--sc-muted);
+  line-height: 1.55;
+  margin: 0;
+  flex: 1;
+}
+.tuti-contact__card-cta {
+  margin-top: auto;
+}
+
+/* ── Contact note ─────────────────────────────────────────────────────── */
+.tuti-contact__note {
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--sc-border);
+  background: var(--sc-surface);
+}
+.tuti-contact__note-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--sc-navy);
+  margin: 0 0 0.4rem;
+}
+.tuti-contact__note-body {
+  font-size: 0.75rem;
+  color: var(--sc-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LEGAL PAGE  .tuti-legal
+   ══════════════════════════════════════════════════════════════════════ */
+
+.tuti-legal {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.tuti-legal__body {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.tuti-legal__hero {
+  background: linear-gradient(160deg, var(--sc-navy) 0%, var(--sc-royal) 100%);
+}
+.tuti-legal__hero-inner {
+  width: min(76rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.75rem 0 2.5rem;
+}
+.tuti-legal__hero-kicker {
+  display: block;
+  color: var(--sc-gold);
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.tuti-legal__hero-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--sc-porcelain);
+  margin: 0 0 0.5rem;
+  line-height: 1.2;
+}
+.tuti-legal__hero-sub {
+  font-size: 0.85rem;
+  color: rgba(251,248,241,0.52);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Index grid ───────────────────────────────────────────────────────── */
+.tuti-legal__index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.875rem;
+  margin-bottom: 2rem;
+}
+.tuti-legal__index-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--sc-border);
+  background: var(--sc-surface);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.tuti-legal__index-card:hover {
+  border-color: rgba(184,138,46,0.32);
+  box-shadow: 0 2px 10px rgba(184,138,46,0.07);
+}
+.tuti-legal__index-card-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: rgba(184,138,46,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sc-gold);
+  flex-shrink: 0;
+}
+.tuti-legal__index-card-text { flex: 1; min-width: 0; }
+.tuti-legal__index-card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--sc-navy);
+  margin: 0 0 0.15rem;
+}
+.tuti-legal__index-card-desc {
+  font-size: 0.71rem;
+  color: var(--sc-muted);
+  margin: 0;
+}
+.tuti-legal__index-card-chevron { color: rgba(7,27,58,0.28); flex-shrink: 0; }
+
+/* ── Trust strip ──────────────────────────────────────────────────────── */
+.tuti-legal__trust {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid var(--sc-border);
+  background: rgba(7,27,58,0.02);
+  margin-bottom: 2rem;
+}
+.tuti-legal__trust-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.73rem;
+  color: var(--sc-muted);
+}
+.tuti-legal__trust-item svg { color: var(--sc-gold); flex-shrink: 0; }
+
+/* ── Article (legal detail) ───────────────────────────────────────────── */
+.tuti-legal__article {
+  max-width: 52rem;
+}
+.tuti-legal__back {
+  margin-bottom: 1.5rem;
+}
+.tuti-legal__toc {
+  padding: 1rem 1.25rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--sc-border);
+  background: rgba(7,27,58,0.02);
+  margin-bottom: 1.75rem;
+}
+.tuti-legal__toc-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--sc-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+}
+.tuti-legal__toc ol {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.tuti-legal__toc li { font-size: 0.77rem; }
+.tuti-legal__toc a { color: var(--sc-navy); text-decoration: none; }
+.tuti-legal__toc a:hover { color: var(--sc-gold); }
+
+.tuti-legal__section {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--sc-border);
+}
+.tuti-legal__section:last-of-type { border-bottom: none; }
+.tuti-legal__section-heading {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--sc-navy);
+  margin: 0 0 0.5rem;
+}
+.tuti-legal__section-body {
+  font-size: 0.79rem;
+  color: rgba(7,27,58,0.68);
+  line-height: 1.7;
+  margin: 0;
+}
+/* Accordion toggle */
+.tuti-legal__section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  gap: 0.75rem;
+}
+.tuti-legal__section-toggle:hover .tuti-legal__section-heading { color: var(--sc-gold); }
+.tuti-legal__section-chevron {
+  flex-shrink: 0;
+  color: rgba(7, 27, 58, 0.3);
+  transition: transform 0.2s ease;
+}
+.tuti-legal__section-chevron--open { transform: rotate(0deg); }
+.tuti-legal__section-chevron:not(.tuti-legal__section-chevron--open) { transform: rotate(-90deg); }
+
+.tuti-legal__footer-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--sc-muted);
+  padding-top: 1.25rem;
+}
+.tuti-legal__footer-note svg { color: var(--sc-gold); flex-shrink: 0; }
+
+/* ── Account CTA (authenticated, replacing bridge) ────────────────────── */
+.tuti-support__account-cta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 0.875rem;
+  border: 1.5px solid rgba(184, 138, 46, 0.18);
+  background: rgba(184, 138, 46, 0.04);
+  margin-bottom: 1.5rem;
+}
+.tuti-support__account-cta-text strong {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--sc-navy);
+  margin-bottom: 0.25rem;
+}
+.tuti-support__account-cta-text p {
+  font-size: 0.76rem;
+  color: var(--sc-muted);
+  margin: 0;
+  line-height: 1.55;
+}
+.tuti-support__account-cta-actions {
+  display: flex;
+  gap: 0.625rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DARK MODE
+   ══════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sc-surface: #0f1f3a;
+    --sc-border: rgba(251,248,241,0.08);
+    --sc-muted: rgba(251,248,241,0.45);
+  }
+  .tuti-support__quick-action,
+  .tuti-support__faq-section,
+  .tuti-contact__card,
+  .tuti-contact__note,
+  .tuti-legal__index-card,
+  .tuti-legal__toc { background: rgba(255,255,255,0.04); }
+  .tuti-support__quick-action-label,
+  .tuti-support__faq-q,
+  .tuti-contact__card-title,
+  .tuti-contact__note-heading,
+  .tuti-legal__index-card-title,
+  .tuti-legal__section-heading { color: var(--sc-porcelain); }
+  .tuti-legal__section-body { color: rgba(251,248,241,0.55); }
+  .tuti-legal__trust { background: rgba(255,255,255,0.02); }
+  .tuti-support__bridge { border-color: rgba(184,138,46,0.14); background: rgba(184,138,46,0.03); }
+  .tuti-support__bridge-text strong { color: var(--sc-porcelain); }
+  .tuti-legal__toc a { color: var(--sc-porcelain); }
+}
+:root[data-theme="dark"] {
+  --sc-surface: #0f1f3a;
+  --sc-border: rgba(251,248,241,0.08);
+  --sc-muted: rgba(251,248,241,0.45);
+}
+:root[data-theme="dark"] .tuti-support__quick-action,
+:root[data-theme="dark"] .tuti-support__faq-section,
+:root[data-theme="dark"] .tuti-contact__card,
+:root[data-theme="dark"] .tuti-contact__note,
+:root[data-theme="dark"] .tuti-legal__index-card,
+:root[data-theme="dark"] .tuti-legal__toc { background: rgba(255,255,255,0.04); }
+:root[data-theme="dark"] .tuti-support__quick-action-label,
+:root[data-theme="dark"] .tuti-support__faq-q,
+:root[data-theme="dark"] .tuti-contact__card-title,
+:root[data-theme="dark"] .tuti-contact__note-heading,
+:root[data-theme="dark"] .tuti-legal__index-card-title,
+:root[data-theme="dark"] .tuti-legal__section-heading { color: var(--sc-porcelain); }
+:root[data-theme="dark"] .tuti-legal__section-body { color: rgba(251,248,241,0.55); }
+:root[data-theme="dark"] .tuti-legal__toc a { color: var(--sc-porcelain); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 960px) {
+  .tuti-support__faq { grid-template-columns: 1fr; }
+  .tuti-support__signin { flex-direction: column; }
+}
+@media (max-width: 640px) {
+  .tuti-support__hero-title,
+  .tuti-contact__hero-title { font-size: 1.55rem; }
+  .tuti-support__quick-actions { grid-template-columns: 1fr 1fr; }
+  .tuti-contact__cards { grid-template-columns: 1fr; }
+  .tuti-legal__index { grid-template-columns: 1fr; }
+  .tuti-support__bridge { flex-direction: column; gap: 1rem; }
+  .tuti-support__account-cta { flex-direction: column; gap: 1rem; }
+}
+@media (max-width: 390px) {
+  .tuti-support__hero-title,
+  .tuti-contact__hero-title,
+  .tuti-legal__hero-title { font-size: 1.3rem; }
+  .tuti-support__quick-actions { grid-template-columns: 1fr; }
+  .tuti-support__signin-actions { flex-direction: column; }
+  .tuti-support__signin-actions .primary-action,
+  .tuti-support__signin-actions .ghost-action { width: 100%; justify-content: center; }
+}

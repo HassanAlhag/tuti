@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Heart, HelpCircle, MapPin, PackageCheck, Pencil, Plus, Settings, ShoppingBag, Star, Trash2, User } from "lucide-react";
-import { authApi, ordersApi } from "@tuti/shared/api/client.js";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Heart, HelpCircle, MapPin, MessageSquare, PackageCheck, Pencil, Plus, Settings, ShoppingBag, Star, Trash2, User } from "lucide-react";
+import { authApi, ordersApi, supportTicketsApi } from "@tuti/shared/api/client.js";
 import { useWishlistStore } from "@tuti/shared/store/wishlistStore.js";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
@@ -19,6 +20,51 @@ import {
 } from "./sitemapPageShared.jsx";
 import "../account.css";
 
+const SUPPORT_CATEGORIES = [
+  { value: "general",          label: "General question" },
+  { value: "account",          label: "Account help" },
+  { value: "order_help",       label: "Order question" },
+  { value: "delivery_help",    label: "Delivery question" },
+  { value: "payment_question", label: "Payment question" },
+  { value: "other",            label: "Something else" },
+];
+
+function supportStatusLabel(status) {
+  switch (status) {
+    case "Open":                  return "Open";
+    case "In Progress":           return "In progress";
+    case "Waiting for Customer":  return "Waiting for your reply";
+    case "Waiting for Seller":    return "With the boutique";
+    case "Waiting for Driver":    return "With delivery";
+    case "Resolved":              return "Resolved";
+    case "Closed":                return "Closed";
+    default:                      return status || "Open";
+  }
+}
+
+function supportStatusKey(status) {
+  switch (status) {
+    case "In Progress":          return "progress";
+    case "Waiting for Customer": return "waiting-reply";
+    case "Waiting for Seller":
+    case "Waiting for Driver":   return "waiting-team";
+    case "Resolved":
+    case "Closed":               return "resolved";
+    default:                     return "open";
+  }
+}
+
+function formatSupportDate(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const diff = Date.now() - d.getTime();
+  if (diff < 60000) return "just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(d);
+}
+
 export function AccountPage({ getShop, onNavigate, products = [] }) {
   const { user, isAuthenticated, updateUser } = useAuthStore();
   const { ids: wishlistIds, toggle: toggleWishlist } = useWishlistStore();
@@ -29,6 +75,14 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
   const [disputeNotes, setDisputeNotes] = useState({});
   const [feedbackLoading, setFeedbackLoading] = useState({});
   const [deepLinkNotice, setDeepLinkNotice] = useState("");
+
+  const qc = useQueryClient();
+  const [supportPanel, setSupportPanel] = useState("list");
+  const [selectedSupportId, setSelectedSupportId] = useState("");
+  const [supportForm, setSupportForm] = useState({ subject: "", category: "general", orderId: "", description: "" });
+  const [supportFormError, setSupportFormError] = useState("");
+  const [supportReplyDraft, setSupportReplyDraft] = useState("");
+  const [supportReplyError, setSupportReplyError] = useState("");
 
   const [profileEdit, setProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState({ name: "", phone: "" });
@@ -145,6 +199,53 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
     }
   }
 
+  const ticketsQuery = useQuery({
+    queryKey: ["account-support-tickets", authenticated, user?.email],
+    queryFn: () => supportTicketsApi.list({ limit: 20 }),
+    enabled: authenticated && accountTab === "support",
+    staleTime: 30000,
+  });
+  const ticketDetailQuery = useQuery({
+    queryKey: ["account-support-ticket", selectedSupportId],
+    queryFn: () => supportTicketsApi.get(selectedSupportId),
+    enabled: authenticated && Boolean(selectedSupportId),
+  });
+  const createTicketMutation = useMutation({
+    mutationFn: (payload) => supportTicketsApi.create(payload),
+    onSuccess: () => {
+      setSupportFormError("");
+      setSupportForm({ subject: "", category: "general", orderId: "", description: "" });
+      qc.invalidateQueries({ queryKey: ["account-support-tickets"] });
+      setSupportPanel("list");
+    },
+    onError: (err) => setSupportFormError(err.message || "Could not send your request."),
+  });
+  const replyTicketMutation = useMutation({
+    mutationFn: ({ ticketId, message }) => supportTicketsApi.reply(ticketId, { message }),
+    onSuccess: () => {
+      setSupportReplyDraft("");
+      setSupportReplyError("");
+      qc.invalidateQueries({ queryKey: ["account-support-ticket", selectedSupportId] });
+    },
+    onError: (err) => setSupportReplyError(err.message || "Could not send your reply."),
+  });
+
+  function handleSupportCreate(e) {
+    e.preventDefault();
+    const subject = supportForm.subject.trim();
+    const description = supportForm.description.trim();
+    if (!subject || !description) { setSupportFormError("Please fill in the subject and message."); return; }
+    createTicketMutation.mutate({ subject, description, category: supportForm.category, orderId: supportForm.orderId || null });
+  }
+
+  const supportTickets = ticketsQuery.data?.tickets || [];
+  const supportOpenCount = supportTickets.filter((t) => ["Open", "In Progress"].includes(t.status)).length;
+  const supportWaitingCount = supportTickets.filter((t) => t.status === "Waiting for Customer").length;
+  const supportResolvedCount = supportTickets.filter((t) => ["Resolved", "Closed"].includes(t.status)).length;
+  const selectedTicketData = ticketDetailQuery.data
+    || supportTickets.find((t) => t.id === selectedSupportId || t.ticketNumber === selectedSupportId)
+    || null;
+
   useEffect(() => {
     if (authenticated && user?.addresses) setAddresses(user.addresses);
   }, [authenticated, user?.addresses]);
@@ -173,6 +274,13 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
       });
     return () => { mounted = false; };
   }, [authenticated, user?.email]);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab && ["orders", "profile", "addresses", "wishlist", "settings", "support"].includes(tab)) {
+      setAccountTab(tab);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authenticated || ordersState.loading) return;
@@ -233,7 +341,7 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
             <div className="tuti-account__hero-stats-inner">
               <div className="tuti-account__hero-stat">
                 <span className="tuti-account__hero-stat-value">{activeOrders}</span>
-                <span className="tuti-account__hero-stat-label">Active</span>
+                <span className="tuti-account__hero-stat-label">Active orders</span>
               </div>
               <div className="tuti-account__hero-stat">
                 <span className="tuti-account__hero-stat-value">{deliveredOrders}</span>
@@ -242,7 +350,7 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
               {customizedGifts > 0 ? (
                 <div className="tuti-account__hero-stat">
                   <span className="tuti-account__hero-stat-value">{customizedGifts}</span>
-                  <span className="tuti-account__hero-stat-label">Gift builds</span>
+                  <span className="tuti-account__hero-stat-label">Customized gifts</span>
                 </div>
               ) : null}
             </div>
@@ -300,6 +408,7 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
                 { key: "addresses", label: "Addresses", Icon: MapPin },
                 { key: "wishlist",  label: "Wishlist",  Icon: Heart },
                 { key: "settings",  label: "Settings",  Icon: Settings },
+                { key: "support",   label: "Support",   Icon: HelpCircle },
               ].map(({ key, label, Icon }) => (
                 <button
                   aria-current={accountTab === key ? "page" : undefined}
@@ -552,6 +661,286 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
               </section>
             ) : null}
 
+            {/* ── Support ──────────────────────────────────────────────── */}
+            {accountTab === "support" ? (
+              <section className="account-form-section">
+                <div className="tuti-account__support-tab">
+
+                  {/* Intro */}
+                  <div className="tuti-account__support-intro">
+                    <div className="tuti-account__support-intro-copy">
+                      <h2 className="tuti-account__support-intro-title">My requests</h2>
+                      <p className="tuti-account__support-intro-body">
+                        Support requests are for general account and product help.
+                        Need help with an order outcome? Start from your order details — it connects your request to the right boutique, delivery, and payment record.
+                      </p>
+                    </div>
+                    <div className="tuti-account__support-intro-actions">
+                      {supportPanel !== "create" ? (
+                        <button
+                          className="primary-action compact"
+                          type="button"
+                          onClick={() => { setSupportPanel("create"); setSupportFormError(""); }}
+                        >
+                          <Plus size={15} aria-hidden="true" /> New request
+                        </button>
+                      ) : null}
+                      <button className="ghost-action compact" type="button" onClick={() => setAccountTab("orders")}>
+                        My orders
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Status summary pills */}
+                  {!ticketsQuery.isLoading && supportTickets.length > 0 && supportPanel === "list" ? (
+                    <div className="tuti-account__support-summary">
+                      {supportOpenCount > 0 ? (
+                        <span className="tuti-account__support-summary-pill tuti-account__support-summary-pill--open">
+                          Open · {supportOpenCount}
+                        </span>
+                      ) : null}
+                      {supportWaitingCount > 0 ? (
+                        <span className="tuti-account__support-summary-pill tuti-account__support-summary-pill--waiting">
+                          Waiting for your reply · {supportWaitingCount}
+                        </span>
+                      ) : null}
+                      {supportResolvedCount > 0 ? (
+                        <span className="tuti-account__support-summary-pill tuti-account__support-summary-pill--resolved">
+                          Resolved · {supportResolvedCount}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* Create form */}
+                  {supportPanel === "create" ? (
+                    <div className="tuti-account__support-create">
+                      <div className="tuti-account__support-create-head">
+                        <button
+                          className="ghost-action compact"
+                          type="button"
+                          onClick={() => { setSupportPanel("list"); setSupportFormError(""); }}
+                        >
+                          ← Back
+                        </button>
+                        <h3>What do you need help with?</h3>
+                      </div>
+                      <form className="tuti-account__support-form" onSubmit={handleSupportCreate}>
+                        <div className="tuti-account__support-form-row">
+                          <label className="tuti-account__support-form-label">
+                            <span>Subject</span>
+                            <input
+                              required
+                              placeholder="Describe your question briefly"
+                              value={supportForm.subject}
+                              onChange={(e) => setSupportForm((f) => ({ ...f, subject: e.target.value }))}
+                            />
+                          </label>
+                          <label className="tuti-account__support-form-label">
+                            <span>Category</span>
+                            <select
+                              value={supportForm.category}
+                              onChange={(e) => setSupportForm((f) => ({ ...f, category: e.target.value }))}
+                            >
+                              {SUPPORT_CATEGORIES.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        <label className="tuti-account__support-form-label">
+                          <span>Related order <em>(optional)</em></span>
+                          <select
+                            value={supportForm.orderId}
+                            onChange={(e) => setSupportForm((f) => ({ ...f, orderId: e.target.value }))}
+                          >
+                            <option value="">No order linked</option>
+                            {ordersState.orders.map((order) => (
+                              <option key={order.orderId} value={order.orderId}>
+                                {order.orderId} · {order.status || "Pending"}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="tuti-account__support-form-label">
+                          <span>Message</span>
+                          <textarea
+                            required
+                            rows={4}
+                            placeholder="Tell us what happened and what help you need."
+                            value={supportForm.description}
+                            onChange={(e) => setSupportForm((f) => ({ ...f, description: e.target.value }))}
+                          />
+                        </label>
+                        {supportFormError ? <p className="error-state checkout-error">{supportFormError}</p> : null}
+                        <div className="account-form-actions">
+                          <button className="primary-action compact" type="submit" disabled={createTicketMutation.isPending}>
+                            {createTicketMutation.isPending ? "Sending…" : "Send request"}
+                          </button>
+                          <button
+                            className="ghost-action compact"
+                            type="button"
+                            onClick={() => { setSupportPanel("list"); setSupportFormError(""); }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  ) : null}
+
+                  {/* Ticket detail */}
+                  {supportPanel === "detail" && selectedTicketData ? (
+                    <div className="tuti-account__support-detail">
+                      <div className="tuti-account__support-detail-head">
+                        <button
+                          className="ghost-action compact"
+                          type="button"
+                          onClick={() => { setSupportPanel("list"); setSupportReplyError(""); }}
+                        >
+                          ← All requests
+                        </button>
+                        <span className={`tuti-account__support-status tuti-account__support-status--${supportStatusKey(selectedTicketData.status)}`}>
+                          {supportStatusLabel(selectedTicketData.status)}
+                        </span>
+                      </div>
+                      <h3 className="tuti-account__support-detail-subject">{selectedTicketData.subject}</h3>
+                      {selectedTicketData.description ? (
+                        <p className="tuti-account__support-detail-desc">{selectedTicketData.description}</p>
+                      ) : null}
+                      {selectedTicketData.orderId ? (
+                        <div className="tuti-account__support-detail-order">
+                          <PackageCheck size={13} aria-hidden="true" />
+                          <span>Linked to order </span>
+                          <button
+                            className="ghost-action compact"
+                            style={{ padding: "0 0.25rem", fontSize: "0.76rem", minHeight: "auto" }}
+                            type="button"
+                            onClick={() => {
+                              setSelectedOrderId(selectedTicketData.orderId);
+                              setAccountTab("orders");
+                            }}
+                          >
+                            {selectedTicketData.orderId}
+                          </button>
+                        </div>
+                      ) : null}
+                      <div className="tuti-account__support-thread">
+                        <span className="tuti-account__support-thread-label">Conversation</span>
+                        {ticketDetailQuery.isLoading ? (
+                          <p className="muted-label" style={{ fontSize: "0.76rem" }}>Loading conversation…</p>
+                        ) : Array.isArray(selectedTicketData?.messages) && selectedTicketData.messages.length > 0 ? (
+                          selectedTicketData.messages.map((msg) => (
+                            <div
+                              key={msg.id}
+                              className={`tuti-account__support-message tuti-account__support-message--${msg.role === "customer" ? "customer" : "team"}`}
+                            >
+                              <div className="tuti-account__support-message-head">
+                                <strong>{msg.role === "customer" ? "You" : "Tuti Support"}</strong>
+                                <span>{formatSupportDate(msg.createdAt)}</span>
+                              </div>
+                              <p>{msg.body}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="muted-label" style={{ fontSize: "0.76rem" }}>No messages yet.</p>
+                        )}
+                      </div>
+                      {!["Resolved", "Closed"].includes(selectedTicketData?.status) ? (
+                        <div className="tuti-account__support-reply">
+                          <textarea
+                            rows={3}
+                            placeholder="Write your reply here…"
+                            value={supportReplyDraft}
+                            onChange={(e) => setSupportReplyDraft(e.target.value)}
+                          />
+                          {supportReplyError ? <p className="error-state" style={{ fontSize: "0.72rem" }}>{supportReplyError}</p> : null}
+                          <div className="account-form-actions">
+                            <button
+                              className="primary-action compact"
+                              type="button"
+                              disabled={replyTicketMutation.isPending || !supportReplyDraft.trim()}
+                              onClick={() => {
+                                if (!selectedSupportId || !supportReplyDraft.trim()) return;
+                                replyTicketMutation.mutate({ ticketId: selectedSupportId, message: supportReplyDraft.trim() });
+                              }}
+                            >
+                              {replyTicketMutation.isPending ? "Sending…" : "Send reply"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="muted-label" style={{ fontSize: "0.76rem" }}>This request has been resolved.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* Ticket list */}
+                  {supportPanel === "list" ? (
+                    <div className="tuti-account__support-list">
+                      {ticketsQuery.isLoading ? (
+                        <p className="muted-label" style={{ fontSize: "0.76rem" }}>Loading your requests…</p>
+                      ) : ticketsQuery.isError ? (
+                        <p className="error-state checkout-error">Could not load requests. Please try again.</p>
+                      ) : !supportTickets.length ? (
+                        <div className="account-empty-state">
+                          <MessageSquare size={22} aria-hidden="true" />
+                          <h3>No requests yet</h3>
+                          <p>Open a support request for general account or product help.</p>
+                          <button
+                            className="primary-action compact"
+                            type="button"
+                            onClick={() => { setSupportPanel("create"); setSupportFormError(""); }}
+                          >
+                            <Plus size={15} aria-hidden="true" /> New request
+                          </button>
+                        </div>
+                      ) : supportTickets.map((ticket) => {
+                        const tid = ticket.id || ticket.ticketNumber;
+                        return (
+                          <button
+                            key={tid}
+                            className={`tuti-account__support-card${selectedSupportId === tid && supportPanel === "detail" ? " tuti-account__support-card--active" : ""}`}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSupportId(tid);
+                              setSupportPanel("detail");
+                              setSupportReplyDraft("");
+                              setSupportReplyError("");
+                            }}
+                          >
+                            <div className="tuti-account__support-card-top">
+                              <strong className="tuti-account__support-card-subject">{ticket.subject}</strong>
+                              <span className={`tuti-account__support-status tuti-account__support-status--${supportStatusKey(ticket.status)}`}>
+                                {supportStatusLabel(ticket.status)}
+                              </span>
+                            </div>
+                            {ticket.orderId ? (
+                              <span className="tuti-account__support-card-meta">Order {ticket.orderId}</span>
+                            ) : null}
+                            <div className="tuti-account__support-card-footer">
+                              {ticket.updatedAt ? (
+                                <span className="tuti-account__support-card-meta">Updated {formatSupportDate(ticket.updatedAt)}</span>
+                              ) : null}
+                              <span className="tuti-account__support-card-cta">View conversation →</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {/* Link to Support Center */}
+                  <div className="tuti-account__support-link-row">
+                    <button className="ghost-action compact" type="button" onClick={() => onNavigate("/support")}>
+                      Browse support articles
+                    </button>
+                  </div>
+
+                </div>
+              </section>
+            ) : null}
+
             {/* ── Orders ───────────────────────────────────────────────── */}
             {accountTab === "orders" ? (
               <section className="account-orders-layout">
@@ -792,10 +1181,10 @@ export function AccountPage({ getShop, onNavigate, products = [] }) {
                       {/* Support CTA */}
                       <div className="tuti-account__support">
                         <div className="tuti-account__support-text">
-                          <strong>Need help?</strong>
-                          <span>Our support team can assist with any order question.</span>
+                          <strong>Need help with this order?</strong>
+                          <span>Start here — we'll connect your request to the right boutique and delivery record.</span>
                         </div>
-                        <button className="ghost-action compact" onClick={() => onNavigate("/support")} type="button">
+                        <button className="ghost-action compact" onClick={() => setAccountTab("support")} type="button">
                           <HelpCircle size={15} aria-hidden="true" /> Get help
                         </button>
                       </div>
