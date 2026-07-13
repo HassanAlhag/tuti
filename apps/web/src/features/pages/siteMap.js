@@ -206,11 +206,12 @@ export const accountSections = [
 export const checkoutSteps = ["Cart", "Checkout", "Payment", "Order Confirmation"];
 
 export const legalPages = [
-  { title: "Privacy Policy",    slug: "privacy-policy",    path: "/legal/privacy-policy" },
-  { title: "Terms & Conditions", slug: "terms-conditions", path: "/legal/terms-conditions" },
-  { title: "Cookie Policy",     slug: "cookie-policy",     path: "/legal/cookie-policy" },
-  { title: "Refund Policy",     slug: "refund-policy",     path: "/legal/refund-policy" },
-  { title: "Shipping Policy",   slug: "shipping-policy",   path: "/legal/shipping-policy" },
+  { title: "Privacy Policy",       slug: "privacy-policy",    path: "/legal/privacy-policy",    desc: "How we collect, use, and protect your information." },
+  { title: "Terms & Conditions",   slug: "terms-conditions",  path: "/legal/terms-conditions",  desc: "Marketplace rules, ordering, and your rights as a customer." },
+  { title: "Refund & Cancellation", slug: "refund-policy",   path: "/legal/refund-policy",     desc: "Eligibility, timelines, and how to request a refund." },
+  { title: "Delivery Policy",      slug: "shipping-policy",   path: "/legal/shipping-policy",   desc: "Delivery areas, timelines, fees, and boutique preparation." },
+  { title: "Build a Gift Terms",   slug: "build-gift-terms",  path: "/legal/build-gift-terms",  desc: "Customization rules, pricing, and boutique preparation for gift orders." },
+  { title: "Cookie Policy",        slug: "cookie-policy",     path: "/legal/cookie-policy",     desc: "Essential and optional cookies used on this platform." },
 ];
 
 export const legalContent = {
@@ -246,7 +247,7 @@ export const legalContent = {
   },
   "terms-conditions": {
     title: "Terms & Conditions",
-    updated: "1 June 2026",
+    updated: "1 July 2026",
     sections: [
       {
         heading: "Acceptance",
@@ -254,15 +255,19 @@ export const legalContent = {
       },
       {
         heading: "Marketplace relationship",
-        body: "Tuti is a marketplace connecting buyers and independent sellers. Tuti is not the seller of record for products listed by third-party sellers. Each seller is responsible for product quality, accuracy of listings, and fulfilment.",
+        body: "Tuti is a marketplace connecting buyers and independent boutique sellers. Tuti facilitates the transaction but is not the seller of record for products listed by third-party boutiques. Each boutique is responsible for product quality, accuracy of listings, preparation, packaging, and fulfilment of their own items.",
+      },
+      {
+        heading: "Boutique preparation",
+        body: "Each boutique on Tuti prepares its own products and gift packaging independently. When a cart contains items from multiple boutiques, each boutique prepares its own portion of the order separately. Tuti does not combine, assemble, or repackage products from different boutiques into a single parcel.",
       },
       {
         heading: "Orders and payment",
-        body: "Orders placed through the platform constitute an offer to purchase. Sellers may accept or decline orders. Cash on delivery is the primary payment method. Card payment is available where indicated.",
+        body: "Orders placed through the platform constitute an offer to purchase. Boutiques may accept or decline orders. Cash on delivery is the primary payment method. Card payment is available where indicated. VAT and applicable fees are shown at checkout before you confirm.",
       },
       {
         heading: "Returns and refunds",
-        body: "Return and refund eligibility is governed by the Refund Policy. Perishable items (cakes, desserts) are non-returnable unless delivered damaged or incorrect.",
+        body: "Return and refund eligibility is governed by the Refund & Cancellation Policy. Perishable items (cakes, desserts) are non-returnable unless delivered damaged or incorrect. Build a Gift orders are customized and prepared to order; eligibility may differ.",
       },
       {
         heading: "Prohibited use",
@@ -301,16 +306,24 @@ export const legalContent = {
     ],
   },
   "refund-policy": {
-    title: "Refund Policy",
-    updated: "1 June 2026",
+    title: "Refund & Cancellation Policy",
+    updated: "1 July 2026",
     sections: [
       {
         heading: "Eligibility",
-        body: "Products may be returned within 14 days of delivery if they are unused, undamaged, and in original packaging. Perishable items (cakes, desserts) are not eligible for return unless delivered damaged or incorrect.",
+        body: "Products may be returned within 14 days of delivery if they are unused, undamaged, and in original packaging. Perishable items (cakes, desserts) are not eligible for return unless delivered damaged or incorrect. Eligibility may also depend on the boutique's own preparation status — for example, a cake that has already been baked and is ready for delivery cannot be cancelled.",
+      },
+      {
+        heading: "Cancellations",
+        body: "You may cancel an order before the boutique begins preparation. Once preparation has started (status: Processing or later), cancellation may not be possible, particularly for food items and customized gifts. Contact support as quickly as possible if you need to cancel.",
+      },
+      {
+        heading: "Build a Gift orders",
+        body: "Build a Gift orders are customized and prepared to order by the boutique. Cancellation is only possible before the boutique confirms and begins preparation. Gift message and customization details cannot be amended after the order is confirmed.",
       },
       {
         heading: "How to request a refund",
-        body: "Open a support ticket from your account page, attach photos of the item, and describe the issue. Our team aims to respond within 24 hours.",
+        body: "Open a support ticket from your account or orders page, attach photos of the item if relevant, and describe the issue. Our team aims to respond within 24 hours. For order outcome disputes (wrong item, damaged delivery), use the dispute flow from your order detail.",
       },
       {
         heading: "Refund timeline",
@@ -318,25 +331,37 @@ export const legalContent = {
       },
       {
         heading: "Non-returnable items",
-        body: "Personalised items (custom cake messages, engraved gifts), opened perfume bottles, and digital items are non-returnable.",
+        body: "Items that cannot be returned include: opened perfume bottles; perishable items (cakes, desserts) unless damaged or incorrect; Build a Gift customized orders once preparation has started; and any item explicitly marked non-returnable at the time of purchase.",
       },
     ],
   },
   "shipping-policy": {
-    title: "Shipping Policy",
-    updated: "1 June 2026",
+    title: "Delivery Policy",
+    updated: "1 July 2026",
     sections: [
       {
         heading: "Delivery areas",
-        body: "Tuti currently delivers within the UAE. Delivery is managed by seller-assigned drivers or platform-contracted delivery partners.",
+        body: "Tuti currently delivers within the UAE. Delivery is managed by boutique-assigned drivers or platform-contracted delivery partners.",
+      },
+      {
+        heading: "Boutique preparation time",
+        body: "Delivery timelines depend on both boutique preparation and physical delivery. Each boutique prepares its own products independently. Food items (cakes, desserts) may have a preparation lead time of 1–2 days. Fragrance and gift box orders are typically ready to dispatch within 24 hours of confirmation. Preparation time is separate from the delivery transit time.",
       },
       {
         heading: "Delivery times",
-        body: "Standard delivery is 1–3 business days. Same-day delivery is available from select sellers in Dubai and Abu Dhabi. Estimated delivery dates are shown at checkout.",
+        body: "Standard delivery is 1–3 business days from the point the boutique is ready. Same-day delivery is available from select boutiques in Dubai and Abu Dhabi. Estimated delivery dates are shown at checkout and in your order details.",
+      },
+      {
+        heading: "Multiple boutiques",
+        body: "If your order contains items from more than one boutique, each boutique prepares and dispatches its own items separately. You may receive items at different times. Each boutique's status is shown in your order details.",
+      },
+      {
+        heading: "Allergy and food preparation",
+        body: "Allergy notes submitted at checkout are passed to the boutique as instructions. However, allergy notes do not replace direct confirmation with the boutique where needed. For severe allergies, contact us before placing an order.",
       },
       {
         heading: "Delivery fees",
-        body: "Delivery fees are set per seller and shown at checkout. Some sellers offer free delivery on orders above a minimum basket value.",
+        body: "Delivery fees are set per boutique and shown at checkout. Some boutiques offer free delivery on orders above a minimum basket value.",
       },
       {
         heading: "Cash on delivery",
@@ -345,6 +370,40 @@ export const legalContent = {
       {
         heading: "Failed deliveries",
         body: "If a delivery attempt fails, the driver will contact you to reschedule. Three failed attempts may result in order cancellation.",
+      },
+    ],
+  },
+  "build-gift-terms": {
+    title: "Build a Gift — Terms & Customization",
+    updated: "1 July 2026",
+    sections: [
+      {
+        heading: "What Build a Gift is",
+        body: "Build a Gift is Tuti's guided customization flow. It lets you configure a gift box from products offered by one boutique — choosing an occasion, gift type, wrap style, selected items, and a personalized message. The complete configuration is attached to your cart item and sent to the boutique when you place your order.",
+      },
+      {
+        heading: "One boutique per Build a Gift order",
+        body: "Each Build a Gift is prepared entirely by a single boutique. Tuti does not combine products from multiple boutiques into one gift box. If you would like gifts from different boutiques, you can add separate products to your cart alongside your Build a Gift item.",
+      },
+      {
+        heading: "Pricing and VAT",
+        body: "The price for your Build a Gift configuration is shown in your cart before checkout. VAT is applied at checkout. The final price includes all customization options you have selected. No additional charges are added after checkout.",
+      },
+      {
+        heading: "Gift message",
+        body: "A personalized gift message can be added during the Build a Gift flow. The message is shared with the boutique and included with your gift. The message cannot be amended after the order is confirmed.",
+      },
+      {
+        heading: "Preparation and delivery",
+        body: "Build a Gift orders are prepared to order by the boutique. Preparation may take longer than standard products, especially for food elements. Estimated delivery is shown at checkout. The boutique's preparation status is visible in your order details.",
+      },
+      {
+        heading: "Cancellation and returns",
+        body: "Build a Gift orders can only be cancelled before the boutique begins preparation. Once preparation starts, the order cannot be cancelled or amended. Food items included in a gift build are non-returnable unless delivered damaged or incorrect. See the Refund & Cancellation Policy for full details.",
+      },
+      {
+        heading: "Customization data",
+        body: "Your customization choices (occasion, items, message, wrap) are stored as part of your order and visible in your account. Tuti retains this data as part of your order record in accordance with the Privacy Policy.",
       },
     ],
   },
