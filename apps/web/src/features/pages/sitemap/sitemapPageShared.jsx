@@ -239,6 +239,50 @@ export function OrderStatusTimeline({ order }) {
   );
 }
 
+const CUSTOMER_TIMELINE_STEPS = [
+  { id: "placed",    label: "Order placed",           matches: (_s) => true },
+  { id: "confirmed", label: "Confirmed by boutique",   matches: (s) => ["Confirmed","Processing","Ready for Delivery","Shipped","Delivered","Customer Accepted"].includes(s) },
+  { id: "preparing", label: "Preparing your order",    matches: (s) => ["Processing","Ready for Delivery","Shipped","Delivered","Customer Accepted"].includes(s) },
+  { id: "ready",     label: "Ready for delivery",      matches: (s) => ["Ready for Delivery","Shipped","Delivered","Customer Accepted"].includes(s) },
+  { id: "delivered", label: "Delivered",               matches: (s) => ["Delivered","Customer Accepted"].includes(s) },
+];
+
+const CUSTOMER_TIMELINE_EXCEPTIONAL = {
+  "Cancelled": { heading: "Order cancelled",   note: "This order has been cancelled." },
+  "Refunded":  { heading: "Refund processed",  note: "A refund has been applied to your original payment method." },
+  "Disputed":  { heading: "Under review",      note: "A dispute is under review with our support team." },
+};
+
+export function CustomerTimeline({ order }) {
+  const status = order?.status || "Pending";
+  const exceptional = CUSTOMER_TIMELINE_EXCEPTIONAL[status];
+  if (exceptional) {
+    return (
+      <div className="tuti-account__timeline">
+        <div className="tuti-account__timeline-exceptional">
+          <strong>{exceptional.heading}</strong>
+          <span>{exceptional.note}</span>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="tuti-account__timeline">
+      {CUSTOMER_TIMELINE_STEPS.map((step, i) => {
+        const isDone = step.matches(status);
+        const isActive = isDone && (i + 1 >= CUSTOMER_TIMELINE_STEPS.length || !CUSTOMER_TIMELINE_STEPS[i + 1].matches(status));
+        const cls = ["tuti-account__timeline-step", isDone && "tuti-account__timeline-step--done", isActive && "tuti-account__timeline-step--active"].filter(Boolean).join(" ");
+        return (
+          <div key={step.id} className={cls}>
+            <div className="tuti-account__timeline-dot" aria-hidden="true" />
+            <span className="tuti-account__timeline-label">{step.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function compactOrderItem(item) {
   const orderItem = {
     productId: item.id,

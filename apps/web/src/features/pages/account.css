@@ -1,0 +1,694 @@
+/* account.css — Premium customer account & order design system (.tuti-account__*) */
+
+/* ── Main wrapper (full-width, replaces page-shell) ───────────────────── */
+.tuti-account {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.tuti-account__body {
+  width: min(90rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.tuti-account__hero {
+  background: linear-gradient(160deg, #071b3a 0%, #0b2a55 100%);
+  position: relative;
+  overflow: hidden;
+}
+.tuti-account__hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 82% 10%, #b88a2e12 0%, transparent 60%);
+  pointer-events: none;
+}
+.tuti-account__hero-main {
+  width: min(90rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.75rem 0 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.tuti-account__hero-kicker {
+  display: block;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b88a2e;
+  margin-bottom: 0.3rem;
+}
+.tuti-account__hero-title {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #fbf8f1;
+  margin: 0 0 0.35rem;
+  line-height: 1.2;
+}
+.tuti-account__hero-sub {
+  font-size: 0.82rem;
+  color: rgba(251, 248, 241, 0.5);
+  max-width: 34rem;
+  line-height: 1.55;
+}
+.tuti-account__hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding-top: 0.2rem;
+}
+
+/* Hero stats strip */
+.tuti-account__hero-stats {
+  border-top: 1px solid rgba(251, 248, 241, 0.09);
+}
+.tuti-account__hero-stats-inner {
+  width: min(90rem, calc(100% - 2rem));
+  margin: 0 auto;
+  display: flex;
+  padding: 1rem 0;
+}
+.tuti-account__hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding-right: 2rem;
+}
+.tuti-account__hero-stat + .tuti-account__hero-stat {
+  padding-left: 2rem;
+  border-left: 1px solid rgba(251, 248, 241, 0.1);
+}
+.tuti-account__hero-stat:last-child { padding-right: 0; }
+.tuti-account__hero-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fbf8f1;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.tuti-account__hero-stat-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(251, 248, 241, 0.42);
+  font-weight: 500;
+}
+
+/* ── Customer Timeline ────────────────────────────────────────────────── */
+.tuti-account__timeline {
+  padding: 1.1rem 0;
+  border-top: 1px solid rgba(7, 27, 58, 0.07);
+  border-bottom: 1px solid rgba(7, 27, 58, 0.07);
+  margin: 0.75rem 0 1rem;
+}
+.tuti-account__timeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.325rem 0;
+  position: relative;
+}
+.tuti-account__timeline-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0.46875rem;
+  top: 1.25rem;
+  height: calc(100% - 0.375rem);
+  width: 1.5px;
+  background: rgba(7, 27, 58, 0.09);
+}
+.tuti-account__timeline-step--done:not(:last-child)::after {
+  background: rgba(184, 138, 46, 0.22);
+}
+.tuti-account__timeline-dot {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(7, 27, 58, 0.16);
+  background: var(--surface, #fff);
+  flex-shrink: 0;
+  margin-top: 0.08rem;
+  position: relative;
+  z-index: 1;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.tuti-account__timeline-step--done .tuti-account__timeline-dot {
+  border-color: rgba(184, 138, 46, 0.45);
+  background: rgba(184, 138, 46, 0.07);
+}
+.tuti-account__timeline-step--active .tuti-account__timeline-dot {
+  border-color: #b88a2e;
+  background: #b88a2e;
+  box-shadow: 0 0 0 3px rgba(184, 138, 46, 0.17);
+}
+.tuti-account__timeline-label {
+  font-size: 0.76rem;
+  color: rgba(7, 27, 58, 0.35);
+  line-height: 1.4;
+  padding-top: 0.05rem;
+}
+.tuti-account__timeline-step--done .tuti-account__timeline-label {
+  color: rgba(7, 27, 58, 0.5);
+}
+.tuti-account__timeline-step--active .tuti-account__timeline-label {
+  color: #071b3a;
+  font-weight: 600;
+}
+.tuti-account__timeline-exceptional {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.7rem 0.875rem;
+  background: rgba(7, 27, 58, 0.03);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(7, 27, 58, 0.07);
+}
+.tuti-account__timeline-exceptional strong {
+  font-size: 0.76rem;
+  color: #071b3a;
+}
+.tuti-account__timeline-exceptional span {
+  font-size: 0.72rem;
+  color: rgba(7, 27, 58, 0.52);
+  line-height: 1.4;
+}
+
+/* ── Order cards (left panel) ─────────────────────────────────────────── */
+.tuti-account__order-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  border: 1.5px solid rgba(7, 27, 58, 0.08);
+  background: var(--surface, #fff);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+.tuti-account__order-card:last-child { margin-bottom: 0; }
+.tuti-account__order-card:hover {
+  border-color: rgba(184, 138, 46, 0.32);
+  box-shadow: 0 2px 8px rgba(7, 27, 58, 0.06);
+}
+.tuti-account__order-card--active {
+  border-color: #b88a2e;
+  box-shadow: 0 0 0 2px rgba(184, 138, 46, 0.13);
+}
+.tuti-account__order-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.tuti-account__order-card-id {
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+.tuti-account__order-card-preview {
+  font-size: 0.76rem;
+  color: rgba(7, 27, 58, 0.58);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tuti-account__order-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.tuti-account__order-card-date {
+  font-size: 0.67rem;
+  color: rgba(7, 27, 58, 0.4);
+}
+.tuti-account__order-card-total {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Order detail panel (right) ───────────────────────────────────────── */
+.tuti-account__detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+.tuti-account__detail-eyebrow {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(7, 27, 58, 0.38);
+  font-weight: 600;
+  margin-bottom: 0.18rem;
+}
+.tuti-account__detail-id {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+.tuti-account__detail-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+.tuti-account__detail-total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Meta strip: delivery + payment */
+.tuti-account__detail-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem 1.5rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid rgba(7, 27, 58, 0.07);
+  border-bottom: 1px solid rgba(7, 27, 58, 0.07);
+}
+.tuti-account__detail-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.tuti-account__detail-meta-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(7, 27, 58, 0.37);
+  font-weight: 600;
+}
+.tuti-account__detail-meta-value {
+  font-size: 0.77rem;
+  color: #071b3a;
+  line-height: 1.4;
+}
+
+/* Items */
+.tuti-account__detail-items {
+  padding: 0.25rem 0;
+}
+.tuti-account__detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid rgba(7, 27, 58, 0.05);
+}
+.tuti-account__detail-item:first-child { padding-top: 0; }
+.tuti-account__detail-item:last-child { border-bottom: none; padding-bottom: 0; }
+.tuti-account__detail-item-info { flex: 1; min-width: 0; }
+.tuti-account__detail-item-name {
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: #071b3a;
+  margin-bottom: 0.1rem;
+}
+.tuti-account__detail-item-right {
+  flex-shrink: 0;
+  text-align: right;
+}
+.tuti-account__detail-item-qty {
+  display: block;
+  font-size: 0.65rem;
+  color: rgba(7, 27, 58, 0.4);
+  margin-bottom: 0.1rem;
+}
+.tuti-account__detail-item-price {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Gift badge */
+.tuti-account__gift-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(184, 138, 46, 0.08);
+  color: #7a5a1a;
+  border: 1px solid rgba(184, 138, 46, 0.2);
+  border-radius: 99px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin: 0.25rem 0 0.1rem;
+}
+
+/* Order/gift note */
+.tuti-account__detail-note {
+  padding: 0.7rem 0.875rem;
+  background: rgba(7, 27, 58, 0.025);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(7, 27, 58, 0.06);
+  margin: 0.625rem 0;
+  font-size: 0.77rem;
+  color: #071b3a;
+  line-height: 1.5;
+}
+.tuti-account__detail-note p { margin: 0; }
+.tuti-account__detail-note p + p { margin-top: 0.25rem; }
+
+/* Total row */
+.tuti-account__detail-totals {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(7, 27, 58, 0.07);
+  margin-top: 0.25rem;
+}
+.tuti-account__detail-totals-label {
+  font-size: 0.77rem;
+  color: rgba(7, 27, 58, 0.5);
+}
+.tuti-account__detail-totals-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #071b3a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Delivery feedback box */
+.tuti-account__detail-feedback {
+  padding: 0.75rem 0.875rem;
+  background: rgba(7, 27, 58, 0.02);
+  border: 1px solid rgba(7, 27, 58, 0.07);
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: #071b3a;
+}
+
+/* Support CTA */
+.tuti-account__support {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  background: rgba(7, 27, 58, 0.02);
+  border: 1px solid rgba(7, 27, 58, 0.07);
+  border-radius: 0.5rem;
+  margin-top: 0.625rem;
+}
+.tuti-account__support-text { flex: 1; min-width: 0; }
+.tuti-account__support-text strong {
+  display: block;
+  font-size: 0.76rem;
+  color: #071b3a;
+  margin-bottom: 0.06rem;
+}
+.tuti-account__support-text span {
+  font-size: 0.68rem;
+  color: rgba(7, 27, 58, 0.46);
+}
+
+/* View full order link */
+.tuti-account__detail-link {
+  display: block;
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(7, 27, 58, 0.4);
+  padding: 0.625rem;
+  margin-top: 0.125rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  transition: color 0.15s;
+}
+.tuti-account__detail-link:hover { color: #071b3a; text-decoration: underline; }
+
+/* ── Guest state ─────────────────────────────────────────────────────── */
+.tuti-account__guest {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 0.25rem;
+}
+.tuti-account__guest-prompt {
+  background: linear-gradient(145deg, #071b3a 0%, #0b2a55 100%);
+  border-radius: 1rem;
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.tuti-account__guest-prompt h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  color: #fbf8f1;
+}
+.tuti-account__guest-prompt p {
+  font-size: 0.82rem;
+  color: rgba(251, 248, 241, 0.62);
+  margin: 0;
+  line-height: 1.6;
+}
+.tuti-account__guest-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.tuti-account__guest-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.tuti-account__guest-card {
+  background: var(--surface, #fff);
+  border: 1px solid rgba(7, 27, 58, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.tuti-account__guest-card-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: rgba(184, 138, 46, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b88a2e;
+  flex-shrink: 0;
+}
+.tuti-account__guest-card strong {
+  display: block;
+  font-size: 0.78rem;
+  color: #071b3a;
+  margin-bottom: 0.14rem;
+}
+.tuti-account__guest-card span {
+  font-size: 0.7rem;
+  color: rgba(7, 27, 58, 0.48);
+  line-height: 1.4;
+}
+
+/* ── Confirmation page hero ──────────────────────────────────────────── */
+.tuti-account__conf-hero {
+  background: linear-gradient(160deg, #071b3a 0%, #0b2a55 100%);
+  position: relative;
+  overflow: hidden;
+}
+.tuti-account__conf-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 80% at 15% 55%, #2da58e0d 0%, transparent 60%);
+  pointer-events: none;
+}
+.tuti-account__conf-hero-inner {
+  width: min(90rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.tuti-account__conf-hero-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  border: 2px solid #2da58e;
+  background: rgba(45, 165, 142, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2da58e;
+  flex-shrink: 0;
+}
+.tuti-account__conf-hero-info { flex: 1; min-width: 0; }
+.tuti-account__conf-hero-kicker {
+  display: block;
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #2da58e;
+  margin-bottom: 0.25rem;
+}
+.tuti-account__conf-hero-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fbf8f1;
+  margin: 0 0 0.2rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.tuti-account__conf-hero-sub {
+  font-size: 0.8rem;
+  color: rgba(251, 248, 241, 0.48);
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .tuti-account__timeline-dot {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .tuti-account__timeline-step--done .tuti-account__timeline-dot { background: rgba(184, 138, 46, 0.15); }
+  .tuti-account__timeline-label { color: rgba(251, 248, 241, 0.32); }
+  .tuti-account__timeline-step--done .tuti-account__timeline-label { color: rgba(251, 248, 241, 0.52); }
+  .tuti-account__timeline-step--active .tuti-account__timeline-label { color: #fbf8f1; }
+  .tuti-account__timeline-exceptional { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.07); }
+  .tuti-account__timeline-exceptional strong { color: #fbf8f1; }
+  .tuti-account__timeline-exceptional span { color: rgba(251, 248, 241, 0.48); }
+
+  .tuti-account__order-card { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.09); }
+  .tuti-account__order-card:hover { border-color: rgba(184, 138, 46, 0.42); }
+  .tuti-account__order-card-id,
+  .tuti-account__order-card-total { color: #fbf8f1; }
+  .tuti-account__order-card-preview,
+  .tuti-account__order-card-date { color: rgba(251, 248, 241, 0.44); }
+
+  .tuti-account__detail-eyebrow,
+  .tuti-account__detail-meta-label { color: rgba(251, 248, 241, 0.33); }
+  .tuti-account__detail-id,
+  .tuti-account__detail-total,
+  .tuti-account__detail-meta-value,
+  .tuti-account__detail-item-name,
+  .tuti-account__detail-item-price,
+  .tuti-account__detail-totals-value { color: #fbf8f1; }
+  .tuti-account__detail-item-qty,
+  .tuti-account__detail-totals-label { color: rgba(251, 248, 241, 0.4); }
+  .tuti-account__detail-note { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.07); color: #fbf8f1; }
+  .tuti-account__detail-totals { border-color: rgba(255, 255, 255, 0.07); }
+  .tuti-account__detail-feedback { background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.07); }
+  .tuti-account__gift-badge { color: #d6b46a; background: rgba(184, 138, 46, 0.12); border-color: rgba(184, 138, 46, 0.26); }
+  .tuti-account__support { background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.07); }
+  .tuti-account__support-text strong { color: #fbf8f1; }
+  .tuti-account__support-text span { color: rgba(251, 248, 241, 0.43); }
+  .tuti-account__detail-link { color: rgba(251, 248, 241, 0.38); }
+  .tuti-account__detail-link:hover { color: #fbf8f1; }
+
+  .tuti-account__guest-card { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.08); }
+  .tuti-account__guest-card strong { color: #fbf8f1; }
+  .tuti-account__guest-card span { color: rgba(251, 248, 241, 0.42); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .tuti-account__guest { grid-template-columns: 1fr; }
+  .tuti-account__guest-cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .tuti-account__hero-main {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem 0 1.25rem;
+  }
+  .tuti-account__hero-title { font-size: 1.3rem; }
+  .tuti-account__hero-actions { flex-wrap: wrap; }
+  .tuti-account__hero-stat { padding-right: 1.5rem; }
+  .tuti-account__hero-stat + .tuti-account__hero-stat { padding-left: 1.5rem; padding-right: 1.5rem; }
+  .tuti-account__guest-cards { grid-template-columns: 1fr; }
+  .tuti-account__detail-meta { grid-template-columns: 1fr; }
+  .tuti-account__conf-hero-inner { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 2rem 0 1.75rem; }
+}
+@media (max-width: 480px) {
+  .tuti-account__hero-main { padding: 1.75rem 0 1.1rem; }
+  .tuti-account__hero-stat { padding-right: 1.25rem; }
+  .tuti-account__hero-stat + .tuti-account__hero-stat { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .tuti-account__guest-prompt { padding: 1.75rem 1.5rem; }
+}
+@media (max-width: 390px) {
+  .tuti-account__hero-title { font-size: 1.12rem; }
+  .tuti-account__hero-stat { padding-right: 1rem; }
+  .tuti-account__hero-stat + .tuti-account__hero-stat { padding-left: 1rem; padding-right: 1rem; }
+  .tuti-account__hero-stat-value { font-size: 1.1rem; }
+  .tuti-account__conf-hero-title { font-size: 1.15rem; }
+}
+
+/* ── BuildGiftCartSummary — scoped display fix for account/order context ─ */
+.tuti-cart__build-gift-summary {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.tuti-cart__build-gift-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.tuti-cart__build-gift-tags span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.5rem;
+  border-radius: 99px;
+  background: rgba(184, 138, 46, 0.07);
+  border: 1px solid rgba(184, 138, 46, 0.18);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #7a5a1a;
+  letter-spacing: 0.01em;
+}
+.tuti-cart__build-gift-items {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  list-style: disc;
+  font-size: 0.76rem;
+  color: rgba(7, 27, 58, 0.62);
+  line-height: 1.6;
+}
+.tuti-cart__build-gift-message {
+  margin: 0;
+  font-size: 0.76rem;
+  font-style: italic;
+  color: rgba(7, 27, 58, 0.58);
+  line-height: 1.55;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tuti-cart__build-gift-tags span { color: #d6b46a; background: rgba(184, 138, 46, 0.1); border-color: rgba(184, 138, 46, 0.22); }
+  .tuti-cart__build-gift-items { color: rgba(251, 248, 241, 0.5); }
+  .tuti-cart__build-gift-message { color: rgba(251, 248, 241, 0.45); }
+}
+:root[data-theme="dark"] .tuti-cart__build-gift-tags span { color: #d6b46a; background: rgba(184, 138, 46, 0.1); border-color: rgba(184, 138, 46, 0.22); }
+:root[data-theme="dark"] .tuti-cart__build-gift-items { color: rgba(251, 248, 241, 0.5); }
+:root[data-theme="dark"] .tuti-cart__build-gift-message { color: rgba(251, 248, 241, 0.45); }
