@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { sellerApplicationsApi } from "@tuti/shared/api/client.js";
 import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
+import "./seller-landing.css";
 
 // ── Rep code helpers ─────────────────────────────────────────────────
 function storeRepCode(code) {
@@ -40,17 +41,18 @@ function getSellerAppUrl() {
 
 // ── Static content ───────────────────────────────────────────────────
 const SELLER_TYPES = [
-  { icon: Sparkles, title: "Perfume shops",    text: "Oud, musk, floral, fresh, amber, minis, and perfume Gift Boxes." },
-  { icon: Cake,     title: "Cake shops",        text: "Signature cakes, custom celebration cakes, cupcakes, and cheesecakes." },
-  { icon: Gift,     title: "Gift box makers",   text: "Perfumes, cakes, desserts, and Gift Boxes prepared by your own boutique." },
+  { icon: Sparkles, title: "Perfume boutiques", text: "Oud, musk, floral, amber, fresh scents, minis, and ready-made perfume Gift Boxes." },
+  { icon: Cake, title: "Cake & dessert shops", text: "Celebration cakes, dessert boxes, cupcakes, cheesecakes, and same-day treats." },
+  { icon: Gift, title: "Gift Box sellers", text: "Occasion-ready packages prepared and packed by your own boutique." },
+  { icon: Users, title: "Corporate gifting boutiques", text: "Premium bulk gifting, branded notes, and boutique-led fulfilment for teams." },
 ];
 
-// Updated to reflect the new application-first flow
 const SELLER_STEPS = [
-  { icon: FileText,    label: "Submit application",  text: "Tell us about your business. Takes 3 minutes." },
-  { icon: UserCheck,   label: "Team contacts you",   text: "We review your details and reach out to discuss terms." },
-  { icon: ShieldCheck, label: "Agreement & contract", text: "Review, negotiate, and sign your seller agreement." },
-  { icon: Store,       label: "Seller activation",   text: "Account created, catalog setup, and products go live after approval." },
+  { icon: FileText, label: "Apply and verify your boutique", text: "Tell us what you sell, where you operate, and how your team prepares orders." },
+  { icon: Store, label: "Add products and delivery rules", text: "List your catalogue, stock, preparation timing, delivery method, and service areas." },
+  { icon: WalletCards, label: "Receive COD-ready orders", text: "Customers can place COD orders at launch while online card payment remains unavailable." },
+  { icon: Truck, label: "Prepare and hand over", text: "Your boutique prepares its own products, packaging, and customization details." },
+  { icon: BadgeDollarSign, label: "Track sales and support", text: "Use Seller Central for order status, finance, balances, and support follow-up." },
 ];
 
 const CATEGORIES = [
@@ -410,6 +412,7 @@ function SellerApplicationForm({ repCode }) {
 export function SellerLandingPage() {
   const [repCode, setRepCode] = useState(() => getStoredRepCode());
   const formRef  = useRef(null);
+  const sellerAppUrl = getSellerAppUrl();
 
   useSeoMeta({
     title: "Sell on Tuti — List Your Perfumes, Cakes & Gift Boxes",
@@ -442,136 +445,181 @@ export function SellerLandingPage() {
   }
 
   return (
-    <main className="seller-landing-page">
-
-      {/* ── Hero ─────────────────────────────────────────────────── */}
-      <section className="seller-landing-hero">
-        <div>
+    <main className="tuti-seller">
+      <section className="tuti-seller__hero">
+        <div className="tuti-seller__hero-copy">
           {repCode && (
             <span className="sell-app-rep-badge">
               <Users size={12} />
               Referred by Tuti partner
             </span>
           )}
-          <span className="eyebrow">Sell on Tuti</span>
-          <h1>Bring your perfume, cakes, sweets, or gift boxes to one premium marketplace.</h1>
+          <span className="tuti-seller__eyebrow">Sell on Tuti</span>
+          <h1>Sell on Tuti</h1>
           <p>
-            Tuti is built for boutique sellers who already deliver their own products,
-            but want one trusted website for discovery, orders, ratings, payments, and repeat customers.
+            Reach customers looking for premium perfumes, cakes, desserts, Gift Boxes,
+            and customized Build a Gift orders prepared by one boutique.
           </p>
-          <div className="seller-landing-actions">
-            <button className="primary-action" onClick={scrollToForm} type="button">
+          <div className="tuti-seller__hero-actions">
+            <button className="tuti-seller__primary" onClick={scrollToForm} type="button">
               <Store size={18} />
-              Apply to sell on Tuti
+              Apply as a boutique
             </button>
-            <a className="secondary-action" href="#seller-how-it-works">
-              How it works
+            <a className="tuti-seller__secondary" href={sellerAppUrl}>
+              Seller sign in
               <ArrowRight size={17} />
             </a>
           </div>
+          <div className="tuti-seller__trust-chips" aria-label="Marketplace rules">
+            <span>Boutique-led preparation</span>
+            <span>COD at launch</span>
+            <span>Perfumes, desserts & Gift Boxes</span>
+            <span>Build a Gift ready</span>
+          </div>
         </div>
 
-        <aside className="seller-landing-card">
-          <span className="seller-landing-card-icon"><WalletCards size={22} /></span>
-          <h2>Payment designed for marketplace trust</h2>
-          <p>Customers pay Cash on Delivery at launch. Each boutique prepares its own products and packaging, with payout handled after delivery and admin checks.</p>
-          <div className="seller-landing-flow">
-            <span>COD</span>
+        <aside className="tuti-seller__hero-card">
+          <div className="tuti-seller__hero-card-head">
+            <span><PackageCheck size={20} /></span>
+            <strong>Boutique package promise</strong>
+          </div>
+          <p>
+            Each boutique prepares its own products and packaging. Tuti checkout can
+            include multiple boutiques, but packages are prepared separately.
+          </p>
+          <div className="tuti-seller__package-flow">
+            <span>List</span>
+            <span>Accept</span>
             <span>Prepare</span>
-            <span>Deliver</span>
-            <span>Payout</span>
+            <span>Handover</span>
           </div>
         </aside>
       </section>
 
-      {/* ── Seller type cards ─────────────────────────────────────── */}
-      <section className="seller-type-grid">
-        {SELLER_TYPES.map(({ icon: Icon, title, text }) => (
-          <article className="seller-type-card" key={title}>
-            <span><Icon size={20} /></span>
-            <h2>{title}</h2>
-            <p>{text}</p>
-          </article>
-        ))}
-      </section>
-
-      {/* ── Benefits ─────────────────────────────────────────────── */}
-      <section className="seller-benefit-grid">
-        <article>
-          <Users size={22} />
-          <h2>Customers can grow without manual work</h2>
-          <p>Buyers browse, checkout as guest or account, track orders, and review products.</p>
-        </article>
-        <article>
-          <PackageCheck size={22} />
-          <h2>Sellers manage their own catalog</h2>
-          <p>Each seller gets Seller Central for products, orders, customers, payout rules, stock, and approval status.</p>
-        </article>
-        <article>
-          <Truck size={22} />
-          <h2>Own delivery stays simple</h2>
-          <p>Every seller can deliver with their own team while Tuti records delivery date, customer details, and payout readiness.</p>
-        </article>
-        <article>
-          <ShieldCheck size={22} />
-          <h2>Admin controls risk</h2>
-          <p>New sellers start pending review. Admin can approve products, monitor disputes, hold payout, and protect customers.</p>
-        </article>
-      </section>
-
-      {/* ── How it works — updated for application-first flow ──────── */}
-      <section className="seller-how-section" id="seller-how-it-works">
-        <div>
-          <span className="eyebrow">Seller journey</span>
-          <h2>Controlled onboarding, clear for sellers</h2>
-          <p>Every seller starts with an application, then agreement, then activation. No shortcuts — quality marketplace for buyers and sellers.</p>
+      <section className="tuti-seller__fit">
+        <div className="tuti-seller__section-head">
+          <span className="tuti-seller__eyebrow">Category fit</span>
+          <h2>Built for boutiques that prepare their own craft.</h2>
+          <p>Join if your team can list, prepare, package, and hand over its own products reliably.</p>
         </div>
-        <ol className="seller-step-list">
-          {SELLER_STEPS.map((step) => (
+        <div className="tuti-seller__fit-grid">
+          {SELLER_TYPES.map(({ icon: Icon, title, text }) => (
+            <article className="tuti-seller__card" key={title}>
+              <span><Icon size={20} /></span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="tuti-seller__steps" id="seller-how-it-works">
+        <div className="tuti-seller__section-head">
+          <span className="tuti-seller__eyebrow">How it works</span>
+          <h2>From application to repeat orders.</h2>
+          <p>Onboarding is reviewed, practical, and designed for customer trust.</p>
+        </div>
+        <ol className="tuti-seller__step-list">
+          {SELLER_STEPS.map((step, index) => (
             <li key={step.label}>
-              <step.icon size={17} />
+              <span className="tuti-seller__step-number">{index + 1}</span>
+              <step.icon size={18} />
               <div>
                 <strong>{step.label}</strong>
-                <span>{step.text}</span>
+                <p>{step.text}</p>
               </div>
             </li>
           ))}
         </ol>
-        <button className="primary-action" onClick={scrollToForm} type="button">
-          Start seller application
-          <ArrowRight size={17} />
-        </button>
       </section>
 
-      {/* ── Payment playbook ──────────────────────────────────────── */}
-      <section className="seller-payment-playbook">
+      <section className="tuti-seller__build-gift">
         <div>
-          <span className="eyebrow">Payment playbook</span>
-          <h2>Strong payment model</h2>
+          <span className="tuti-seller__eyebrow">Build a Gift for sellers</span>
+          <h2>Customize gifts only within what your boutique can prepare.</h2>
+          <p>
+            Eligible boutiques can receive Build a Gift orders. Each Build a Gift is
+            prepared by one boutique, and customization details are attached to the order.
+          </p>
         </div>
-        <div className="seller-payment-grid">
+        <div className="tuti-seller__rule-list">
+          <span><CheckCircle2 size={16} /> One boutique prepares the customized gift</span>
+          <span><CheckCircle2 size={16} /> Message, wrapping, and add-ons stay attached to the order</span>
+          <span><CheckCircle2 size={16} /> Offer only categories your team can prepare itself</span>
+        </div>
+      </section>
+
+      <section className="tuti-seller__cod">
+        <div className="tuti-seller__section-head">
+          <span className="tuti-seller__eyebrow">Payments at launch</span>
+          <h2>COD-ready, with no online card payment claims.</h2>
+          <p>Customers pay the driver on delivery. Seller balances are tracked through the marketplace.</p>
+        </div>
+        <div className="tuti-seller__cod-grid">
           <article>
             <BadgeDollarSign size={20} />
-            <strong>Online payments</strong>
-            <p>Online card payments are not available yet. Launch orders use Cash on Delivery while payment gateway work remains pending.</p>
+            <strong>Cash on Delivery</strong>
+            <p>COD is available at launch. Customers pay cash to the driver on delivery.</p>
           </article>
           <article>
             <WalletCards size={20} />
-            <strong>Cash on delivery</strong>
-            <p>Mark COD pending, require seller/admin collection confirmation, then release seller payout ledger.</p>
+            <strong>Tracked balances</strong>
+            <p>Seller balances and settlement readiness are tracked through the marketplace.</p>
           </article>
           <article>
             <ShieldCheck size={20} />
-            <strong>Risk rules</strong>
-            <p>New sellers, disputes, refund windows, and low fulfillment can automatically hold payout for admin review.</p>
+            <strong>Card payments later</strong>
+            <p>Online card payments are not available yet and should not be promised to customers.</p>
           </article>
         </div>
       </section>
 
-      {/* ── Application form section ──────────────────────────────── */}
-      <section className="sell-app-section-wrapper" id="seller-apply" ref={formRef}>
+      <section className="tuti-seller__tools">
+        <div className="tuti-seller__section-head">
+          <span className="tuti-seller__eyebrow">Seller tools</span>
+          <h2>Operate your boutique from Seller Central.</h2>
+        </div>
+        <div className="tuti-seller__tools-grid">
+          {[
+            ["Product management", "Create products, manage categories, pricing, stock, and approval status."],
+            ["Order management", "Review incoming orders, preparation details, and delivery readiness."],
+            ["Support and disputes", "Follow up on customer issues and refund/cancellation questions."],
+            ["Finance and balances", "Track COD-related balances, payout readiness, and settlement status."],
+            ["Reporting", "See sales and order signals available in the seller workspace."],
+          ].map(([title, text]) => (
+            <article className="tuti-seller__tool-card" key={title}>
+              <strong>{title}</strong>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="tuti-seller__faq">
+        <div className="tuti-seller__section-head">
+          <span className="tuti-seller__eyebrow">FAQ</span>
+          <h2>What boutiques ask before joining.</h2>
+        </div>
+        <div className="tuti-seller__faq-grid">
+          {[
+            ["What can I sell?", "Perfumes, cakes, desserts, Gift Boxes, and approved boutique gift products."],
+            ["Can I offer Build a Gift?", "Yes, if your boutique can prepare the selected products and customization details itself."],
+            ["Who prepares the package?", "The boutique receiving the order prepares its own package. Tuti does not combine products from different boutiques into one physical box."],
+            ["How does COD work?", "Customers pay the driver on delivery. Tuti tracks order and balance status through the marketplace."],
+            ["Can I sell in multiple categories?", "Yes, if your boutique can reliably prepare and fulfil each category it lists."],
+            ["How do refunds and cancellations work?", "Support and admin review order issues, disputes, and payout holds according to marketplace rules."],
+          ].map(([question, answer]) => (
+            <article key={question}>
+              <strong>{question}</strong>
+              <p>{answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="sell-app-section-wrapper tuti-seller__apply" id="seller-apply" ref={formRef}>
         <div className="sell-app-header">
-          <span className="eyebrow">Partner application</span>
+          <span className="tuti-seller__eyebrow">Partner application</span>
           <h2>Apply to sell on Tuti</h2>
           <p>
             Fill in your business details. Our team reviews every application personally
@@ -597,6 +645,19 @@ export function SellerLandingPage() {
         <SellerApplicationForm repCode={repCode} />
       </section>
 
+      <section className="tuti-seller__cta">
+        <div>
+          <span className="tuti-seller__eyebrow">Ready to join?</span>
+          <h2>Bring your boutique to Tuti customers.</h2>
+        </div>
+        <div className="tuti-seller__hero-actions">
+          <button className="tuti-seller__primary" onClick={scrollToForm} type="button">
+            Apply as a boutique
+            <ArrowRight size={17} />
+          </button>
+          <a className="tuti-seller__secondary" href={sellerAppUrl}>Seller sign in</a>
+        </div>
+      </section>
     </main>
   );
 }

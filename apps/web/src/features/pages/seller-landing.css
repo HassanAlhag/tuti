@@ -1,0 +1,552 @@
+.tuti-seller {
+  --seller-navy: #071b3a;
+  --seller-ink: #061426;
+  --seller-blue: #0b2a55;
+  --seller-gold: #b88a2e;
+  --seller-champagne: #d6b46a;
+  --seller-porcelain: #fbf8f1;
+  --seller-white: #ffffff;
+  --seller-graphite: #20242a;
+  --seller-muted: #66707c;
+  --seller-border: rgba(7, 27, 58, 0.14);
+  --seller-shadow: 0 18px 44px rgba(6, 20, 38, 0.11);
+  background:
+    radial-gradient(circle at 8% 24rem, rgba(214, 180, 106, 0.12), transparent 22rem),
+    linear-gradient(180deg, #fff 0%, #fbf8f1 48%, #fff 100%);
+  color: var(--seller-graphite);
+  overflow-x: clip;
+  padding-bottom: clamp(1.5rem, 3vw, 2.75rem);
+}
+
+.tuti-seller__fit,
+.tuti-seller__steps,
+.tuti-seller__build-gift,
+.tuti-seller__cod,
+.tuti-seller__tools,
+.tuti-seller__faq,
+.tuti-seller__apply,
+.tuti-seller__cta {
+  width: min(92rem, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.tuti-seller__hero {
+  width: 100vw;
+  min-height: clamp(390px, 38vw, 500px);
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  display: grid;
+  grid-template-columns: minmax(1rem, 1fr) minmax(0, 54rem) minmax(340px, 32rem) minmax(1rem, 1fr);
+  gap: clamp(1.25rem, 4vw, 4rem);
+  align-items: center;
+  border-bottom: 1px solid rgba(214, 180, 106, 0.26);
+  padding: clamp(1.6rem, 4vw, 3rem) 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(214, 180, 106, 0.22), transparent 20rem),
+    linear-gradient(135deg, #071b3a 0%, #0b2a55 68%, #061426 100%);
+  color: #fff;
+}
+
+.tuti-seller__hero-copy {
+  grid-column: 2;
+}
+
+.tuti-seller__hero h1 {
+  margin: 0.7rem 0 0;
+  color: #fff;
+  font-size: clamp(3.4rem, 7vw, 7rem);
+  line-height: 0.88;
+  letter-spacing: 0;
+}
+
+.tuti-seller__hero p {
+  max-width: 48rem;
+  margin: 1rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: clamp(1rem, 1.35vw, 1.18rem);
+  line-height: 1.65;
+}
+
+.tuti-seller__eyebrow {
+  color: var(--seller-champagne);
+  font-size: 0.74rem;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.tuti-seller__hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.tuti-seller__primary,
+.tuti-seller__secondary,
+.tuti-seller .primary-action {
+  min-height: 2.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  border-radius: 12px;
+  padding: 0 1rem;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.tuti-seller__primary,
+.tuti-seller .primary-action {
+  border: 1px solid rgba(214, 180, 106, 0.28);
+  background: linear-gradient(180deg, #102a55, #071b3a);
+  color: #fff;
+  box-shadow: 0 14px 30px rgba(6, 20, 38, 0.22);
+}
+
+.tuti-seller__secondary {
+  border: 1px solid rgba(214, 180, 106, 0.44);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.tuti-seller__trust-chips,
+.tuti-seller__package-flow,
+.tuti-seller__rule-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.tuti-seller__trust-chips {
+  margin-top: 1.2rem;
+}
+
+.tuti-seller__trust-chips span,
+.tuti-seller__package-flow span,
+.tuti-seller__rule-list span {
+  border: 1px solid rgba(214, 180, 106, 0.28);
+  border-radius: 999px;
+  padding: 0.46rem 0.7rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.tuti-seller__hero-card {
+  grid-column: 3;
+  border: 1px solid rgba(214, 180, 106, 0.32);
+  border-radius: 26px;
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  background:
+    radial-gradient(circle at 85% 18%, rgba(214, 180, 106, 0.2), transparent 10rem),
+    rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.tuti-seller__hero-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--seller-champagne);
+}
+
+.tuti-seller__hero-card-head span {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(214, 180, 106, 0.16);
+}
+
+.tuti-seller__hero-card p {
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.62;
+}
+
+.tuti-seller__fit,
+.tuti-seller__steps,
+.tuti-seller__build-gift,
+.tuti-seller__cod,
+.tuti-seller__tools,
+.tuti-seller__faq,
+.tuti-seller__apply,
+.tuti-seller__cta {
+  margin-top: clamp(1.25rem, 2.4vw, 2rem);
+}
+
+.tuti-seller__apply {
+  display: grid;
+  grid-template-columns: minmax(0, 0.44fr) minmax(0, 1fr);
+  gap: clamp(1.75rem, 3vw, 2.4rem);
+  align-items: start;
+  margin-top: clamp(2.4rem, 4vw, 3.4rem);
+  padding: clamp(2rem, 3vw, 2.5rem);
+}
+
+/* storefront.css .sell-app-section-wrapper sets its own width (90rem via --max-width) and
+   margin: 0 auto ... (zeroing margin-top); this higher-specificity rule pins both to match
+   the FAQ and other page sections. */
+.tuti-seller .sell-app-section-wrapper {
+  width: min(92rem, calc(100% - 2rem));
+  margin-inline: auto;
+  margin-top: clamp(2rem, 3vw, 3rem);
+}
+
+.tuti-seller__section-head {
+  max-width: 52rem;
+}
+
+.tuti-seller__section-head h2,
+.tuti-seller__build-gift h2,
+.tuti-seller__cta h2,
+.sell-app-header h2 {
+  margin: 0.3rem 0 0;
+  color: var(--seller-ink);
+  font-size: clamp(2rem, 3.2vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.tuti-seller__section-head p,
+.tuti-seller__build-gift p,
+.sell-app-header p {
+  color: var(--seller-muted);
+  line-height: 1.65;
+}
+
+.tuti-seller__fit-grid,
+.tuti-seller__cod-grid,
+.tuti-seller__tools-grid,
+.tuti-seller__faq-grid {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.tuti-seller__fit-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tuti-seller__cod-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tuti-seller__tools-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.tuti-seller__faq-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tuti-seller__card,
+.tuti-seller__cod-grid article,
+.tuti-seller__tool-card,
+.tuti-seller__faq-grid article,
+.sell-app-section-wrapper,
+.sell-app-section,
+.sell-app-success {
+  border: 1px solid var(--seller-border);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fff, #fbf8f1);
+  box-shadow: 0 12px 30px rgba(6, 20, 38, 0.07);
+}
+
+.tuti-seller__card,
+.tuti-seller__cod-grid article,
+.tuti-seller__tool-card,
+.tuti-seller__faq-grid article {
+  padding: 1rem;
+}
+
+.tuti-seller__card > span,
+.tuti-seller__cod-grid svg {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--seller-gold);
+  background: rgba(214, 180, 106, 0.13);
+}
+
+.tuti-seller__card h3,
+.tuti-seller__cod-grid strong,
+.tuti-seller__tool-card strong,
+.tuti-seller__faq-grid strong {
+  display: block;
+  margin: 0.75rem 0 0.35rem;
+  color: var(--seller-ink);
+  font-size: 1rem;
+}
+
+.tuti-seller__card p,
+.tuti-seller__cod-grid p,
+.tuti-seller__tool-card p,
+.tuti-seller__faq-grid p {
+  margin: 0;
+  color: var(--seller-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.tuti-seller__steps,
+.tuti-seller__build-gift,
+.tuti-seller__cod,
+.tuti-seller__tools,
+.tuti-seller__faq,
+.tuti-seller__cta {
+  border: 1px solid var(--seller-border);
+  border-radius: 26px;
+  padding: clamp(1.1rem, 2vw, 1.6rem);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--seller-shadow);
+}
+
+.tuti-seller__step-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tuti-seller__step-list li {
+  position: relative;
+  display: grid;
+  gap: 0.55rem;
+  align-content: start;
+  border: 1px solid var(--seller-border);
+  border-radius: 20px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.tuti-seller__step-number {
+  width: max-content;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  background: var(--seller-navy);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.tuti-seller__step-list svg {
+  color: var(--seller-gold);
+}
+
+.tuti-seller__step-list strong {
+  color: var(--seller-ink);
+}
+
+.tuti-seller__step-list p {
+  margin: 0.25rem 0 0;
+  color: var(--seller-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.tuti-seller__build-gift {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.75fr);
+  gap: 1rem;
+  align-items: center;
+  background:
+    radial-gradient(circle at 90% 18%, rgba(214, 180, 106, 0.16), transparent 15rem),
+    linear-gradient(135deg, #071b3a, #061426);
+  color: #fff;
+}
+
+.tuti-seller__build-gift h2 {
+  color: #fff;
+}
+
+.tuti-seller__build-gift p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.tuti-seller__rule-list span {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tuti-seller__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(214, 180, 106, 0.15), transparent 14rem),
+    linear-gradient(180deg, #fff, #fbf8f1);
+}
+
+.tuti-seller__cta .tuti-seller__secondary {
+  color: var(--seller-ink);
+  background: #fff;
+}
+
+.tuti-seller .sell-app-header {
+  padding: 0.25rem 0 0;
+}
+
+.tuti-seller .sell-app-journey {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.tuti-seller .sell-app-journey-step {
+  border: 1px solid var(--seller-border);
+  border-radius: 18px;
+  padding: 0.85rem;
+  background: #fff;
+}
+
+.tuti-seller .sell-app-journey-num {
+  display: inline-grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--seller-navy);
+  color: #fff;
+  font-weight: 950;
+}
+
+.tuti-seller .sell-app-form {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid var(--seller-border);
+  border-radius: 24px;
+  padding: clamp(1.75rem, 2.4vw, 2rem);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 30px rgba(6, 20, 38, 0.055);
+}
+
+.tuti-seller .sell-app-section {
+  padding: 1rem;
+}
+
+.tuti-seller .sell-app-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.tuti-seller .sell-app-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tuti-seller .sell-app-field--full {
+  grid-column: 1 / -1;
+}
+
+.tuti-seller .sell-app-field span,
+.tuti-seller .sell-app-section h4 {
+  color: var(--seller-ink);
+  font-weight: 900;
+}
+
+.tuti-seller .sell-app-field input,
+.tuti-seller .sell-app-field select {
+  min-height: 2.8rem;
+  border: 1px solid var(--seller-border);
+  border-radius: 12px;
+  padding: 0 0.85rem;
+  background: #fff;
+  color: var(--seller-ink);
+}
+
+.tuti-seller .sell-app-footer {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tuti-seller .sell-app-disclaimer,
+.tuti-seller .sell-app-optional-note,
+.tuti-seller .sell-app-required-note {
+  color: var(--seller-muted);
+}
+
+@media (max-width: 1120px) {
+  .tuti-seller__hero {
+    grid-template-columns: 1rem minmax(0, 1fr) 1rem;
+  }
+
+  .tuti-seller__hero-copy,
+  .tuti-seller__hero-card {
+    grid-column: 2;
+  }
+
+  .tuti-seller__fit-grid,
+  .tuti-seller__tools-grid,
+  .tuti-seller__step-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tuti-seller__build-gift,
+  .tuti-seller__apply,
+  .tuti-seller__cta {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .tuti-seller__fit,
+  .tuti-seller__steps,
+  .tuti-seller__build-gift,
+  .tuti-seller__cod,
+  .tuti-seller__tools,
+  .tuti-seller__faq,
+  .tuti-seller__apply,
+  .tuti-seller__cta {
+    width: min(100% - 1rem, 92rem);
+  }
+
+  .tuti-seller__hero {
+    min-height: auto;
+    padding: 1rem 0;
+  }
+
+  .tuti-seller__hero h1 {
+    font-size: clamp(3rem, 18vw, 4.8rem);
+  }
+
+  .tuti-seller__hero-actions,
+  .tuti-seller__cod-grid,
+  .tuti-seller__fit-grid,
+  .tuti-seller__tools-grid,
+  .tuti-seller__faq-grid,
+  .tuti-seller__step-list,
+  .tuti-seller .sell-app-journey,
+  .tuti-seller .sell-app-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .tuti-seller__cta {
+    display: grid;
+  }
+
+  .tuti-seller__apply {
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1rem;
+  }
+
+  .tuti-seller .sell-app-form {
+    border-radius: 20px;
+    padding: 1rem;
+  }
+
+  .tuti-seller .sell-app-header {
+    padding-top: 0.2rem;
+  }
+}
