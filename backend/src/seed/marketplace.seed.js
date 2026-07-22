@@ -11,6 +11,14 @@
  *   notes           — internal admin note
  */
 
+// Stable identity for the seed/dev "demo seller" login (see login() in
+// auth.service.js). shop-oud-lane is deliberately the one seed shop with a
+// real, fixed ownerId so the "any ...seller...@ email" demo convenience
+// session can pass requireOwnedShop's database-backed ownership check
+// instead of always being rejected -- a fresh random user id generated on
+// every demo login would never match this shop's recorded owner.
+export const DEMO_SELLER_USER_ID = "seed-demo-seller-oud-lane";
+
 export const shops = [
   {
     id: "shop-sweet-studio",
@@ -80,6 +88,7 @@ export const shops = [
     id: "shop-oud-lane",
     name: "Oud Lane",
     owner: "Mariam Al Noor",
+    ownerId: DEMO_SELLER_USER_ID,
     city: "Dubai",
     status: "Approved",
     fulfillmentRate: 96,

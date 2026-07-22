@@ -438,6 +438,16 @@ export async function getPublicSellerProductsBySlug(slug) {
     throw createHttpError(404, "Seller profile not found.");
   }
 
+  // The profile's own `published` flag is seller-controlled and was
+  // previously the only gate here -- a shop still "Pending review" (or
+  // Suspended/Terminated) could publish its brand profile and leak any
+  // products that had already been flipped to Live. Require admin shop
+  // approval too, matching the storefront/search public-read paths.
+  const shop = await loadShop(profile.shopId);
+  if (!shop || shop.status !== "Approved") {
+    throw createHttpError(404, "Seller profile not found.");
+  }
+
   const products = await loadLiveProductsForShop(profile.shopId);
   return products.map((product) => sanitizePublicProduct(product));
 }

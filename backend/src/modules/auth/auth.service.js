@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { z } from "zod";
 import { assertProductionSeedModeDisabled, env } from "../../config/env.js";
 import { sendPasswordReset } from "../../shared/email.js";
@@ -9,13 +10,25 @@ import { User } from "../../models/User.js";
 import { SalesRep } from "../../models/SalesRep.js";
 import { SellerReferral } from "../../models/SellerReferral.js";
 import { normalizePermissions } from "../users/user.roles.js";
+import { DEMO_SELLER_USER_ID } from "../../seed/marketplace.seed.js";
+
+// The demo seller session (seed/dev mode only) always resolves to this
+// exact shop, whose seed record's ownerId is DEMO_SELLER_USER_ID -- see
+// marketplace.seed.js for why the two must stay in lockstep.
+const DEMO_SELLER_SHOP_ID = "shop-oud-lane";
 
 export const registerSchema = z.object({
   name: z.string().min(2).max(80).trim(),
   email: z.string().email().toLowerCase().trim(),
   password: z.string().min(8).max(128),
   role: z.enum(["customer", "seller"]).default("customer"),
-  shopId: z.string().optional(),
+  // shopId is deliberately NOT accepted here. It is always generated
+  // server-side in register() -- a client-supplied shopId previously let
+  // an attacker register as a seller against an existing shop's id and
+  // receive a JWT carrying that shopId, passing every downstream
+  // `product.shopId === req.user.shopId` ownership check as if they were
+  // the real owner. Zod strips unknown keys by default, so any shopId a
+  // client sends here is silently discarded before register() ever sees it.
   shopName: z.string().max(100).optional(),
   shopCategory: z.enum(["perfume", "cake", "dessert", "gift_box", "mixed"]).optional(),
   shopCategories: z.array(z.enum(["perfume", "cake", "dessert", "gift_box", "mixed"])).min(1).max(5).optional(),
@@ -67,6 +80,28 @@ function makeShopId(name) {
   return `shop-${slug}-${randomUUID().slice(0, 5)}`;
 }
 
+// Generates a fresh, server-side shopId and confirms it isn't already
+// taken before handing it back. Collisions are astronomically unlikely
+// (makeShopId suffixes a random UUID slice) but this keeps the guarantee
+// explicit rather than assumed, and gives register() a clean, typed error
+// instead of a raw duplicate-key exception if one ever occurred.
+async function allocateShopId(name, { session } = {}) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const candidate = makeShopId(name);
+    let taken;
+    if (env.mongoUri) {
+      const query = Shop.exists({ id: candidate });
+      taken = Boolean(session ? await query.session(session) : await query);
+    } else {
+      taken = Boolean(seedRepository.getShop(candidate));
+    }
+    if (!taken) return candidate;
+  }
+  const err = new Error("Could not allocate a shop identifier. Please try again.");
+  err.status = 500;
+  throw err;
+}
+
 function initialsFrom(name) {
   return String(name || "TS")
     .split(/\s+/)
@@ -107,12 +142,12 @@ function categoryCover(categories) {
   }[selected[0]] || "Tuti seller";
 }
 
-function makeSellerShop(payload, ownerId) {
+function makeSellerShop(payload, ownerId, shopId) {
   const shopName = payload.shopName?.trim() || `${payload.name}'s Tuti Shop`;
   const categories = normalizeShopCategories(payload);
   const category = primaryShopCategory(categories);
   return {
-    id: payload.shopId || makeShopId(shopName),
+    id: shopId,
     name: shopName,
     owner: payload.name,
     ownerId,
@@ -244,41 +279,75 @@ export async function register(payload) {
     if (existing) {
       const err = new Error("Email already registered."); err.status = 409; throw err;
     }
-    const repAttribution = payload.role === "seller"
-      ? await resolveRepAttribution(payload.repCode)
-      : { repCode: "", repId: null, acquisitionSource: "organic" };
-    const userPayload = {
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-      role: payload.role,
-      shopId: payload.role === "seller" ? payload.shopId || makeShopId(payload.shopName || payload.name) : payload.shopId,
-      shopCategory: payload.role === "seller" ? primaryShopCategory(normalizeShopCategories(payload)) : payload.shopCategory,
-      shopCategories: payload.role === "seller" ? normalizeShopCategories(payload) : [],
-      permissions: normalizePermissions(payload.role),
-    };
-    const user = await User.create(userPayload);
-    if (payload.role === "seller") {
-      const shopPayload = makeSellerShop({ ...payload, ...repAttribution, shopId: user.shopId }, user._id);
-      const shop = await Shop.create(shopPayload);
-      if (repAttribution.repId) {
-        // Guard: one referral per shop. Handles retried registrations where the user
-        // was already created but the referral wasn't (e.g. partial failure).
-        const existingReferral = await SellerReferral.findOne({ shopId: shop.id });
-        if (!existingReferral) {
-          await SellerReferral.create({
-            id: `ref-${randomUUID()}`,
-            repId: repAttribution.repId,
-            repCode: repAttribution.repCode,
-            shopId: shop.id,
-            shopName: shop.name,
-            sellerUserId: user._id,
-            status: "pending_approval",
-            approvedAt: null,
-          });
-        }
-      }
+
+    if (payload.role !== "seller") {
+      // Non-sellers never carry a shopId (schema no longer accepts one as
+      // client input; nothing in this branch reads payload.shopId either).
+      const user = await User.create({
+        name: payload.name,
+        email: payload.email,
+        password: payload.password,
+        role: payload.role,
+        permissions: normalizePermissions(payload.role),
+      });
+      const tokens = tokenPair(user);
+      user.refreshToken = tokens.refreshToken;
+      await user.save();
+      return { user: safeUser(user), ...tokens };
     }
+
+    // Seller registration creates a User and a Shop together. The shopId is
+    // always generated here, server-side (see allocateShopId) -- never
+    // accepted from the client -- and both documents (plus an optional
+    // referral record) are created inside one transaction, so a failure
+    // creating the Shop can never leave an orphaned seller User behind.
+    const repAttribution = await resolveRepAttribution(payload.repCode);
+    const categories = normalizeShopCategories(payload);
+    const category = primaryShopCategory(categories);
+
+    const session = await mongoose.startSession();
+    let user;
+    try {
+      await session.withTransaction(async () => {
+        const shopId = await allocateShopId(payload.shopName || payload.name, { session });
+
+        const [createdUser] = await User.create([{
+          name: payload.name,
+          email: payload.email,
+          password: payload.password,
+          role: "seller",
+          shopId,
+          shopCategory: category,
+          shopCategories: categories,
+          permissions: normalizePermissions("seller"),
+        }], { session });
+        user = createdUser;
+
+        const shopPayload = makeSellerShop({ ...payload, ...repAttribution }, user._id, shopId);
+        const [shop] = await Shop.create([shopPayload], { session });
+
+        if (repAttribution.repId) {
+          // Guard: one referral per shop. Handles retried registrations where the user
+          // was already created but the referral wasn't (e.g. partial failure).
+          const existingReferral = await SellerReferral.findOne({ shopId: shop.id }).session(session);
+          if (!existingReferral) {
+            await SellerReferral.create([{
+              id: `ref-${randomUUID()}`,
+              repId: repAttribution.repId,
+              repCode: repAttribution.repCode,
+              shopId: shop.id,
+              shopName: shop.name,
+              sellerUserId: user._id,
+              status: "pending_approval",
+              approvedAt: null,
+            }], { session });
+          }
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+
     const tokens = tokenPair(user);
     user.refreshToken = tokens.refreshToken;
     await user.save();
@@ -287,7 +356,11 @@ export async function register(payload) {
 
   assertSeedAuthModeAllowed();
 
-  // Seed mode
+  // Seed mode — mirrors the Mongo branch's guarantees as closely as the
+  // in-memory store allows: shopId is always server-generated (never taken
+  // from payload.shopId, which no longer exists on the parsed payload
+  // anyway), and allocateShopId refuses to hand back an id that already
+  // exists in the seed shop list.
   for (const u of seedUsers.values()) {
     if (u.email === payload.email) {
       const err = new Error("Email already registered."); err.status = 409; throw err;
@@ -297,8 +370,12 @@ export async function register(payload) {
   const repAttribution = payload.role === "seller"
     ? await resolveRepAttribution(payload.repCode)
     : { repCode: "", repId: null, acquisitionSource: "organic" };
-  const shop = payload.role === "seller" ? makeSellerShop({ ...payload, ...repAttribution }, id) : null;
-  if (shop) seedRepository.addShop(shop);
+  let shop = null;
+  if (payload.role === "seller") {
+    const shopId = await allocateShopId(payload.shopName || payload.name);
+    shop = makeSellerShop({ ...payload, ...repAttribution }, id, shopId);
+    seedRepository.addShop(shop);
+  }
   if (shop && repAttribution.acquisitionSource === "sales_rep") {
     const state = seedRepository.getState();
     state.sellerReferrals = state.sellerReferrals || [];
@@ -324,7 +401,7 @@ export async function register(payload) {
     name: payload.name,
     email: payload.email,
     role: payload.role,
-    shopId: shop?.id || payload.shopId || null,
+    shopId: shop?.id || null,
     shopCategory: shop?.category || null,
     shopCategories: shop?.categories || [],
     createdAt: new Date().toISOString(),
@@ -367,12 +444,36 @@ export async function login({ email, password }) {
   }
 
   // Auto-create demo session
-  const demoId = randomUUID();
   const role = email.includes("admin") ? "admin" : email.includes("seller") ? "seller" : "customer";
-  const shopId = role === "seller" ? "shop-oud-lane" : null;
-  const demoUser = { _id: demoId, id: demoId, name: email.split("@")[0], email, role, shopId };
+
+  if (role === "seller") {
+    // Stable demo seller identity, deliberately reused across every
+    // "...seller...@..." demo login instead of a fresh random id each
+    // time. A fresh id would never match shop-oud-lane's recorded
+    // ownerId and would always be rejected by requireOwnedShop.
+    let demoUser = seedUsers.get(DEMO_SELLER_USER_ID);
+    if (demoUser) {
+      demoUser.email = email;
+      demoUser.name = email.split("@")[0];
+    } else {
+      demoUser = {
+        _id: DEMO_SELLER_USER_ID,
+        id: DEMO_SELLER_USER_ID,
+        name: email.split("@")[0],
+        email,
+        role: "seller",
+        shopId: DEMO_SELLER_SHOP_ID,
+      };
+      seedUsers.set(DEMO_SELLER_USER_ID, demoUser);
+    }
+    const base = { sub: DEMO_SELLER_USER_ID, role: "seller", shopId: DEMO_SELLER_SHOP_ID };
+    return { user: demoUser, accessToken: signAccess(base), refreshToken: signRefresh(base) };
+  }
+
+  const demoId = randomUUID();
+  const demoUser = { _id: demoId, id: demoId, name: email.split("@")[0], email, role, shopId: null };
   seedUsers.set(demoId, demoUser);
-  const base = { sub: demoId, role, shopId };
+  const base = { sub: demoId, role, shopId: null };
   return { user: demoUser, accessToken: signAccess(base), refreshToken: signRefresh(base) };
 }
 

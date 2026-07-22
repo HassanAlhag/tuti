@@ -692,6 +692,16 @@ function assertOrderAccess(order, user, guestToken) {
 
 function assertOrderTransition(order, status, user) {
   const role = user?.role;
+  // Distinct from (and previously missing alongside) assertOrderAccess's
+  // read-path check: a seller could otherwise transition ANY order's
+  // status forward through a valid seller-permitted transition, regardless
+  // of which shop it actually belonged to -- the status enum/role check
+  // below never confirmed the order was theirs to begin with.
+  if (role === "seller" && !order.shopIds?.includes(user.shopId)) {
+    const error = new Error("Access denied.");
+    error.status = 403;
+    throw error;
+  }
   if (canTransitionOrderStatus(order.status, status, role)) return;
   const error = new Error(`Invalid order status transition: ${order.status} -> ${status} for ${role}.`);
   error.status = 409;

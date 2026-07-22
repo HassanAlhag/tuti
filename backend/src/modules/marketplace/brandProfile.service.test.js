@@ -266,6 +266,28 @@ test("public products endpoint returns only live products for that seller", asyn
   assert.ok(products.every((product) => product.shopId === undefined));
 });
 
+test("public products endpoint hides products when the shop is not admin-approved", async () => {
+  // SHOP_TWO is "Pending review" -- a seller can still self-publish their
+  // brand profile (published is a seller-controlled flag, not an approval
+  // gate), and it already has a Live product (prd-live-002). Before the
+  // shop-approval check was added, this published-but-unapproved profile's
+  // products leaked publicly; the shop's own admin approval status must
+  // also gate this endpoint, not just the profile's published flag.
+  const created = await updateSellerBrandProfile(
+    SHOP_TWO.id,
+    { displayName: "Oud Lane Two", published: true },
+    { role: "seller", shopId: SHOP_TWO.id }
+  );
+
+  await assert.rejects(
+    getPublicSellerProductsBySlug(created.slug),
+    (error) => {
+      assert.equal(error.status, 404);
+      return true;
+    }
+  );
+});
+
 test("public payload does not expose operational data", async () => {
   const created = await updateSellerBrandProfile(SHOP_ONE.id, { displayName: "Oud Lane", published: true }, { role: "seller", shopId: SHOP_ONE.id });
   const publicProfile = await getPublicPublishedBrandProfileBySlug(created.slug);

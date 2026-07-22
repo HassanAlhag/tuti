@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireRole } from "../../middleware/auth.js";
+import { authenticate, requireOwnedShop, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
   addSupportInternalNote,
@@ -21,13 +21,18 @@ import {
 export const supportRouter = Router();
 export const adminSupportRouter = Router();
 
-supportRouter.use(authenticate);
+supportRouter.use(authenticate, requireOwnedShop);
 adminSupportRouter.use(authenticate, requireRole("admin", "support"));
+
+function verifiedUser(req) {
+  if (req.user?.role !== "seller") return req.user;
+  return { ...req.user, shopId: req.ownedShopId };
+}
 
 function registerReadWriteRoutes(router) {
   router.post("/tickets", validate(createSupportTicketSchema), async (req, res, next) => {
     try {
-      res.status(201).json({ data: await createSupportTicket(req.body, req.user) });
+      res.status(201).json({ data: await createSupportTicket(req.body, verifiedUser(req)) });
     } catch (err) {
       next(err);
     }
@@ -37,7 +42,7 @@ function registerReadWriteRoutes(router) {
     try {
       const { q, status, priority, category, orderId, page, limit } = req.query;
       res.json({
-        data: await listSupportTickets(req.user, { q, status, priority, category, orderId, page, limit }),
+        data: await listSupportTickets(verifiedUser(req), { q, status, priority, category, orderId, page, limit }),
       });
     } catch (err) {
       next(err);
@@ -46,7 +51,7 @@ function registerReadWriteRoutes(router) {
 
   router.get("/tickets/:ticketId", async (req, res, next) => {
     try {
-      res.json({ data: await getSupportTicket(req.params.ticketId, req.user) });
+      res.json({ data: await getSupportTicket(req.params.ticketId, verifiedUser(req)) });
     } catch (err) {
       next(err);
     }
@@ -54,7 +59,7 @@ function registerReadWriteRoutes(router) {
 
   router.post("/tickets/:ticketId/replies", validate(replySupportTicketSchema), async (req, res, next) => {
     try {
-      res.status(201).json({ data: await replySupportTicket(req.params.ticketId, req.body, req.user) });
+      res.status(201).json({ data: await replySupportTicket(req.params.ticketId, req.body, verifiedUser(req)) });
     } catch (err) {
       next(err);
     }

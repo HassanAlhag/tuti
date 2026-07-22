@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
+import { authenticate, optionalAuth, requireOwnedShop, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import {
   addShopAdminNotice,
@@ -87,24 +87,21 @@ export const marketplaceRouter = Router();
 export const sellerBrandRouter = Router();
 export const publicMarketplaceRouter = Router();
 
-sellerBrandRouter.get("/brand-profile", authenticate, requireRole("seller"), async (req, res, next) => {
+sellerBrandRouter.get("/brand-profile", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    if (!req.user?.shopId) return res.status(403).json({ error: "Seller profile is not linked." });
-    res.json({ data: await getSellerBrandProfile(req.user.shopId) });
+    res.json({ data: await getSellerBrandProfile(req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
-sellerBrandRouter.patch("/brand-profile", authenticate, requireRole("seller"), async (req, res, next) => {
+sellerBrandRouter.patch("/brand-profile", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    if (!req.user?.shopId) return res.status(403).json({ error: "Seller profile is not linked." });
-    res.json({ data: await updateSellerBrandProfile(req.user.shopId, req.body, req.user) });
+    res.json({ data: await updateSellerBrandProfile(req.ownedShopId, req.body, req.user) });
   } catch (err) { next(err); }
 });
 
-sellerBrandRouter.get("/brand-profile/preview", authenticate, requireRole("seller"), async (req, res, next) => {
+sellerBrandRouter.get("/brand-profile/preview", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    if (!req.user?.shopId) return res.status(403).json({ error: "Seller profile is not linked." });
-    res.json({ data: await previewSellerBrandProfile(req.user.shopId) });
+    res.json({ data: await previewSellerBrandProfile(req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
@@ -149,9 +146,9 @@ marketplaceRouter.get("/search", async (req, res, next) => {
 });
 
 // Seller — own shop only
-marketplaceRouter.get("/seller", authenticate, requireRole("seller", "admin"), async (req, res, next) => {
+marketplaceRouter.get("/seller", authenticate, requireRole("seller", "admin"), requireOwnedShop, async (req, res, next) => {
   try {
-    const shopId = req.user.role === "admin" ? req.query.shopId : req.user.shopId;
+    const shopId = req.user.role === "admin" ? req.query.shopId : req.ownedShopId;
     res.json({ data: await getSellerData(shopId) });
   } catch (err) { next(err); }
 });
@@ -160,10 +157,11 @@ marketplaceRouter.post(
   "/seller/products",
   authenticate,
   requireRole("seller", "admin"),
+  requireOwnedShop,
   validate(createProductSchema),
   async (req, res, next) => {
     try {
-      const shopId = req.user.role === "admin" ? req.body.shopId : req.user.shopId;
+      const shopId = req.user.role === "admin" ? req.body.shopId : req.ownedShopId;
       res.status(201).json({ data: await createSellerProduct({ ...req.body, shopId }) });
     } catch (err) { next(err); }
   }
@@ -179,12 +177,13 @@ marketplaceRouter.patch(
   "/seller/products/:productId",
   authenticate,
   requireRole("seller", "admin"),
+  requireOwnedShop,
   validate(updateSellerProductSchema),
   async (req, res, next) => {
     try {
       const shopId = req.user.role === "admin"
         ? (req.body.shopId || req.user.shopId)
-        : req.user.shopId;
+        : req.ownedShopId;
       res.json({ data: await updateSellerProduct(req.params.productId, shopId, req.body) });
     } catch (err) { next(err); }
   }
@@ -198,12 +197,13 @@ marketplaceRouter.patch(
   "/seller/products/:productId/stock",
   authenticate,
   requireRole("seller", "admin"),
+  requireOwnedShop,
   validate(updateSellerStockSchema),
   async (req, res, next) => {
     try {
       const shopId = req.user.role === "admin"
         ? (req.body.shopId || req.user.shopId)
-        : req.user.shopId;
+        : req.ownedShopId;
       res.json({ data: await updateSellerStock(req.params.productId, shopId, req.body) });
     } catch (err) { next(err); }
   }
@@ -217,12 +217,13 @@ marketplaceRouter.patch(
   "/seller/products/stock-bulk",
   authenticate,
   requireRole("seller", "admin"),
+  requireOwnedShop,
   validate(bulkStockSchema),
   async (req, res, next) => {
     try {
       const shopId = req.user.role === "admin"
         ? (req.body.shopId || req.user.shopId)
-        : req.user.shopId;
+        : req.ownedShopId;
       res.json({ data: await updateSellerStockBulk(shopId, req.body) });
     } catch (err) { next(err); }
   }
@@ -232,22 +233,23 @@ marketplaceRouter.patch(
   "/seller/notices/:noticeId/action-plan",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
-      res.json({ data: await submitSellerActionPlan(req.params.noticeId, req.body, req.user) });
+      res.json({ data: await submitSellerActionPlan(req.params.noticeId, req.body, { ...req.user, shopId: req.ownedShopId }) });
     } catch (err) { next(err); }
   }
 );
 
-marketplaceRouter.get("/seller/drivers", authenticate, requireRole("seller"), async (req, res, next) => {
+marketplaceRouter.get("/seller/drivers", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    res.json({ data: await listSellerDrivers(req.user.shopId) });
+    res.json({ data: await listSellerDrivers(req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
-marketplaceRouter.get("/seller/drivers/cod-summary", authenticate, requireRole("seller"), async (req, res, next) => {
+marketplaceRouter.get("/seller/drivers/cod-summary", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    res.json({ data: await getSellerDriverCodSummary(req.user.shopId) });
+    res.json({ data: await getSellerDriverCodSummary(req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
@@ -255,10 +257,11 @@ marketplaceRouter.post(
   "/seller/drivers",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   validate(createDriverSchema),
   async (req, res, next) => {
     try {
-      res.status(201).json({ data: await createSellerDriver(req.user.shopId, req.user.shopName || "", req.user.sub, req.body) });
+      res.status(201).json({ data: await createSellerDriver(req.ownedShopId, req.user.shopName || "", req.user.sub, req.body) });
     } catch (err) { next(err); }
   }
 );
@@ -267,10 +270,11 @@ marketplaceRouter.patch(
   "/seller/drivers/:driverId",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   validate(updateDriverSchema),
   async (req, res, next) => {
     try {
-      res.json({ data: await updateSellerDriver(req.params.driverId, req.user.shopId, req.body) });
+      res.json({ data: await updateSellerDriver(req.params.driverId, req.ownedShopId, req.body) });
     } catch (err) { next(err); }
   }
 );
@@ -279,9 +283,10 @@ marketplaceRouter.post(
   "/seller/drivers/:driverId/login",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
-      res.status(201).json({ data: await createSellerDriverLogin(req.params.driverId, req.user.shopId, req.user.sub, req.body) });
+      res.status(201).json({ data: await createSellerDriverLogin(req.params.driverId, req.ownedShopId, req.user.sub, req.body) });
     } catch (err) { next(err); }
   }
 );
@@ -290,10 +295,11 @@ marketplaceRouter.post(
   "/seller/drivers/:driverId/assign/:orderId",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   validate(sellerDriverAssignSchema),
   async (req, res, next) => {
     try {
-      res.json({ data: await assignSellerDriverToOrder(req.params.driverId, req.params.orderId, req.user.shopId, req.user, req.body) });
+      res.json({ data: await assignSellerDriverToOrder(req.params.driverId, req.params.orderId, req.ownedShopId, req.user, req.body) });
     } catch (err) { next(err); }
   }
 );
@@ -302,10 +308,11 @@ marketplaceRouter.patch(
   "/seller/drivers/:driverId/orders/:orderId/delivery",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   validate(driverDeliverySchema),
   async (req, res, next) => {
     try {
-      res.json({ data: await recordSellerDriverDelivery(req.params.driverId, req.params.orderId, req.user.shopId, req.body, req.user) });
+      res.json({ data: await recordSellerDriverDelivery(req.params.driverId, req.params.orderId, req.ownedShopId, req.body, req.user) });
     } catch (err) { next(err); }
   }
 );
@@ -314,29 +321,30 @@ marketplaceRouter.post(
   "/seller/delivery-offers",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   validate(createDeliveryOfferSchema),
   async (req, res, next) => {
     try {
-      res.status(201).json({ data: await createSellerDeliveryOffer(req.user.shopId, req.user.shopName || "", req.user.sub, req.body) });
+      res.status(201).json({ data: await createSellerDeliveryOffer(req.ownedShopId, req.user.shopName || "", req.user.sub, req.body) });
     } catch (err) { next(err); }
   }
 );
 
-marketplaceRouter.get("/seller/delivery-offers", authenticate, requireRole("seller"), async (req, res, next) => {
+marketplaceRouter.get("/seller/delivery-offers", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    res.json({ data: await listSellerDeliveryOffers(req.user.shopId) });
+    res.json({ data: await listSellerDeliveryOffers(req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
-marketplaceRouter.get("/seller/delivery-offers/:offerId", authenticate, requireRole("seller"), async (req, res, next) => {
+marketplaceRouter.get("/seller/delivery-offers/:offerId", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    res.json({ data: await getSellerDeliveryOffer(req.params.offerId, req.user.shopId) });
+    res.json({ data: await getSellerDeliveryOffer(req.params.offerId, req.ownedShopId) });
   } catch (err) { next(err); }
 });
 
-marketplaceRouter.patch("/seller/delivery-offers/:offerId/cancel", authenticate, requireRole("seller"), async (req, res, next) => {
+marketplaceRouter.patch("/seller/delivery-offers/:offerId/cancel", authenticate, requireRole("seller"), requireOwnedShop, async (req, res, next) => {
   try {
-    res.json({ data: await cancelSellerDeliveryOffer(req.params.offerId, req.user.shopId, req.user) });
+    res.json({ data: await cancelSellerDeliveryOffer(req.params.offerId, req.ownedShopId, req.user) });
   } catch (err) { next(err); }
 });
 
@@ -581,9 +589,10 @@ marketplaceRouter.get(
   "/seller/balance",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
-      res.json({ data: await getSellerBalance(req.user.shopId) });
+      res.json({ data: await getSellerBalance(req.ownedShopId) });
     } catch (err) { next(err); }
   }
 );
@@ -592,11 +601,12 @@ marketplaceRouter.get(
   "/seller/transactions",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
       const { limit, offset } = req.query;
       res.json({
-        data: await getSellerTransactions(req.user.shopId, {
+        data: await getSellerTransactions(req.ownedShopId, {
           limit:  limit  ? Math.min(Number(limit), 200) : 50,
           offset: offset ? Number(offset)               : 0,
         }),
@@ -609,11 +619,12 @@ marketplaceRouter.get(
   "/seller/payouts",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
       const { limit, offset } = req.query;
       res.json({
-        data: await getSellerPayouts(req.user.shopId, {
+        data: await getSellerPayouts(req.ownedShopId, {
           limit:  limit  ? Math.min(Number(limit), 100) : 20,
           offset: offset ? Number(offset)               : 0,
         }),
@@ -719,10 +730,10 @@ marketplaceRouter.get(
   "/seller/invoice",
   authenticate,
   requireRole("seller"),
+  requireOwnedShop,
   async (req, res, next) => {
     try {
-      const shopId = req.user?.shopId;
-      if (!shopId) return res.status(403).json({ error: "Seller shop not found." });
+      const shopId = req.ownedShopId;
 
       const { period } = req.query; // YYYY-MM
       let fromDate, toDate;

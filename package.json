@@ -29,6 +29,7 @@
     "kill": "lsof -ti :5055,5173,5174,5175,5176,5177 | xargs kill -9 2>/dev/null || true",
     "seed:showcase": "node backend/src/seed/showcase-seed.mjs",
     "seed:showcase:reset": "echo 'Seed-mode placements live in server memory and reset on server restart. Restart the backend then run: npm run seed:showcase'",
+    "audit:seller-shop-ownership": "node backend/src/tools/auditSellerShopOwnership.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:backend": "node --test $(find backend/src -name '*.test.js' | tr '\\n' ' ')",

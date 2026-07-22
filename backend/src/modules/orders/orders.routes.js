@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, optionalAuth, requireRole } from "../../middleware/auth.js";
+import { authenticate, optionalAuth, requireOwnedShop, requireRole } from "../../middleware/auth.js";
 import { validate } from "../../middleware/validate.js";
 import { sendOrderConfirmation } from "../../shared/email.js";
 import { sendOrderConfirmationSms, sendOrderStatusSms } from "../../shared/sms.js";
@@ -39,13 +39,13 @@ ordersRouter.post("/", optionalAuth, validate(createOrderSchema), async (req, re
 });
 
 // List orders — customer sees own, seller sees shop, admin sees all
-ordersRouter.get("/", authenticate, async (req, res, next) => {
+ordersRouter.get("/", authenticate, requireOwnedShop, async (req, res, next) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const result = await listOrders({
       userId: req.user.sub,
       role: req.user.role,
-      shopId: req.user.shopId,
+      shopId: req.user.role === "seller" ? req.ownedShopId : req.user.shopId,
       page: Number(page),
       limit: Math.min(Number(limit), 100),
     });
@@ -53,11 +53,17 @@ ordersRouter.get("/", authenticate, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// Get single order — optionalAuth so guests can use a confirmation token
-ordersRouter.get("/:orderId", optionalAuth, async (req, res, next) => {
+// Get single order — optionalAuth so guests can use a confirmation token.
+// requireOwnedShop no-ops for guests/customers/admin/support (only a
+// seller claim is checked against the database), so this stays safe for
+// every other caller of this shared endpoint.
+ordersRouter.get("/:orderId", optionalAuth, requireOwnedShop, async (req, res, next) => {
   try {
     const guestToken = typeof req.query.token === "string" ? req.query.token : null;
-    res.json({ data: await getOrder(req.params.orderId, req.user, guestToken) });
+    const user = req.user && req.user.role === "seller"
+      ? { ...req.user, shopId: req.ownedShopId }
+      : req.user;
+    res.json({ data: await getOrder(req.params.orderId, user, guestToken) });
   } catch (err) { next(err); }
 });
 
@@ -66,10 +72,12 @@ ordersRouter.patch(
   "/:orderId/status",
   authenticate,
   requireRole("seller", "admin", "support"),
+  requireOwnedShop,
   validate(updateOrderStatusSchema),
   async (req, res, next) => {
     try {
-      const updated = await updateOrderStatus(req.params.orderId, req.body.status, req.user, req.body.note, req.body.courierRef);
+      const user = req.user.role === "seller" ? { ...req.user, shopId: req.ownedShopId } : req.user;
+      const updated = await updateOrderStatus(req.params.orderId, req.body.status, user, req.body.note, req.body.courierRef);
       res.json({ data: updated });
       const phone = updated.customerPhone || updated.deliveryAddress?.phone;
       if (phone) sendOrderStatusSms(phone, req.params.orderId, req.body.status).catch(() => {});

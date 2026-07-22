@@ -43,6 +43,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// One seller account per shop. Scoped to role:"seller" only (drivers
+// legitimately share their parent shop's shopId across many User docs, and
+// customers/admins/support always have shopId:null) -- this is a hard
+// database-level backstop against two seller accounts ever being bound to
+// the same shop, independent of any application-layer bug.
+userSchema.index(
+  { shopId: 1 },
+  { unique: true, partialFilterExpression: { role: "seller", shopId: { $type: "string" } } }
+);
+
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
