@@ -23,11 +23,14 @@ import {
   TutiProductRail,
   TutiTrustStrip,
 } from "../../ui/customer/commerce/index.js";
+import { BoutiqueCard } from "../boutiques/BoutiqueCard.jsx";
+import { useEnrichedBoutiques } from "../boutiques/boutiqueDirectory.js";
 import cakeCategoryImage from "../../assets/category-cakes.jpg";
 import giftSetCategoryImage from "../../assets/category-gift-sets.jpg";
 import perfumeCategoryImage from "../../assets/category-perfumes.jpg";
 import perfumeHeroImage from "../../assets/perfume-hero.png";
 import "../homepage/homepage.css";
+import "../boutiques/boutiques.css";
 
 const SHORTCUTS = [
   { label: "Perfumes", category: "perfume", icon: SprayCan, tone: "cyan" },
@@ -105,21 +108,6 @@ function pickProducts(products = [], category, limit = 10) {
       return true;
     })
     .slice(0, limit);
-}
-
-function getShopSlug(shop) {
-  return shop?.slug || shop?.id || shop?.shopId || "";
-}
-
-function getShopTitle(shop) {
-  return shop?.displayName || shop?.name || "Verified boutique";
-}
-
-function getShopSpecialty(shop) {
-  if (Array.isArray(shop?.specialties) && shop.specialties.length) return shop.specialties[0];
-  if (Array.isArray(shop?.fragranceIdentityTags) && shop.fragranceIdentityTags.length) return shop.fragranceIdentityTags[0];
-  if (Array.isArray(shop?.categories) && shop.categories.length) return shop.categories[0];
-  return "Perfume, cakes and gifting";
 }
 
 function Hero({ goToBuildBox, goToFragranceFinder, goToShop }) {
@@ -276,46 +264,32 @@ function ModernGiftingSection({ goToShop, goToShops }) {
 }
 
 function BoutiqueSection({ goToSellerBrand, goToShops, shops = [] }) {
-  const visibleShops = shops.slice(0, 4);
+  const { boutiques } = useEnrichedBoutiques(shops);
+  // Boutiques with a published brand profile (real slug/tagline/tags) lead
+  // the rail -- otherwise shops still mid-onboarding with no public profile
+  // content could crowd out the ones actually worth featuring.
+  const visibleBoutiques = [...boutiques]
+    .sort((a, b) => (b.slug ? 1 : 0) - (a.slug ? 1 : 0))
+    .slice(0, 4);
+
+  if (!visibleBoutiques.length) return null;
 
   return (
     <TutiSection
       eyebrow="Verified boutiques"
       title="Shop from trusted sellers."
-      subtitle="Every seller discovery card keeps the focus on what they make, how they fulfil, and why they are worth browsing."
+      subtitle="Every boutique prepares and packages its own products -- browse who's behind each one before you shop."
       action={<TutiButton variant="ghost" size="sm" onClick={goToShops}>View all boutiques</TutiButton>}
       density="compact"
       className="home-rebuild-section"
     >
-      <div className={`home-boutique-grid home-boutique-grid--count-${Math.max(1, visibleShops.length)}`}>
-        {(visibleShops.length ? visibleShops : [{ id: "seller-preview", name: "Tuti boutique preview" }]).map((shop) => (
-          <TutiCard
-            as="button"
-            type="button"
-            variant="commerce"
-            padding="md"
-            interactive
-            className="home-boutique-card"
-            key={shop.id || shop.shopId || shop.name}
-            onClick={() => {
-              const slug = getShopSlug(shop);
-              if (slug) goToSellerBrand?.(slug);
-              else goToShops?.();
-            }}
-          >
-            <span className="home-boutique-card__mark" aria-hidden="true">
-              {getShopTitle(shop).slice(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <TutiBadge tone="cyan">Verified</TutiBadge>
-              <h3>{getShopTitle(shop)}</h3>
-              <p>{shop.shortTagline || shop.tagline || "A curated boutique preparing premium products for thoughtful gifts."}</p>
-            </div>
-            <div className="home-boutique-card__meta">
-              <span>{getShopSpecialty(shop)}</span>
-              <span>{shop.rating ? `${shop.rating} rating` : "Quality reviewed"}</span>
-            </div>
-          </TutiCard>
+      <div className="boutique-grid">
+        {visibleBoutiques.map((boutique) => (
+          <BoutiqueCard
+            key={boutique.id || boutique.name}
+            boutique={boutique}
+            onVisit={(identifier) => (identifier ? goToSellerBrand?.(identifier) : goToShops?.())}
+          />
         ))}
       </div>
     </TutiSection>

@@ -1,33 +1,37 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   BadgeCheck,
-  Globe2,
+  MapPin,
   Package,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
+  Star,
   Store,
   Tag,
-  ShoppingBag,
-  Users,
+  Truck,
 } from "lucide-react";
-import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { publicSellerBrandApi } from "@tuti/shared/api/client.js";
 import { getLocalizedField, DEFAULT_LOCALE } from "@tuti/shared/utils/locale.js";
-import { ProductCardRouter } from "../storefront/components/ProductCardRouter.jsx";
+import { TutiBadge, TutiButton, TutiEmptyState } from "../../ui/customer/primitives/index.js";
+import { TutiProductGrid, TutiTrustStrip, getProductCategory } from "../../ui/customer/commerce/index.js";
+import {
+  getBoutiqueCategoryChips,
+  getBoutiqueDeliveryLabel,
+  getBoutiqueFallbackCopy,
+  getBoutiqueFallbackImage,
+  getBoutiqueInitials,
+  getShopCategories,
+  normalizeKey,
+} from "../boutiques/boutiqueDirectory.js";
 import { trackPageView } from "../tracking/marketplaceTracking.js";
 import { useSeoMeta } from "@tuti/shared/hooks/useSeoMeta.js";
+import "../boutiques/boutiques.css";
 
 function isImageUrl(value) {
   return /^(https?:\/\/|\/uploads\/|data:)/i.test(String(value || ""));
-}
-
-function normalizeProducts(products = []) {
-  return products.map((product) => ({
-    ...product,
-    status: product.status || "Live",
-  }));
 }
 
 function safeDecodeSlug(value) {
@@ -42,9 +46,26 @@ function getBrandHeading(profile, locale = DEFAULT_LOCALE) {
   return getLocalizedField(profile, "displayName", locale) || "Seller brand";
 }
 
-export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }) {
+function getBoutiqueHue(seed) {
+  const text = String(seed || "tuti");
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 31 + text.charCodeAt(i)) % 360;
+  }
+  return (hash + 360) % 360;
+}
+
+const PRODUCT_CATEGORY_TABS = [
+  { key: "all", label: "All" },
+  { key: "perfume", label: "Perfumes" },
+  { key: "cake", label: "Cakes & Desserts" },
+  { key: "gift_box", label: "Gift Boxes" },
+];
+
+export function SellerBrandPage({ slug, shops = [], onAddToCart, onNavigate, onViewProduct }) {
   const cleanSlug = safeDecodeSlug(slug);
   const pageViewKeyRef = useRef("");
+  const [productCategory, setProductCategory] = useState("all");
 
   const profileQuery = useQuery({
     queryKey: ["seller-brand-public", cleanSlug],
@@ -60,15 +81,47 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
     enabled: Boolean(cleanSlug) && profileQuery.isSuccess && Boolean(profile),
   });
 
-  const products = useMemo(() => normalizeProducts(productsQuery.data || []), [productsQuery.data]);
+  const products = productsQuery.data || [];
   const loading = profileQuery.isLoading || (profileQuery.isSuccess && productsQuery.isLoading);
   const notFound = profileQuery.isError && !profileQuery.data;
   const errorMessage = profileQuery.error?.message || productsQuery.error?.message || "";
 
+  // storefront.shops carries city/rating/category data the public brand-
+  // profile API doesn't expose; matched by display name since that's the
+  // one field both shapes reliably share (see boutiqueDirectory.js).
+  const matchedShop = useMemo(() => {
+    if (!profile) return null;
+    const heading = normalizeKey(getBrandHeading(profile));
+    return shops.find((shop) => normalizeKey(shop.name) === heading) || null;
+  }, [profile, shops]);
+
+  const categories = useMemo(
+    () => (matchedShop ? getShopCategories(matchedShop) : []),
+    [matchedShop]
+  );
+  const categoryChips = useMemo(
+    () => (matchedShop ? getBoutiqueCategoryChips(matchedShop) : []),
+    [matchedShop]
+  );
+
+  const filteredProducts = useMemo(() => {
+    if (productCategory === "all") return products;
+    return products.filter((product) => {
+      const cat = getProductCategory(product);
+      return cat === productCategory || (productCategory === "cake" && cat === "dessert");
+    });
+  }, [products, productCategory]);
+
+  const availableProductTabs = useMemo(() => {
+    if (categories.length < 2) return [];
+    const present = new Set(products.map((p) => getProductCategory(p)));
+    return PRODUCT_CATEGORY_TABS.filter((tab) => tab.key === "all" || present.has(tab.key) || (tab.key === "cake" && present.has("dessert")));
+  }, [categories, products]);
+
   useSeoMeta({
     title: profile ? getBrandHeading(profile) : undefined,
     description: profile
-      ? `${getBrandHeading(profile)} — ${profile.tagline || "Browse products and shop with cash on delivery on Tuti."}`
+      ? `${getBrandHeading(profile)} — ${profile.shortTagline || "Browse products and shop with cash on delivery on Tuti."}`
       : undefined,
     ogImage: isImageUrl(profile?.logoUrl) ? profile.logoUrl : undefined,
     canonical: profile ? `https://tuti.ae/sellers/${profile.slug || cleanSlug}` : undefined,
@@ -76,10 +129,10 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
       "@context": "https://schema.org",
       "@type": "Store",
       "name": getBrandHeading(profile),
-      "description": profile.tagline || getBrandHeading(profile),
+      "description": profile.shortTagline || getBrandHeading(profile),
       "image": isImageUrl(profile.logoUrl) ? profile.logoUrl : undefined,
       "url": `https://tuti.ae/sellers/${profile.slug || cleanSlug}`,
-      "address": profile.city ? { "@type": "PostalAddress", "addressLocality": profile.city, "addressCountry": "AE" } : undefined,
+      "address": matchedShop?.city ? { "@type": "PostalAddress", "addressLocality": matchedShop.city, "addressCountry": "AE" } : undefined,
     } : undefined,
   });
 
@@ -94,68 +147,61 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
       source: "web_seller_brand_page",
       route: typeof window !== "undefined" ? window.location.pathname : "",
       context: {
-        sellerShopId: profile.shopId || null,
+        sellerShopId: matchedShop?.id || null,
         metadata: {
           sellerSlug: cleanSlug,
         },
       },
     });
-  }, [cleanSlug, profile, profileQuery.isSuccess]);
+  }, [cleanSlug, profile, profileQuery.isSuccess, matchedShop]);
 
   function goHome() {
-    if (onNavigate) {
-      onNavigate("/");
-      return;
-    }
+    if (onNavigate) { onNavigate("/"); return; }
     window.location.href = "/";
   }
 
   function goShop() {
-    if (onNavigate) {
-      onNavigate("/shop");
-      return;
-    }
+    if (onNavigate) { onNavigate("/shop"); return; }
     window.location.href = "/shop";
   }
 
   function goBrandHome() {
-    if (onNavigate) {
-      onNavigate("/shops");
-      return;
-    }
+    if (onNavigate) { onNavigate("/shops"); return; }
     window.location.href = "/shops";
+  }
+
+  function goSupport() {
+    if (onNavigate) { onNavigate("/support"); return; }
+    window.location.href = "/support";
+  }
+
+  function scrollToProducts() {
+    document.getElementById("boutique-products")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (loading) {
     return (
-      <main className="page-shell seller-brand-page">
-        <EmptyState icon={Sparkles} text="Loading seller brand page…" />
+      <main className="page-shell boutique-profile-page">
+        <TutiEmptyState icon={<Sparkles size={26} />} title="Loading boutique…" />
       </main>
     );
   }
 
   if (notFound || !profile) {
     return (
-      <main className="page-shell seller-brand-page">
-        <section className="not-found-panel seller-brand-state">
+      <main className="page-shell boutique-profile-page">
+        <section className="boutique-profile-not-found">
           <Store size={26} />
-          <h1>{cleanSlug ? "Seller page unavailable" : "Seller page link is incomplete"}</h1>
+          <h1>{cleanSlug ? "Boutique page unavailable" : "Boutique link is incomplete"}</h1>
           <p>
             {cleanSlug
-              ? "This seller brand page is not published yet, or the link is no longer available."
-              : "The seller page link is missing a brand slug."}
+              ? "This boutique's public page is not published yet, or the link is no longer available."
+              : "The boutique link is missing an identifier."}
           </p>
-          <div className="seller-brand-actions">
-            <button className="primary-action" type="button" onClick={goHome}>
-              <ArrowLeft size={16} />
-              Back to home
-            </button>
-            <button className="secondary-action" type="button" onClick={goShop}>
-              Browse perfumes
-            </button>
-            <button className="secondary-action" type="button" onClick={goBrandHome}>
-              Browse sellers
-            </button>
+          <div className="boutique-profile-not-found-actions">
+            <TutiButton size="sm" icon={<ArrowLeft size={15} />} onClick={goHome}>Back to home</TutiButton>
+            <TutiButton variant="ghost" size="sm" onClick={goShop}>Browse products</TutiButton>
+            <TutiButton variant="ghost" size="sm" onClick={goBrandHome}>Browse boutiques</TutiButton>
           </div>
         </section>
       </main>
@@ -164,212 +210,188 @@ export function SellerBrandPage({ slug, onAddToCart, onNavigate, onViewProduct }
 
   if (productsQuery.isError && !productsQuery.data) {
     return (
-      <main className="page-shell seller-brand-page">
-        <section className="not-found-panel seller-brand-state">
+      <main className="page-shell boutique-profile-page">
+        <section className="boutique-profile-not-found">
           <Store size={26} />
-          <h1>Seller page unavailable</h1>
-          <p>{errorMessage || "We could not load this seller page right now."}</p>
-          <div className="seller-brand-actions">
-            <button className="primary-action" type="button" onClick={goHome}>
-              <ArrowLeft size={16} />
-              Back to home
-            </button>
-            <button className="secondary-action" type="button" onClick={goBrandHome}>
-              Browse sellers
-            </button>
+          <h1>Boutique page unavailable</h1>
+          <p>{errorMessage || "We could not load this boutique right now."}</p>
+          <div className="boutique-profile-not-found-actions">
+            <TutiButton size="sm" icon={<ArrowLeft size={15} />} onClick={goHome}>Back to home</TutiButton>
+            <TutiButton variant="ghost" size="sm" onClick={goBrandHome}>Browse boutiques</TutiButton>
           </div>
         </section>
       </main>
     );
   }
 
+  const sellerHeading = getBrandHeading(profile);
   const hasBanner = isImageUrl(profile.bannerUrl);
   const hasLogo = isImageUrl(profile.logoUrl);
-  const publicShop = { name: profile.displayName || "Tuti seller" };
-  const hasStory = Boolean(getLocalizedField(profile, "brandStory", DEFAULT_LOCALE));
-  const hasTrustContent = Boolean((profile.trustBadges || []).length || (profile.sellerPolicies || []).length);
-  const sellerHeading = getBrandHeading(profile);
+  const fallbackImage = matchedShop ? getBoutiqueFallbackImage(matchedShop) : "";
+  const intro = getLocalizedField(profile, "shortTagline", DEFAULT_LOCALE)
+    || getLocalizedField(profile, "brandStory", DEFAULT_LOCALE)
+    || (matchedShop ? getBoutiqueFallbackCopy(matchedShop) : "This boutique is preparing its full public profile.");
+  const brandStory = getLocalizedField(profile, "brandStory", DEFAULT_LOCALE);
+  const deliveryLabel = matchedShop ? getBoutiqueDeliveryLabel(matchedShop) : "";
+  const publicShop = { name: sellerHeading };
+
+  const trustItems = [
+    { icon: <ShieldCheck size={18} />, title: "Verified boutique", description: "Reviewed by Tuti before going live." },
+    { icon: <Package size={18} />, title: "Boutique-owned preparation", description: `Prepared and packaged by ${sellerHeading}, not combined with other boutiques.` },
+    { icon: <BadgeCheck size={18} />, title: "COD at launch", description: "Cash on delivery is available for every order." },
+    ...(deliveryLabel ? [{ icon: <Truck size={18} />, title: "Delivery", description: deliveryLabel }] : []),
+  ];
 
   return (
-    <main className="page-shell seller-brand-page">
-      <section className="seller-brand-hero">
+    <main className="page-shell boutique-profile-page">
+      <section className="boutique-profile-hero">
         <div
-          className={hasBanner ? "seller-brand-banner seller-brand-banner--image" : "seller-brand-banner"}
-          style={hasBanner ? { backgroundImage: `linear-gradient(180deg, rgba(12,25,22,0.32), rgba(12,25,22,0.76)), url(${profile.bannerUrl})` } : undefined}
+          className={hasBanner ? "boutique-profile-cover" : "boutique-profile-cover boutique-profile-cover--tinted"}
+          style={!hasBanner ? { "--boutique-hue": getBoutiqueHue(profile.slug || sellerHeading) } : undefined}
         >
-          {!hasBanner && (
-            <div className="seller-brand-banner-copy">
-              <span className="seller-brand-banner-kicker">Verified boutique</span>
-              <strong>{profile.shortTagline || sellerHeading}</strong>
-            </div>
-          )}
+          {hasBanner ? <img src={profile.bannerUrl} alt="" /> : (fallbackImage ? <img src={fallbackImage} alt="" /> : null)}
+        </div>
 
-          <div className="seller-brand-hero-card">
-            <div className="seller-brand-logo">
-              {hasLogo ? (
-                <img src={profile.logoUrl} alt={`${getBrandHeading(profile)} logo`} />
-              ) : (
-                <span>{String(profile.logoUrl || profile.displayName || "TS").slice(0, 2).toUpperCase()}</span>
-              )}
+        <div className="boutique-profile-card">
+          <div className="boutique-profile-logo">
+            {hasLogo ? <img src={profile.logoUrl} alt={`${sellerHeading} logo`} /> : getBoutiqueInitials(sellerHeading)}
+          </div>
+
+          <div>
+            <div className="boutique-profile-title-row">
+              <h1>{sellerHeading}</h1>
+              <TutiBadge tone="cyan" icon={<BadgeCheck size={13} />}>Verified boutique</TutiBadge>
             </div>
 
-            <div className="seller-brand-copy">
-              <div className="seller-brand-title-row">
-                <div className="seller-brand-title-stack">
-                  <h1>{sellerHeading}</h1>
-                </div>
-                <span className="seller-brand-pill seller-brand-pill--brand">
-                  <BadgeCheck size={14} />
-                  Verified boutique
-                </span>
-              </div>
-
-              {getLocalizedField(profile, "shortTagline", DEFAULT_LOCALE) ? (
-                <p className="seller-brand-tagline">{getLocalizedField(profile, "shortTagline", DEFAULT_LOCALE)}</p>
-              ) : null}
+            <div className="boutique-profile-meta">
+              {categoryChips.map((chip) => <span key={chip}>{chip}</span>)}
+              {matchedShop?.city ? <span><MapPin size={13} aria-hidden="true" /> {matchedShop.city}</span> : null}
+              {matchedShop?.serviceRating ? <span><Star size={13} aria-hidden="true" /> {matchedShop.serviceRating} rating</span> : null}
             </div>
 
-            <div className="seller-brand-chip-row">
-              {(profile.fragranceIdentityTags || []).slice(0, 6).map((tag) => (
-                <span className="seller-brand-pill" key={tag}>
-                  <Tag size={13} />
-                  {tag}
-                </span>
-              ))}
+            <p className="boutique-profile-intro">{intro}</p>
+
+            <div className="boutique-profile-actions">
+              <TutiButton size="md" icon={<ShoppingBag size={16} />} iconPosition="right" onClick={scrollToProducts}>
+                Browse products
+              </TutiButton>
+              <TutiButton variant="ghost" size="md" onClick={goSupport}>Contact support</TutiButton>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="seller-brand-detail-grid">
-        <article className="seller-brand-panel">
-          <div className="seller-brand-panel-head">
-            <span className="seller-brand-panel-eyebrow">About the brand</span>
-            <h2>Story and identity</h2>
+      <TutiTrustStrip items={trustItems} variant="cards" className="boutique-profile-trust" />
+
+      <section className="boutique-profile-grid">
+        <article className="boutique-profile-panel">
+          <div className="boutique-profile-panel-head">
+            <div>
+              <span className="boutique-profile-panel-eyebrow">About the boutique</span>
+              <h2>Story and preparation</h2>
+            </div>
+            <span className="boutique-profile-panel-icon" aria-hidden="true"><Store size={18} /></span>
           </div>
 
-          {hasStory ? (
-            <div className="seller-brand-story-block">
-              {getLocalizedField(profile, "brandStory", DEFAULT_LOCALE) ? (
-                <p className="seller-brand-story">{getLocalizedField(profile, "brandStory", DEFAULT_LOCALE)}</p>
-              ) : null}
-            </div>
-          ) : (
-            <p className="seller-brand-story seller-brand-story--fallback">
-              This verified boutique is preparing its full brand story. Explore its available products below.
-            </p>
-          )}
+          <p>{brandStory || (matchedShop ? getBoutiqueFallbackCopy(matchedShop) : "This boutique is preparing its brand story. Explore its available products below.")}</p>
 
-          {(profile.specialties || []).length ? (
-            <div className="seller-brand-list">
-              <div className="seller-brand-list-head">
-                <Users size={15} />
-                <strong>Specialties</strong>
-              </div>
-              <div className="seller-brand-pill-row">
-                {profile.specialties.map((item) => (
-                  <span className="seller-brand-pill" key={item}>{item}</span>
-                ))}
-              </div>
+          {categoryChips.length ? (
+            <div className="boutique-profile-category-list">
+              {categoryChips.map((chip) => <TutiBadge tone="champagne" key={chip}>{chip}</TutiBadge>)}
             </div>
           ) : null}
+
+          <div className="boutique-profile-note">
+            <ShieldCheck size={16} aria-hidden="true" />
+            <p>Each boutique prepares and packages its own items. Tuti does not combine products from multiple boutiques into one physical box.</p>
+          </div>
         </article>
 
-        <article className="seller-brand-panel">
-          <div className="seller-brand-panel-head">
-            <span className="seller-brand-panel-eyebrow">Trust and policy</span>
-            <h2>What shoppers should know</h2>
+        <article className="boutique-profile-panel">
+          <div className="boutique-profile-panel-head">
+            <div>
+              <span className="boutique-profile-panel-eyebrow">Good to know</span>
+              <h2>What shoppers should know</h2>
+            </div>
           </div>
 
-          {(profile.trustBadges || []).length ? (
-            <div className="seller-brand-list">
-              <div className="seller-brand-list-head">
-                <ShieldCheck size={15} />
-                <strong>Trust badges</strong>
-              </div>
-              <div className="seller-brand-pill-row">
-                {profile.trustBadges.map((item) => (
-                  <span className="seller-brand-pill" key={item}>{item}</span>
-                ))}
+          <div className="boutique-profile-info-rows">
+            <div className="boutique-profile-info-row">
+              <span className="boutique-profile-info-row__icon" aria-hidden="true"><BadgeCheck size={15} /></span>
+              <div>
+                <p className="boutique-profile-info-row__title">Cash on Delivery at launch</p>
+                <p className="boutique-profile-info-row__desc">Available for every order from this boutique.</p>
               </div>
             </div>
-          ) : null}
 
-          {(profile.sellerPolicies || []).length ? (
-            <div className="seller-brand-list">
-              <div className="seller-brand-list-head">
-                <Package size={15} />
-                <strong>Helpful policies</strong>
-              </div>
-              <div className="seller-brand-policy-list">
-                {profile.sellerPolicies.map((policy, index) => (
-                  <div className="seller-brand-policy-row" key={`${policy.label || policy.value || index}`}>
-                    <strong>{policy.label || "Policy"}</strong>
-                    <span>{policy.value || ""}</span>
-                  </div>
-                ))}
+            <div className="boutique-profile-info-row">
+              <span className="boutique-profile-info-row__icon" aria-hidden="true"><Package size={15} /></span>
+              <div>
+                <p className="boutique-profile-info-row__title">Boutique-owned preparation</p>
+                <p className="boutique-profile-info-row__desc">Prepared and packaged by {sellerHeading} alone.</p>
               </div>
             </div>
-          ) : null}
 
-          {(profile.socialLinks || []).length ? (
-            <div className="seller-brand-list">
-              <div className="seller-brand-list-head">
-                <Globe2 size={15} />
-                <strong>Find the brand</strong>
+            {deliveryLabel ? (
+              <div className="boutique-profile-info-row">
+                <span className="boutique-profile-info-row__icon" aria-hidden="true"><Truck size={15} /></span>
+                <div>
+                  <p className="boutique-profile-info-row__title">Delivery</p>
+                  <p className="boutique-profile-info-row__desc">{deliveryLabel}.</p>
+                </div>
               </div>
-              <div className="seller-brand-link-list">
-                {profile.socialLinks.map((link, index) => (
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    key={`${link.label || link.url || index}`}
-                  >
-                    <Globe2 size={14} />
-                    <span>{link.label || link.url}</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {!hasTrustContent && !(profile.socialLinks || []).length ? (
-            <p className="seller-brand-story seller-brand-story--fallback">
-              More boutique details will appear here as this seller expands its public profile.
-            </p>
-          ) : null}
+            {categoryChips.length ? (
+              <div className="boutique-profile-info-row">
+                <span className="boutique-profile-info-row__icon" aria-hidden="true"><Tag size={15} /></span>
+                <div>
+                  <p className="boutique-profile-info-row__title">What this boutique sells</p>
+                  <p className="boutique-profile-info-row__desc">{categoryChips.join(", ")}.</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </article>
       </section>
 
-      <section className="seller-brand-products">
-        <div className="seller-brand-section-head">
+      <section className="boutique-profile-products" id="boutique-products">
+        <div className="boutique-profile-products-head">
           <div>
-            <span className="seller-brand-panel-eyebrow">Live catalog</span>
+            <span className="boutique-profile-panel-eyebrow">Live catalog</span>
             <h2>Products from {sellerHeading}</h2>
           </div>
-          <button className="secondary-action compact" type="button" onClick={goShop}>
-            <ShoppingBag size={14} />
-            {sellerHeading ? `Browse products from ${sellerHeading}` : "Explore products"}
-          </button>
         </div>
 
-        {products.length ? (
-          <div className="product-grid">
-            {products.map((product) => (
-              <ProductCardRouter
-                key={product.id}
-                product={product}
-                shop={publicShop}
-                onAddToCart={onAddToCart}
-                onRateProduct={onViewProduct}
-                onViewProduct={onViewProduct}
-              />
+        {availableProductTabs.length ? (
+          <div className="boutique-profile-category-tabs" role="group" aria-label="Filter products by category">
+            {availableProductTabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={`boutique-directory-filter${productCategory === tab.key ? " is-active" : ""}`}
+                onClick={() => setProductCategory(tab.key)}
+                aria-pressed={productCategory === tab.key}
+              >
+                {tab.label}
+              </button>
             ))}
           </div>
-        ) : (
-          <EmptyState icon={Package} text="No products available yet. Check back soon." />
-        )}
+        ) : null}
+
+        <TutiProductGrid
+          products={filteredProducts}
+          getShop={() => publicShop}
+          variant="catalog"
+          onAddToCart={onAddToCart}
+          onViewProduct={onViewProduct}
+          emptyState={<TutiEmptyState icon={<Package size={26} />} title="This boutique has no live products yet." />}
+        />
+
+        <p className="boutique-profile-preparation">
+          <Package size={15} aria-hidden="true" />
+          Prepared and packaged by {sellerHeading}.
+        </p>
       </section>
     </main>
   );

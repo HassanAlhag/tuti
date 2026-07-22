@@ -1,0 +1,738 @@
+/* Shared seller/boutique discovery styles -- homepage "Verified boutiques"
+   rail, the /shops all-boutiques directory, and the /sellers/:slug public
+   boutique profile. Kept in one file since all three surfaces share the
+   same card and reuse each other's tokens. */
+
+/* ── Boutique card (homepage rail + directory grid) ───────────────── */
+
+.boutique-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+.boutique-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 0;
+  min-width: 0;
+  text-align: left;
+  position: relative;
+  overflow: visible;
+}
+
+.boutique-card__media {
+  position: relative;
+  grid-row: 1;
+  grid-column: 1;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: calc(var(--tuti-radius-lg) - 2px) calc(var(--tuti-radius-lg) - 2px) 0 0;
+  background: linear-gradient(150deg, #eef1f4 0%, #e4e8ec 100%);
+}
+
+.boutique-card__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boutique-card__media--tinted {
+  background:
+    radial-gradient(circle at 24% 18%, hsl(var(--boutique-hue, 210) 55% 88% / 0.9), transparent 55%),
+    radial-gradient(circle at 82% 78%, rgba(184, 138, 46, 0.16), transparent 42%),
+    linear-gradient(150deg, hsl(var(--boutique-hue, 210) 32% 95%), hsl(var(--boutique-hue, 210) 24% 88%));
+}
+
+.boutique-card__badge {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.32rem 0.6rem;
+  color: var(--tuti-text-strong);
+  background: color-mix(in srgb, var(--tuti-surface) 88%, transparent);
+  border: 1px solid var(--tuti-border);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.boutique-card__badge svg {
+  color: var(--tuti-gold);
+}
+
+.boutique-card__mark {
+  grid-row: 1;
+  grid-column: 1;
+  align-self: end;
+  justify-self: start;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  margin-left: 1rem;
+  place-items: center;
+  color: var(--tuti-text-strong);
+  background: linear-gradient(145deg, #fff 0%, var(--tuti-champagne-soft) 100%);
+  border: 2px solid var(--tuti-surface);
+  border-radius: var(--tuti-radius-md);
+  box-shadow: 0 8px 18px rgba(7, 27, 58, 0.18);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  /* Straddle the media/body seam: end-aligned to the media row's bottom
+     edge, then nudged down by exactly half its own height -- works at any
+     rendered media height since the offset is relative to the mark itself,
+     not the (fluid, aspect-ratio-driven) media box. */
+  transform: translateY(50%);
+  z-index: 2;
+}
+
+.boutique-card__body {
+  grid-row: 2;
+  grid-column: 1;
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.95rem 1rem 1.1rem;
+}
+
+.boutique-card__title {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.boutique-card__meta-line {
+  margin: 0;
+  color: var(--tuti-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.boutique-card__desc {
+  margin: 0.15rem 0 0;
+  color: var(--tuti-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.boutique-card__footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.boutique-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.boutique-card__chip {
+  padding: 0.22rem 0.55rem;
+  color: var(--tuti-text);
+  background: var(--tuti-surface-soft);
+  border: 1px solid var(--tuti-border);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.boutique-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+  color: var(--tuti-text-strong);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.boutique-card__rating svg {
+  color: var(--tuti-gold);
+  fill: var(--tuti-gold);
+}
+
+.boutique-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  color: var(--tuti-primary);
+  font-size: 0.84rem;
+  font-weight: 850;
+  padding-bottom: 1px;
+  border-bottom: 1.5px solid rgba(184, 138, 46, 0.5);
+  width: fit-content;
+  transition: border-color 160ms ease, gap 160ms ease;
+}
+
+.boutique-card:hover .boutique-card__cta,
+.boutique-card:focus-visible .boutique-card__cta {
+  gap: 0.55rem;
+  border-color: var(--tuti-gold);
+}
+
+.boutique-card:focus-visible {
+  outline: 2px solid var(--tuti-gold);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1080px) {
+  .boutique-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .boutique-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── All-boutiques directory page ──────────────────────────────────── */
+
+.boutique-directory-header {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 1.75rem;
+  background: linear-gradient(160deg, #071b3a 0%, #0b2a55 100%);
+}
+
+.boutique-directory-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 82% 12%, rgba(184, 138, 46, 0.16) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.boutique-directory-header__inner {
+  position: relative;
+  width: min(92rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(2.25rem, 5vw, 3.25rem) 0 clamp(1.85rem, 4vw, 2.5rem);
+}
+
+.boutique-directory-header .eyebrow {
+  color: var(--tuti-gold);
+}
+
+.boutique-directory-header h1 {
+  margin: 0.4rem 0 0.6rem;
+  max-width: 34ch;
+  color: #fbf8f1;
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  line-height: 1.08;
+}
+
+.boutique-directory-header p {
+  margin: 0 0 1.15rem;
+  max-width: 46rem;
+  color: rgba(251, 248, 241, 0.72);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.boutique-directory-header-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.boutique-directory-header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  color: #fbf8f1;
+  background: rgba(251, 248, 241, 0.08);
+  border: 1px solid rgba(251, 248, 241, 0.18);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.boutique-directory-header-chip svg {
+  color: var(--tuti-gold);
+}
+
+.boutique-directory-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem;
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-lg);
+}
+
+.boutique-directory-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 16rem;
+  min-width: 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--tuti-surface-soft);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-md);
+}
+
+.boutique-directory-search svg {
+  flex: 0 0 auto;
+  color: var(--tuti-text-muted);
+}
+
+.boutique-directory-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--tuti-text);
+  font-size: 0.92rem;
+}
+
+.boutique-directory-search input:focus {
+  outline: none;
+}
+
+.boutique-directory-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.boutique-directory-filter {
+  padding: 0.5rem 0.9rem;
+  color: var(--tuti-text);
+  background: var(--tuti-surface-soft);
+  border: 1px solid var(--tuti-border);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.boutique-directory-filter:hover {
+  border-color: var(--tuti-border-strong);
+}
+
+.boutique-directory-filter.is-active {
+  color: #fff;
+  background: var(--tuti-primary);
+  border-color: var(--tuti-primary);
+}
+
+.boutique-directory-filter:focus-visible {
+  outline: 2px solid var(--tuti-gold);
+  outline-offset: 2px;
+}
+
+.boutique-directory-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.boutique-directory-sort label {
+  color: var(--tuti-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.boutique-directory-sort select {
+  padding: 0.5rem 0.7rem;
+  color: var(--tuti-text);
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-sm);
+  font-size: 0.85rem;
+}
+
+.boutique-directory-count {
+  margin: -0.6rem 0 1.1rem;
+  color: var(--tuti-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .boutique-directory-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .boutique-directory-sort {
+    margin-left: 0;
+    justify-content: space-between;
+  }
+}
+
+/* ── Public boutique profile page ──────────────────────────────────── */
+
+.boutique-profile-page {
+  padding-top: 0;
+}
+
+.boutique-profile-hero {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.boutique-profile-cover {
+  position: relative;
+  height: clamp(14rem, 32vw, 20rem);
+  overflow: hidden;
+  border-radius: var(--tuti-radius-xl);
+  background: linear-gradient(150deg, #eef1f4 0%, #e4e8ec 100%);
+}
+
+.boutique-profile-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boutique-profile-cover--tinted {
+  background:
+    radial-gradient(circle at 20% 20%, hsl(var(--boutique-hue, 210) 55% 88% / 0.9), transparent 55%),
+    radial-gradient(circle at 85% 80%, rgba(184, 138, 46, 0.18), transparent 45%),
+    linear-gradient(150deg, hsl(var(--boutique-hue, 210) 32% 95%), hsl(var(--boutique-hue, 210) 24% 88%));
+}
+
+.boutique-profile-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(6, 20, 38, 0.55), transparent 55%);
+}
+
+.boutique-profile-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: center;
+  width: min(58rem, calc(100% - 2rem));
+  margin: -3.25rem auto 0;
+  padding: 1.25rem 1.4rem;
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border-strong);
+  border-radius: var(--tuti-radius-lg);
+  box-shadow: var(--tuti-shadow-raised);
+}
+
+.boutique-profile-logo {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  place-items: center;
+  color: var(--tuti-text-strong);
+  background: linear-gradient(145deg, #fff 0%, var(--tuti-champagne-soft) 100%);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-md);
+  font-size: 1.15rem;
+  font-weight: 900;
+  overflow: hidden;
+}
+
+.boutique-profile-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boutique-profile-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.boutique-profile-title-row h1 {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.1;
+}
+
+.boutique-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  color: var(--tuti-text-muted);
+  font-size: 0.86rem;
+}
+
+.boutique-profile-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.boutique-profile-intro {
+  margin: 0.55rem 0 0;
+  color: var(--tuti-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.boutique-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .boutique-profile-card {
+    grid-template-columns: auto 1fr;
+    width: calc(100% - 1.5rem);
+    margin-top: -2.6rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .boutique-profile-card {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: start;
+  }
+}
+
+.boutique-profile-trust {
+  margin: 1.75rem 0;
+}
+
+.boutique-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  align-items: stretch;
+}
+
+@media (max-width: 780px) {
+  .boutique-profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.boutique-profile-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--tuti-surface-commerce);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-lg);
+  box-shadow: var(--tuti-shadow);
+  padding: clamp(1.25rem, 2.4vw, 1.75rem);
+}
+
+.boutique-profile-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.boutique-profile-panel-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: var(--tuti-gold);
+  background: var(--tuti-champagne-soft);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-md);
+}
+
+.boutique-profile-panel-eyebrow {
+  display: block;
+  margin-bottom: 0.3rem;
+  color: var(--tuti-gold);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.boutique-profile-panel h2 {
+  margin: 0 0 0.7rem;
+  color: var(--tuti-text-strong);
+  font-size: 1.2rem;
+}
+
+.boutique-profile-panel p {
+  margin: 0 0 0.5rem;
+  color: var(--tuti-text-muted);
+  line-height: 1.55;
+}
+
+.boutique-profile-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: auto;
+  padding: 0.8rem 1rem;
+  color: var(--tuti-text-strong);
+  background: var(--tuti-surface-soft);
+  border: 1px solid var(--tuti-border);
+  border-left: 3px solid var(--tuti-gold);
+  border-radius: var(--tuti-radius-sm);
+}
+
+.boutique-profile-note svg {
+  flex: 0 0 auto;
+  margin-top: 0.15rem;
+  color: var(--tuti-gold);
+}
+
+.boutique-profile-note p {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: 0.85rem;
+  font-weight: 620;
+  line-height: 1.5;
+}
+
+.boutique-profile-info-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.boutique-profile-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.boutique-profile-info-row:not(:last-child) {
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--tuti-border);
+}
+
+.boutique-profile-info-row__icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  color: var(--tuti-gold);
+  background: var(--tuti-champagne-soft);
+  border: 1px solid var(--tuti-border);
+  border-radius: 999px;
+}
+
+.boutique-profile-info-row__title {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.boutique-profile-info-row__desc {
+  margin: 0.15rem 0 0;
+  color: var(--tuti-text-muted);
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+.boutique-profile-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.boutique-profile-preparation {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem 1.1rem;
+  color: var(--tuti-text-strong);
+  background: var(--tuti-surface-soft);
+  border: 1px dashed var(--tuti-border-strong);
+  border-radius: var(--tuti-radius-md);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.boutique-profile-products-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.boutique-profile-products-head h2 {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: 1.3rem;
+}
+
+.boutique-profile-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1.1rem;
+}
+
+.boutique-profile-not-found {
+  display: grid;
+  justify-items: start;
+  gap: 0.9rem;
+  max-width: 34rem;
+  margin: 3rem auto;
+  padding: 2rem;
+  background: var(--tuti-surface);
+  border: 1px solid var(--tuti-border);
+  border-radius: var(--tuti-radius-lg);
+  text-align: left;
+}
+
+.boutique-profile-not-found h1 {
+  margin: 0;
+  color: var(--tuti-text-strong);
+  font-size: 1.4rem;
+}
+
+.boutique-profile-not-found p {
+  margin: 0;
+  color: var(--tuti-text-muted);
+}
+
+.boutique-profile-not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}

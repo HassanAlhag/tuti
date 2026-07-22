@@ -48,11 +48,16 @@ function getRoute() {
   if (p.startsWith("/sellers/"))      return "seller-brand";
   if (p.startsWith("/collections/") && p !== "/collections/") return "collection";
   if (p.startsWith("/orders/"))        return "order-confirmation";
+  // "/shops" must be checked before the "/shop" prefix below -- otherwise
+  // startsWith("/shop") matches "/shops" too and every direct link/refresh
+  // on the all-boutiques directory silently rendered the product catalog
+  // instead (only in-app nav via navigate("shops") avoided this, since it
+  // sets route state directly rather than going through getRoute()).
+  if (p.startsWith("/shops"))            return "shops";
   if (p.startsWith("/shop"))             return "shop";
   if (p.startsWith("/products/"))        return "product";
   if (p.startsWith("/cart"))             return "cart";
   if (p.startsWith("/collections"))      return "collections";
-  if (p.startsWith("/shops"))            return "shops";
   if (p.startsWith("/login"))             return "login";
   if (p.startsWith("/sell"))             return "sell";
   if (p.startsWith("/about"))            return "about";
@@ -455,11 +460,18 @@ export default function App() {
       />
     ),
     sell:  <SellerLandingPage />,
-    shops: <ShopsPage shops={shops} />,
+    shops: (
+      <ShopsPage
+        shops={shops}
+        goToSellerBrand={(slug) => navigatePath(routePaths.seller(slug))}
+        goToShop={(c) => navigate("shop", c)}
+      />
+    ),
     about: <AboutPage roles={storefront?.roles || []} />,
     "seller-brand": (
       <SellerBrandPage
         slug={sellerBrandSlug}
+        shops={shops}
         onAddToCart={addToCartWithFeedback}
         onNavigate={navigatePath}
         onViewProduct={goToProduct}
