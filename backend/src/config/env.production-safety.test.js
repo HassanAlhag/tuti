@@ -20,6 +20,11 @@ function productionRawEnv(overrides = {}) {
     JWT_SECRET: strongJwtSecret,
     JWT_REFRESH_SECRET: strongRefreshSecret,
     CORS_ORIGINS: "https://tuti.example,https://seller.tuti.example",
+    // Region + bucket only -- no static credentials by default. This is
+    // the preferred production model: an IAM role supplies credentials via
+    // the AWS SDK's default provider chain, with no keys in the env at all.
+    AWS_REGION: "us-east-1",
+    AWS_S3_BUCKET: "tuti-product-media",
     ...overrides,
   };
 }
@@ -76,7 +81,45 @@ test("production safety: production rejects localhost and default development CO
   );
 });
 
-test("production safety: valid production database, JWT, and CORS config passes", () => {
+test("production safety: production requires AWS_REGION and AWS_S3_BUCKET regardless of credential style", () => {
+  assert.throws(
+    () => validateRaw(productionRawEnv({ AWS_S3_BUCKET: "" })),
+    /AWS_REGION and AWS_S3_BUCKET are required in production/
+  );
+  assert.throws(
+    () => validateRaw(productionRawEnv({ AWS_REGION: "" })),
+    /AWS_REGION and AWS_S3_BUCKET are required in production/
+  );
+});
+
+test("production safety: region/bucket with IAM-role-style credentials (no static keys) passes", () => {
+  // No AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY at all -- the preferred
+  // production model (EC2/ECS/Elastic Beanstalk IAM role).
+  assert.doesNotThrow(() => validateRaw(productionRawEnv()));
+});
+
+test("production safety: region/bucket with both explicit access key and secret passes", () => {
+  assert.doesNotThrow(() => validateRaw(productionRawEnv({
+    AWS_ACCESS_KEY_ID: "test-access-key-id",
+    AWS_SECRET_ACCESS_KEY: "test-secret-access-key",
+  })));
+});
+
+test("production safety: only AWS_ACCESS_KEY_ID present (no secret) fails", () => {
+  assert.throws(
+    () => validateRaw(productionRawEnv({ AWS_ACCESS_KEY_ID: "test-access-key-id" })),
+    /AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must both be set or both be omitted/
+  );
+});
+
+test("production safety: only AWS_SECRET_ACCESS_KEY present (no access key) fails", () => {
+  assert.throws(
+    () => validateRaw(productionRawEnv({ AWS_SECRET_ACCESS_KEY: "test-secret-access-key" })),
+    /AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must both be set or both be omitted/
+  );
+});
+
+test("production safety: valid production database, JWT, CORS, and AWS S3 config passes", () => {
   assert.doesNotThrow(() => validateRaw(productionRawEnv()));
 });
 

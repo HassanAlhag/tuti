@@ -24,6 +24,7 @@ const SECTIONS = [
   "sales-reps",
   "audit",
   "merchandising",
+  "media",
 ];
 
 function getSection() {

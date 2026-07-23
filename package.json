@@ -30,6 +30,7 @@
     "seed:showcase": "node backend/src/seed/showcase-seed.mjs",
     "seed:showcase:reset": "echo 'Seed-mode placements live in server memory and reset on server restart. Restart the backend then run: npm run seed:showcase'",
     "audit:seller-shop-ownership": "node backend/src/tools/auditSellerShopOwnership.js",
+    "migrate:image-path-to-media": "node backend/src/tools/migrateImagePathToMediaAsset.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:backend": "node --test $(find backend/src -name '*.test.js' | tr '\\n' ' ')",

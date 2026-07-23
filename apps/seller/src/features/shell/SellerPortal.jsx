@@ -1,5 +1,6 @@
 export { SellerOverview } from "../overview/SellerOverview.jsx";
 export { SellerProducts } from "../products/SellerProducts.jsx";
+export { SellerMedia } from "../media/SellerMedia.jsx";
 export { SellerOrders } from "../orders/SellerOrders.jsx";
 export { SellerSupportTickets } from "../support/SellerSupportTickets.jsx";
 export { SellerDrivers } from "../drivers/SellerDrivers.jsx";

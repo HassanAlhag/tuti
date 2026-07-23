@@ -6,6 +6,8 @@ import { Product } from "../../models/Product.js";
 import { Shop } from "../../models/Shop.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { getSellerBrandProfile } from "./brandProfile.service.js";
+import { getProductMediaForList } from "../media/media.service.js";
+import { legacyImageVariants } from "./marketplace.service.js";
 
 const seedCuratedCollections = new Map();
 
@@ -315,8 +317,11 @@ function sanitizeStoredCollection(collection) {
   };
 }
 
-function safeAdminProduct(product) {
+function safeAdminProduct(product, media = null) {
   if (!product) return null;
+  const legacyEligible = !media?.hasLinks;
+  const primaryImage = media?.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null);
+  const images = media?.images?.length ? media.images : (legacyEligible && product.imagePath ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }] : []);
   return {
     id: normalizeText(product.id),
     name: normalizeText(product.name),
@@ -325,7 +330,11 @@ function safeAdminProduct(product) {
     originalPrice: product.originalPrice != null ? Number(product.originalPrice) : undefined,
     stock: Number(product.stock || 0),
     status: normalizeText(product.status) || "Live",
-    imagePath: product.imagePath || null,
+    // Recomputed from the CURRENT primary image once links exist -- see
+    // the matching note in marketplace.service.js's mergeProductMedia.
+    imagePath: legacyEligible ? (product.imagePath || null) : (primaryImage?.card || null),
+    primaryImage,
+    images,
     family: normalizeText(product.family),
     gender: normalizeText(product.gender),
     releaseType: normalizeText(product.releaseType),
@@ -338,8 +347,11 @@ function safeAdminProduct(product) {
   };
 }
 
-function safePublicProduct(product) {
+function safePublicProduct(product, media = null) {
   if (!product) return null;
+  const legacyEligible = !media?.hasLinks;
+  const primaryImage = media?.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null);
+  const images = media?.images?.length ? media.images : (legacyEligible && product.imagePath ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }] : []);
   return {
     id: normalizeText(product.id),
     name: normalizeText(product.name),
@@ -348,7 +360,11 @@ function safePublicProduct(product) {
     originalPrice: product.originalPrice != null ? Number(product.originalPrice) : undefined,
     stock: Number(product.stock || 0),
     status: normalizeText(product.status) || "Live",
-    imagePath: product.imagePath || null,
+    // Recomputed from the CURRENT primary image once links exist -- see
+    // the matching note in marketplace.service.js's mergeProductMedia.
+    imagePath: legacyEligible ? (product.imagePath || null) : (primaryImage?.card || null),
+    primaryImage,
+    images,
     rating: Number(product.rating || 0),
     reviews: Number(product.reviews || 0),
     verifiedReviews: Number(product.verifiedReviews || 0),
@@ -521,6 +537,8 @@ async function buildCollectionAdminItem(item) {
   const refs = await resolveCollectionItemRefs(item);
   if (item.type === "product") {
     const { product, shop } = refs;
+    const media = product ? (await getProductMediaForList([product.id])).get(normalizeText(product.id)) : null;
+    const normalizedProduct = safeAdminProduct(product, media);
     return {
       type: "product",
       productId: item.productId,
@@ -533,9 +551,9 @@ async function buildCollectionAdminItem(item) {
       priority: item.priority,
       title: item.titleOverride || normalizeText(product?.name) || "Featured product",
       subtitle: item.subtitleOverride || normalizeText(product?.family) || normalizeText(product?.collection) || "",
-      imageUrl: item.imageOverrideUrl || normalizeText(product?.imagePath) || "",
+      imageUrl: item.imageOverrideUrl || normalizeText(normalizedProduct?.primaryImage?.card) || normalizeText(normalizedProduct?.imagePath) || "",
       badge: item.badgeLabel || normalizeText(product?.releaseType) || "",
-      product: safeAdminProduct(product),
+      product: normalizedProduct,
       shop: safeAdminShop(shop),
       seller: null,
     };
@@ -569,6 +587,8 @@ async function buildCollectionPublicItem(item) {
     if (!product || !shop) return null;
     if (normalizeText(product.status) !== "Live") return null;
     if (normalizeText(shop.status) !== "Approved") return null;
+    const media = (await getProductMediaForList([product.id])).get(normalizeText(product.id));
+    const normalizedProduct = safePublicProduct(product, media);
     return {
       type: "product",
       priority: item.priority,
@@ -578,9 +598,9 @@ async function buildCollectionPublicItem(item) {
         || normalizeText(product.collection)
         || normalizeText(product.description)
         || "",
-      imageUrl: item.imageOverrideUrl || normalizeText(product.imagePath) || "",
+      imageUrl: item.imageOverrideUrl || normalizeText(normalizedProduct?.primaryImage?.card) || normalizeText(normalizedProduct?.imagePath) || "",
       badgeLabel: item.badgeLabel || normalizeText(product.releaseType) || "",
-      product: safePublicProduct(product),
+      product: normalizedProduct,
       shop: safePublicShop(shop),
       seller: null,
     };

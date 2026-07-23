@@ -428,3 +428,27 @@ export const uploadApi = {
     }).then((r) => r.json()).then((p) => { if (!p.data) throw new Error(p.error || "Upload failed."); return p.data; });
   },
 };
+
+function toQuery(params = {}) {
+  const q = new URLSearchParams(
+    Object.entries(params).filter(([, v]) => v != null && v !== "")
+  ).toString();
+  return q ? `?${q}` : "";
+}
+
+// Seller's own media library. Every endpoint is scoped server-side to the
+// authenticated seller's verified shop (requireOwnedShop) -- no shopId is
+// ever sent from here, matching the backend's trust model.
+export const sellerMediaApi = {
+  list: (params = {}) => request(`/seller/media${toQuery(params)}`),
+  get: (id) => request(`/seller/media/${encodeURIComponent(id)}`),
+  update: (id, payload) => request(`/seller/media/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  remove: (id) => request(`/seller/media/${encodeURIComponent(id)}`, { method: "DELETE" }),
+};
+
+export const adminMediaApi = {
+  list: (params = {}) => request(`/admin/media${toQuery(params)}`),
+  get: (id) => request(`/admin/media/${encodeURIComponent(id)}`),
+  moderate: (id, action) => request(`/admin/media/${encodeURIComponent(id)}/moderation`, { method: "PATCH", body: JSON.stringify({ action }) }),
+  remove: (id) => request(`/admin/media/${encodeURIComponent(id)}`, { method: "DELETE" }),
+};

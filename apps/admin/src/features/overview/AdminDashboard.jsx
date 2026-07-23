@@ -234,6 +234,14 @@ export function AdminDashboard({ adminData, analyticsSummary, updatePayout, upda
                     )}
                     <span>{product.family || product.cakeType || "Product"} · {formatCurrency(product.price)} · {product.stock} in stock</span>
                     <span className="ac-approval-shop">{adminData.shops.find((s) => s.id === product.shopId)?.name || "Unknown shop"} · {product.category}</span>
+                    {product.images?.length > 1 ? (
+                      <span className="ac-approval-gallery" aria-label={`${product.images.length} submitted images`}>
+                        {product.images.map((image, i) => {
+                          const thumbUrl = image.thumbnail || image.card || image.detail;
+                          return <img key={thumbUrl + i} src={thumbUrl} alt={image.altText || `${product.name} image ${i + 1}`} />;
+                        })}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="row-actions">
                     {getAllowedProductActions(product.status, "admin").map((status) => {

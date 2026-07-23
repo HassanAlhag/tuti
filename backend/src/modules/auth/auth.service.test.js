@@ -98,6 +98,7 @@ test("seller cannot access or modify another shop's products", async () => {
     name: "Shop A Perfume",
     price: 100,
     category: "perfume",
+    status: "Draft",
   });
 
   await assert.rejects(
@@ -117,6 +118,7 @@ test("legitimate seller retains full access to their own products", async () => 
     name: "Owner Perfume",
     price: 100,
     category: "perfume",
+    status: "Draft",
   });
 
   const updated = await updateSellerProduct(product.id, seller.user.shopId, { stock: 42 });

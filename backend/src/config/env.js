@@ -69,6 +69,18 @@ export function buildEnv(rawEnv = process.env) {
     jwtRefreshExpiresIn: rawEnv.JWT_REFRESH_EXPIRES_IN || "7d",
     nodeEnv: rawEnv.NODE_ENV || "development",
     uploadDir: rawEnv.UPLOAD_DIR || "",
+    // AWS S3 (product media storage) — see backend/src/shared/s3Storage.js.
+    // AWS_REGION + AWS_S3_BUCKET are required in production. Static
+    // credentials are OPTIONAL: the preferred production model is an
+    // EC2/ECS/Elastic Beanstalk IAM role via the AWS SDK's default
+    // credential provider chain (no static keys at all). Explicit
+    // AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY are only for local/testing
+    // and must be supplied as a pair -- see validateEnv below.
+    awsRegion: rawEnv.AWS_REGION || "",
+    awsS3Bucket: rawEnv.AWS_S3_BUCKET || "",
+    awsAccessKeyId: rawEnv.AWS_ACCESS_KEY_ID || "",
+    awsSecretAccessKey: rawEnv.AWS_SECRET_ACCESS_KEY || "",
+    awsCloudFrontDomain: rawEnv.AWS_CLOUDFRONT_DOMAIN || "",
     // Email (SMTP) — leave empty to use console logging in dev
     emailHost: rawEnv.EMAIL_HOST || "",
     emailPort: Number(rawEnv.EMAIL_PORT || 587),
@@ -135,6 +147,23 @@ function isStrongProductionSecret(secret) {
   return value.length >= 32 && !isPlaceholderSecret(value);
 }
 
+// Static credentials are an all-or-nothing pair -- specifying only one of
+// AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY is always a misconfiguration
+// (never a valid "partial" state), regardless of whether either is used.
+export function isAwsCredentialPairValid(config = env) {
+  return Boolean(config.awsAccessKeyId) === Boolean(config.awsSecretAccessKey);
+}
+
+// Region + bucket are the only hard requirements. Static keys are
+// optional -- their absence just means the AWS SDK's default credential
+// provider chain (env vars it reads itself, shared config file, or an
+// EC2/ECS/Elastic Beanstalk IAM role) supplies credentials instead. This
+// is what makes IAM-role-based production deployments (no static keys at
+// all) a valid "configured" state.
+export function isAwsS3Configured(config = env) {
+  return Boolean(config.awsRegion && config.awsS3Bucket) && isAwsCredentialPairValid(config);
+}
+
 export function validateEnv(config = env, rawEnv = process.env) {
   const isProd = config.nodeEnv === "production";
   const errors = [];
@@ -146,6 +175,12 @@ export function validateEnv(config = env, rawEnv = process.env) {
   if (isProd) {
     if (!config.mongoUri) {
       errors.push("MONGO_URI is required in production.");
+    }
+    if (!config.awsRegion || !config.awsS3Bucket) {
+      errors.push("AWS_REGION and AWS_S3_BUCKET are required in production for product media storage.");
+    }
+    if (!isAwsCredentialPairValid(config)) {
+      errors.push("AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must both be set or both be omitted -- do not configure only one. Omit both to use the AWS SDK's default credential provider chain (recommended in production: an EC2/ECS/Elastic Beanstalk IAM role).");
     }
     if (!isStrongProductionSecret(config.jwtSecret)) {
       errors.push("JWT_SECRET must be a strong production secret of at least 32 characters and not a placeholder.");
@@ -179,6 +214,19 @@ export function validateEnv(config = env, rawEnv = process.env) {
 export function assertProductionSeedModeDisabled(config = env, context = "seed/demo mode") {
   if (config.nodeEnv === "production" && !config.mongoUri) {
     const error = new Error(`${context} is disabled in production. Set MONGO_URI.`);
+    error.status = 500;
+    throw error;
+  }
+}
+
+// Second, defense-in-depth gate checked directly inside shared/s3Storage.js
+// at the moment media storage is actually used -- validateEnv() already
+// hard-stops server startup without AWS config, but this protects any
+// script/tool that imports the storage module without going through
+// server.js's normal boot path.
+export function assertProductionMediaStorageConfigured(config = env, context = "Local disk media storage") {
+  if (config.nodeEnv === "production" && !isAwsS3Configured(config)) {
+    const error = new Error(`${context} is disabled in production. Set AWS_REGION and AWS_S3_BUCKET (credentials are optional -- an IAM role or a matched AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY pair both work).`);
     error.status = 500;
     throw error;
   }

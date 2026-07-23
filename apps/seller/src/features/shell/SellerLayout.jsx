@@ -4,7 +4,7 @@
  */
 
 import {
-  ArrowLeft, BadgeDollarSign, BarChart2, CheckCircle2, MessageSquare,
+  ArrowLeft, BadgeDollarSign, BarChart2, CheckCircle2, Image, MessageSquare,
   LayoutDashboard, Package, Plus, ShoppingBag, Sparkles, Truck, Users, WalletCards,
 } from "lucide-react";
 import { brand }            from "@tuti/shared/brand.js";
@@ -19,6 +19,7 @@ const NAV_GROUPS = [
       { id: "overview",  label: "Overview",  icon: LayoutDashboard },
       { id: "brand",     label: "Brand",     icon: Sparkles },
       { id: "products",  label: "Products",  icon: Package },
+      { id: "media",     label: "Media",     icon: Image },
       { id: "orders",    label: "Orders",    icon: ShoppingBag },
       { id: "drivers",   label: "Drivers",   icon: Truck },
     ],

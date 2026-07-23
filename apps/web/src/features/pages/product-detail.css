@@ -99,16 +99,54 @@
 
 .tuti-pdp__uploaded-media {
   display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 0.75rem;
   place-items: center;
 }
 
-.tuti-pdp__uploaded-media img {
+.tuti-pdp__uploaded-media > img {
   display: block;
   width: 100%;
   height: 100%;
   max-height: 25rem;
   object-fit: contain;
   border-radius: 10px;
+}
+
+.tuti-pdp__gallery-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.tuti-pdp__gallery-thumb {
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+  overflow: hidden;
+  background: var(--lg-white, #fff);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.tuti-pdp__gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tuti-pdp__gallery-thumb.is-active {
+  border-color: var(--tuti-gold, #b88a2e);
+}
+
+.tuti-pdp__gallery-thumb:focus-visible {
+  outline: 2px solid var(--tuti-gold, #b88a2e);
+  outline-offset: 2px;
 }
 
 .tuti-pdp__cake-media,

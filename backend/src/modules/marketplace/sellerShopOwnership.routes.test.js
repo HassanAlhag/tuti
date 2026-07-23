@@ -136,7 +136,7 @@ async function postSellerProduct(user, body = {}) {
   const response = await fetch(`${baseUrl}/api/marketplace/seller/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenFor(user)}` },
-    body: JSON.stringify({ name: "Test Product", price: 100, category: "perfume", ...body }),
+    body: JSON.stringify({ name: "Test Product", price: 100, category: "perfume", status: "Draft", ...body }),
   });
   return { response, payload: await response.json() };
 }

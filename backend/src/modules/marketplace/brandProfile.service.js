@@ -4,6 +4,8 @@ import { SellerBrandProfile } from "../../models/SellerBrandProfile.js";
 import { Shop } from "../../models/Shop.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
 import { sellerBrandProfiles } from "../../seed/marketplace.seed.js";
+import { getProductMediaForList } from "../media/media.service.js";
+import { legacyImageVariants } from "./marketplace.service.js";
 
 // Pre-populated from marketplace.seed.js so the homepage's featured
 // sellers rail has real, published profiles on a fresh seed-memory
@@ -389,8 +391,17 @@ function sortByNewest(items) {
   return [...items].sort((left, right) => new Date(right.createdAt || 0) - new Date(left.createdAt || 0));
 }
 
-function sanitizePublicProduct(product) {
+function sanitizePublicProduct(product, media = null) {
   if (!product) return null;
+  // Only fall back to legacy imagePath when the product has no MediaAsset
+  // links at all -- see getProductMedia's doc comment in media.service.js.
+  // Falling back whenever primaryImage is merely empty would resurrect a
+  // stale URL the instant the linked image gets quarantined/rejected.
+  const legacyEligible = !media?.hasLinks;
+  const primaryImage = media?.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null);
+  const images = media?.images?.length
+    ? media.images
+    : legacyEligible && product.imagePath ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }] : [];
   return {
     id: product.id,
     name: product.name,
@@ -398,7 +409,12 @@ function sanitizePublicProduct(product) {
     price: Number(product.price || 0),
     originalPrice: product.originalPrice != null ? Number(product.originalPrice) : undefined,
     stock: Number(product.stock || 0),
-    imagePath: product.imagePath || null,
+    // Recomputed from the CURRENT primary image once links exist (never
+    // the stale DB-stored mirror) -- see the matching note in
+    // marketplace.service.js's mergeProductMedia.
+    imagePath: legacyEligible ? (product.imagePath || null) : (primaryImage?.card || null),
+    primaryImage,
+    images,
     rating: Number(product.rating || 0),
     reviews: Number(product.reviews || 0),
     verifiedReviews: Number(product.verifiedReviews || 0),
@@ -449,7 +465,8 @@ export async function getPublicSellerProductsBySlug(slug) {
   }
 
   const products = await loadLiveProductsForShop(profile.shopId);
-  return products.map((product) => sanitizePublicProduct(product));
+  const mediaMap = await getProductMediaForList(products.map((p) => p.id));
+  return products.map((product) => sanitizePublicProduct(product, mediaMap.get(product.id)));
 }
 
 export async function listAdminSellerBrandProfiles() {

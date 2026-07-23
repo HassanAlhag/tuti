@@ -493,6 +493,14 @@ export function AdminShops({ adminData, updateProductStatus, focusedShopId = "",
                             )}
                           </span>
                           <small>{product.category} · {product.status}</small>
+                          {product.images?.length > 1 ? (
+                            <span className="ac-approval-gallery" aria-label={`${product.images.length} submitted images`}>
+                              {product.images.map((image, i) => {
+                                const thumbUrl = image.thumbnail || image.card || image.detail;
+                                return <img key={thumbUrl + i} src={thumbUrl} alt={image.altText || `${product.name} image ${i + 1}`} />;
+                              })}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="row-actions">
                           {getAllowedProductActions(product.status, "admin").map((status) => {

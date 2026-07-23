@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuthStore }    from "@tuti/shared/store/authStore.js";
 import { useIdleTimeout }  from "@tuti/shared/hooks/useIdleTimeout.js";
-import { marketplaceApi, sellerBrandProfileApi, uploadApi } from "@tuti/shared/api/client.js";
+import { marketplaceApi, sellerBrandProfileApi } from "@tuti/shared/api/client.js";
 import { SellerLayout }    from "./features/shell/SellerLayout.jsx";
 import { SellerLogin }     from "./features/auth/SellerLogin.jsx";
 import {
@@ -21,6 +21,7 @@ import {
   SellerBrandProfile,
   SellerDrivers,
   SellerProducts,
+  SellerMedia,
   SellerOrders,
   SellerCustomers,
   SellerAnalytics,
@@ -30,7 +31,7 @@ import {
   isOnboardingDone,
 } from "./features/shell/SellerPortal.jsx";
 
-const SECTIONS  = ["overview", "onboarding", "brand", "products", "orders", "drivers", "customers", "analytics", "payouts", "support"];
+const SECTIONS  = ["overview", "onboarding", "brand", "products", "media", "orders", "drivers", "customers", "analytics", "payouts", "support"];
 
 function getSectionFromQuery() {
   const section = new URLSearchParams(window.location.search).get("section");
@@ -49,6 +50,7 @@ const DEFAULT_PRODUCT = {
   price: 320, size: "75ml", stock: 12, notes: "oud, amber, musk",
   cakeType: "", servings: "", flavors: "", allergens: "", occasionTags: "",
   leadTimeDays: 0, customMessageAvailable: false, imageName: "",
+  primaryMediaAssetId: null, galleryMediaAssetIds: [],
 };
 
 export default function App() {
@@ -142,32 +144,22 @@ export default function App() {
   }
 
   // ── Submit new product ──────────────────────────────────────────
+  // Images are uploaded and resolved to a mediaAssetId directly inside
+  // SellerMediaPicker (see features/media/), so by the time this runs
+  // newProduct.primaryMediaAssetId/galleryMediaAssetIds are already just
+  // ids -- no separate upload step needed here (unlike the old
+  // upload-then-set-imagePath flow this replaces).
   async function submitProduct(e) {
     e.preventDefault();
     if (!newProduct.name.trim()) return;
     const split = (v) => String(v || "").split(",").map((s) => s.trim()).filter(Boolean);
     const payload = { ...newProduct, price: Number(newProduct.price), stock: Number(newProduct.stock), shopId: seller?.shop?.id || user?.shopId };
 
-    // Remove internal file reference — never send File objects to JSON API
-    const imageFile = payload._imageFile;
-    delete payload._imageFile;
-
     if (newProduct.category !== "perfume") {
       payload.family = ""; payload.gender = "";
       payload.flavors = split(newProduct.flavors);
       payload.allergens = split(newProduct.allergens);
       payload.occasionTags = split(newProduct.occasionTags);
-    }
-
-    if (imageFile) {
-      setUploadNote("Uploading image…");
-      try {
-        const { url } = await uploadApi.uploadImage(imageFile);
-        payload.imagePath = url;
-      } catch (err) {
-        setUploadNote(err?.message || "Image upload failed.");
-        return;
-      }
     }
 
     await marketplaceApi.createSellerProduct(payload);
@@ -200,6 +192,7 @@ export default function App() {
     overview:  <SellerOverview  seller={seller} />,
     brand:     <SellerBrandProfile seller={seller} />,
     products:  <SellerProducts  seller={seller} productDraft={newProduct} setProductDraft={setNewProduct} onProductSubmit={submitProduct} uploadNote={uploadNote} onRefreshSeller={refreshSeller} focusedProductId={deepLinkTarget.productId} onFocusHandled={(notice) => setDeepLinkTarget((current) => ({ ...current, notice: notice || "" }))} />,
+    media:     <SellerMedia />,
     orders:    <SellerOrders focusedOrderId={deepLinkTarget.orderId} onFocusHandled={(notice) => setDeepLinkTarget((current) => ({ ...current, notice: notice || "" }))} />,
     drivers:   <SellerDrivers seller={seller} />,
     customers: <SellerCustomers seller={seller} />,

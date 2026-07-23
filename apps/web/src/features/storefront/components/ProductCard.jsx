@@ -18,7 +18,10 @@ export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewP
   const chipLabel = product.family || product.category || "Perfume";
   const sellerName = shop?.name || "Marketplace seller";
   const hasReviews = Number(product.reviews || 0) > 0;
-  const imageAlt = `${product.name} by ${sellerName}`;
+  // Primary media (MediaAsset, optimized "card" variant) first, legacy
+  // imagePath fallback, category art (BottleArt) last.
+  const cardImage = product.primaryImage?.card || product.images?.[0]?.card || product.imagePath || "";
+  const imageAlt = product.images?.[0]?.altText || `${product.name} by ${sellerName}`;
 
   function viewProduct() {
     if (onViewProduct) {
@@ -31,8 +34,8 @@ export function ProductCard({ product, shop, onAddToCart, onRateProduct, onViewP
     <article className="product-card">
       <div className="catalog-card-media-wrap">
         <button className="product-media-button catalog-card-media" onClick={viewProduct} type="button" aria-label={`View details for ${product.name}`}>
-          {product.imagePath ? (
-            <img className="catalog-card-image" src={product.imagePath} alt={imageAlt} loading="lazy" decoding="async" />
+          {cardImage ? (
+            <img className="catalog-card-image" src={cardImage} alt={imageAlt} loading="lazy" decoding="async" />
           ) : (
             <BottleArt product={product} />
           )}

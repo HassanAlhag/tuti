@@ -10,6 +10,7 @@ import {
   Crown,
   Sparkles,
   Headphones,
+  Image as ImageIcon,
   LayoutDashboard,
   RotateCcw,
   Settings2,
@@ -42,6 +43,7 @@ import { AdminRoleMatrix } from "../settings/AdminRoleMatrix.jsx";
 import { AdminSupport } from "../disputes/AdminSupport.jsx";
 import { AdminSalesReps } from "../users/AdminSalesReps.jsx";
 import { AdminMerchandising } from "../merchandising/AdminMerchandising.jsx";
+import { AdminMedia } from "../media/AdminMedia.jsx";
 import { AdminFinance } from "../finance/AdminFinance.jsx";
 
 export function AdminConsole({
@@ -85,6 +87,7 @@ export function AdminConsole({
       label: "Merchandising",
       items: [
         { id: "merchandising", label: "Merchandising", icon: Sparkles },
+        { id: "media", label: "Media", icon: ImageIcon },
       ],
     },
     {
@@ -144,6 +147,7 @@ export function AdminConsole({
     "sales-reps": <AdminSalesReps />,
     audit: <AdminAuditLog />,
     merchandising: <AdminMerchandising adminData={adminData} />,
+    media: <AdminMedia />,
     finance: <AdminFinance />,
   }[activeSection];
 
@@ -153,7 +157,7 @@ export function AdminConsole({
       const section = params.get("section");
       const orderId = params.get("order") || "";
       const shopId = params.get("shop") || "";
-      const allowed = new Set(["overview", "operations", "payments", "payouts", "orders", "users", "seller-pipeline", "crm", "drivers", "clients", "shops", "analytics", "support", "support-tickets", "roles", "sales-reps", "audit", "merchandising", "finance"]);
+      const allowed = new Set(["overview", "operations", "payments", "payouts", "orders", "users", "seller-pipeline", "crm", "drivers", "clients", "shops", "analytics", "support", "support-tickets", "roles", "sales-reps", "audit", "merchandising", "media", "finance"]);
       if (section && allowed.has(section)) {
         setActiveSection(section);
       }

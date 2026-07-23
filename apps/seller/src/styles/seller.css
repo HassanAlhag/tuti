@@ -5511,3 +5511,446 @@ body { background: linear-gradient(180deg, var(--paper), #f3ede1); }
   .sd-invoice-period { width: 100%; }
   .sd-invoice-period input[type="month"] { width: 100%; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   MY MEDIA (sd-media-)
+   ══════════════════════════════════════════════════════════════════ */
+
+.sd-media-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.sd-media-upload-note {
+  margin: -0.5rem 0 0.75rem;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.sd-media-loading {
+  padding: 2rem 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+.sd-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.85rem;
+}
+
+.sd-media-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.sd-media-card:hover,
+.sd-media-card:focus-visible {
+  border-color: var(--brand);
+  box-shadow: var(--shadow-xs);
+}
+
+.sd-media-card-thumb-wrap {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--paper-2);
+}
+
+.sd-media-card-thumb-wrap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sd-media-card-flag {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  color: #fff;
+  background: var(--danger);
+  border-radius: 999px;
+}
+
+.sd-media-card-name {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sd-media-card-meta,
+.sd-media-card-usage {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.sd-media-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.sd-media-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(23, 23, 23, 0.45);
+}
+
+.sd-media-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 20rem) minmax(0, 22rem);
+  gap: 0;
+  position: relative;
+  width: min(44rem, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--panel);
+  border-radius: 14px;
+  box-shadow: var(--shadow-strong);
+}
+
+.sd-media-detail-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.sd-media-detail-preview {
+  width: 100%;
+  height: 100%;
+  min-height: 14rem;
+  object-fit: cover;
+  background: var(--paper-2);
+}
+
+.sd-media-detail-body {
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 1.1rem;
+}
+
+.sd-media-detail-filename {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.sd-media-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.sd-media-detail-flag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 8px;
+  font-size: var(--text-sm);
+}
+
+.sd-media-detail-body input {
+  min-height: 2.3rem;
+  padding: 0 0.65rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.sd-media-detail-usage {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.sd-media-detail-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--brand);
+}
+
+.sd-media-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .sd-media-detail {
+    grid-template-columns: 1fr;
+  }
+  .sd-media-detail-preview {
+    min-height: 10rem;
+  }
+}
+
+/* ── Seller product-form media picker (sd-media-picker-) ─────────── */
+
+.sd-media-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.sd-media-picker-tile {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-2);
+}
+
+.sd-media-picker-tile--primary {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(215, 168, 74, 0.25);
+}
+
+.sd-media-picker-tile--pending {
+  opacity: 0.75;
+}
+
+.sd-media-picker-tile--pending img {
+  filter: blur(1px) saturate(0.85);
+}
+
+.sd-media-picker-pending-badge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0.15rem 0.4rem;
+  color: #fff;
+  background: rgba(23, 23, 23, 0.45);
+  font-size: 0.62rem;
+  font-weight: var(--fw-semibold);
+  text-align: center;
+}
+
+.sd-media-picker-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sd-media-picker-badge {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.1rem 0.35rem;
+  color: #171717;
+  background: var(--gold);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: var(--fw-semibold);
+}
+
+.sd-media-picker-remove {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  color: #fff;
+  background: rgba(23, 23, 23, 0.65);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sd-media-picker-tile-actions {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  background: linear-gradient(0deg, rgba(23, 23, 23, 0.6), transparent);
+}
+
+.sd-media-picker-tile-actions button {
+  display: grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  color: #fff;
+  background: rgba(23, 23, 23, 0.55);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sd-media-picker-tile-actions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sd-media-picker-add {
+  display: grid;
+  place-items: center;
+  gap: 0.25rem;
+  width: 5.5rem;
+  height: 5.5rem;
+  color: var(--muted);
+  background: var(--paper);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.68rem;
+  text-align: center;
+  padding: 0.3rem;
+}
+
+.sd-media-picker-add:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.sd-media-picker-hint,
+.sd-media-picker-note {
+  margin: 0.4rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.sd-media-picker-panel {
+  margin-top: 0.6rem;
+  padding: 0.75rem;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.sd-media-picker-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.sd-media-picker-tabs button {
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.sd-media-picker-tabs button.is-active {
+  color: #fff;
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.sd-media-picker-panel-close {
+  margin-left: auto;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+.sd-media-picker-dropzone {
+  min-height: 6rem;
+}
+
+.sd-media-picker-library {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.sd-media-picker-library-item {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sd-media-picker-library-item:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sd-media-picker-library-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sd-media-picker-library-flag {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #fff;
+  background: var(--danger);
+  border-radius: 999px;
+}

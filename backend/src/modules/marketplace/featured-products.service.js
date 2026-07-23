@@ -5,6 +5,8 @@ import { FeaturedProductPlacement, FEATURED_PRODUCT_PLACEMENT_KEYS } from "../..
 import { Product } from "../../models/Product.js";
 import { Shop } from "../../models/Shop.js";
 import { seedRepository } from "../../repositories/seedRepository.js";
+import { getProductMediaForList } from "../media/media.service.js";
+import { legacyImageVariants } from "./marketplace.service.js";
 
 const DEFAULT_PLACEMENT_KEY = "homepage_featured_products";
 
@@ -123,8 +125,17 @@ function normalizePublicShop(shop) {
   };
 }
 
-function normalizePublicProduct(product) {
+// Only fall back to the legacy imagePath when the product has never had a
+// MediaAsset link at all -- see getProductMedia's doc comment in
+// media.service.js. `media` is optional so admin-side callers that don't
+// need it can omit it without breaking.
+function normalizePublicProduct(product, media = null) {
   if (!product) return null;
+  const legacyEligible = !media?.hasLinks;
+  const primaryImage = media?.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null);
+  const images = media?.images?.length
+    ? media.images
+    : legacyEligible && product.imagePath ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }] : [];
   return {
     id: product.id,
     name: normalizeText(product.name),
@@ -133,7 +144,9 @@ function normalizePublicProduct(product) {
     originalPrice: product.originalPrice != null ? Number(product.originalPrice) : undefined,
     stock: Number(product.stock || 0),
     status: normalizeText(product.status) || "Live",
-    imagePath: product.imagePath || null,
+    imagePath: legacyEligible ? (product.imagePath || null) : (primaryImage?.card || null),
+    primaryImage,
+    images,
     rating: Number(product.rating || 0),
     reviews: Number(product.reviews || 0),
     verifiedReviews: Number(product.verifiedReviews || 0),
@@ -158,8 +171,8 @@ function normalizePublicProduct(product) {
   };
 }
 
-function normalizeAdminProduct(product) {
-  const publicProduct = normalizePublicProduct(product);
+function normalizeAdminProduct(product, media = null) {
+  const publicProduct = normalizePublicProduct(product, media);
   if (!publicProduct) return null;
   return {
     ...publicProduct,
@@ -191,6 +204,11 @@ function humanizePlacementBadge(product) {
   return category.replace(/_/g, " ");
 }
 
+// `product` here is expected to already be the normalized (media-aware)
+// product -- i.e. the result of normalizePublicProduct/normalizeAdminProduct,
+// never the raw DB record -- so imageUrl inherits the same
+// quarantine/rejection-safe fallback instead of reading a raw, possibly
+// stale imagePath directly.
 function resolvePlacementDisplay(placement, product) {
   return {
     title: normalizeText(placement.titleOverride) || normalizeText(product?.name) || "Featured product",
@@ -199,7 +217,7 @@ function resolvePlacementDisplay(placement, product) {
       || normalizeText(product?.collection)
       || normalizeText(product?.description)
       || "",
-    imageUrl: normalizeText(placement.imageOverrideUrl) || normalizeText(product?.imagePath) || "",
+    imageUrl: normalizeText(placement.imageOverrideUrl) || normalizeText(product?.primaryImage?.card) || normalizeText(product?.imagePath) || "",
     badgeLabel: normalizeText(placement.badgeLabel) || humanizePlacementBadge(product),
   };
 }
@@ -267,20 +285,22 @@ function isProductPubliclyVisible(product, shop) {
   return true;
 }
 
-function buildPlacementAdminRecord(placement, product, shop) {
+function buildPlacementAdminRecord(placement, product, shop, media = null) {
   const stored = sanitizeStoredPlacement(placement);
-  const display = resolvePlacementDisplay(stored, product);
+  const normalizedProduct = normalizeAdminProduct(product, media);
+  const display = resolvePlacementDisplay(stored, normalizedProduct);
   return {
     ...stored,
     ...display,
-    product: normalizeAdminProduct(product),
+    product: normalizedProduct,
     shop: normalizeAdminShop(shop),
   };
 }
 
-function buildPlacementPublicRecord(placement, product, shop) {
+function buildPlacementPublicRecord(placement, product, shop, media = null) {
   const stored = sanitizeStoredPlacement(placement);
-  const display = resolvePlacementDisplay(stored, product);
+  const normalizedProduct = normalizePublicProduct(product, media);
+  const display = resolvePlacementDisplay(stored, normalizedProduct);
   return {
     id: stored.id,
     placementKey: stored.placementKey,
@@ -291,7 +311,7 @@ function buildPlacementPublicRecord(placement, product, shop) {
     subtitle: display.subtitle,
     imageUrl: display.imageUrl,
     badgeLabel: display.badgeLabel,
-    product: normalizePublicProduct(product),
+    product: normalizedProduct,
     shop: normalizePublicShop(shop),
   };
 }
@@ -401,13 +421,13 @@ export async function listAdminFeaturedProductPlacements(filters = {}) {
     return true;
   });
 
+  const sorted = filtered.sort(compareAdminPlacements);
+  const mediaMap = await getProductMediaForList(sorted.map((placement) => placement.productId));
   const hydrated = await Promise.all(
-    filtered
-      .sort(compareAdminPlacements)
-      .map(async (placement) => {
-        const { product, shop } = await resolveProductAndShopForPlacement(placement);
-        return buildPlacementAdminRecord(placement, product, shop);
-      })
+    sorted.map(async (placement) => {
+      const { product, shop } = await resolveProductAndShopForPlacement(placement);
+      return buildPlacementAdminRecord(placement, product, shop, mediaMap.get(normalizeText(placement.productId)));
+    })
   );
 
   return hydrated;
@@ -445,7 +465,8 @@ export async function createFeaturedProductPlacement(payload = {}, actor = null)
   };
 
   const persisted = await persistPlacement(next, true);
-  return buildPlacementAdminRecord(persisted, product, shop);
+  const media = await getProductMediaForList([normalizeText(product?.id)]);
+  return buildPlacementAdminRecord(persisted, product, shop, media.get(normalizeText(product?.id)));
 }
 
 export async function updateFeaturedProductPlacement(id, payload = {}, actor = null) {
@@ -491,7 +512,8 @@ export async function updateFeaturedProductPlacement(id, payload = {}, actor = n
 
   const persisted = await persistPlacement(next, false);
   const { product, shop } = await resolveProductAndShopForPlacement(persisted);
-  return buildPlacementAdminRecord(persisted, product, shop);
+  const media = await getProductMediaForList([normalizeText(product?.id)]);
+  return buildPlacementAdminRecord(persisted, product, shop, media.get(normalizeText(product?.id)));
 }
 
 export async function deleteFeaturedProductPlacement(id, actor = null) {
@@ -509,7 +531,8 @@ export async function deleteFeaturedProductPlacement(id, actor = null) {
 
   const persisted = await persistPlacement(next, false);
   const { product, shop } = await resolveProductAndShopForPlacement(persisted);
-  return buildPlacementAdminRecord(persisted, product, shop);
+  const media = await getProductMediaForList([normalizeText(product?.id)]);
+  return buildPlacementAdminRecord(persisted, product, shop, media.get(normalizeText(product?.id)));
 }
 
 export async function listPublicFeaturedProductPlacements(placementKey = DEFAULT_PLACEMENT_KEY) {
@@ -525,13 +548,18 @@ export async function listPublicFeaturedProductPlacements(placementKey = DEFAULT
     .filter((placement) => isPlacementInDateWindow(placement, now))
     .sort(comparePlacements);
 
-  const publicPlacements = [];
-  for (const placement of filtered) {
+  const visiblePlacements = filtered.filter((placement) => {
     const product = productsById.get(normalizeText(placement.productId)) || null;
     const shop = shopsById.get(normalizeText(placement.shopId)) || null;
-    if (!isProductPubliclyVisible(product, shop)) continue;
-    publicPlacements.push(buildPlacementPublicRecord(placement, product, shop));
-  }
+    return isProductPubliclyVisible(product, shop);
+  });
+  const mediaMap = await getProductMediaForList(visiblePlacements.map((placement) => placement.productId));
+
+  const publicPlacements = visiblePlacements.map((placement) => {
+    const product = productsById.get(normalizeText(placement.productId)) || null;
+    const shop = shopsById.get(normalizeText(placement.shopId)) || null;
+    return buildPlacementPublicRecord(placement, product, shop, mediaMap.get(normalizeText(placement.productId)));
+  });
 
   return publicPlacements;
 }

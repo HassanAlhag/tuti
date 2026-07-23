@@ -7,16 +7,15 @@ import hpp from "hpp";
 import { rateLimit } from "express-rate-limit";
 import pinoHttp from "pino-http";
 import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
 import { logger } from "./shared/logger.js";
 
 if (env.sentryDsn) {
   Sentry.init({ dsn: env.sentryDsn, environment: env.nodeEnv, tracesSampleRate: 0.1 });
 }
-import { createStorageProvider } from "./shared/storage.js";
-import { authenticate, requireRole } from "./middleware/auth.js";
+import { createUploadMulter } from "./shared/mediaStorage.js";
+import { uploadsDir } from "./shared/uploadsDir.js";
+import { authenticate, requireOwnedShop, requireRole } from "./middleware/auth.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { crmRouter } from "./modules/crm/crm.routes.js";
 import { driverRouter, driversRouter } from "./modules/drivers/drivers.routes.js";
@@ -34,18 +33,19 @@ import { usersRouter } from "./modules/users/users.routes.js";
 import { srRouter } from "./modules/sr/sr.routes.js";
 import { auditRouter } from "./modules/audit/audit.routes.js";
 import { reportsRouter } from "./modules/reports/reports.routes.js";
+import { adminMediaRouter, sellerMediaRouter } from "./modules/media/media.routes.js";
+import { createMediaAsset } from "./modules/media/media.service.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadsDir = env.uploadDir
-  ? path.resolve(env.uploadDir)
-  : path.join(__dirname, "..", "uploads");
-
+// Local disk is a dev/test-only fallback (see shared/s3Storage.js) --
+// still created so /uploads static serving and that fallback path work,
+// but production always requires real AWS S3 config (validateEnv()).
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-// Storage provider is resolved once at startup (async); the upload endpoint
-// waits on this promise. If S3 env vars are present the provider uses S3,
-// otherwise it falls back to local disk.
-const storageProviderPromise = createStorageProvider(uploadsDir);
+// multer buffers the upload in memory; the route validates + optimizes it
+// (Sharp: real decode, EXIF auto-rotate, thumbnail/card/detail WebP
+// variants) and persists each variant itself via
+// mediaStorage.optimizeAndPersistImage -- see shared/mediaStorage.js.
+const uploadMulter = createUploadMulter();
 
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -128,27 +128,66 @@ export function createApp() {
     });
   });
 
-  // Image upload endpoint — seller/admin only
+  // Image upload endpoint — seller (own shop, database-verified), admin,
+  // or driver (proof-of-delivery). Every upload is recorded as a
+  // MediaAsset with server-resolved ownership; requireOwnedShop runs for
+  // sellers specifically so a forged shopId claim can never attach a file
+  // under someone else's shop namespace (see modules/media/media.service.js).
   app.post(
     "/api/upload",
     authenticate,
-    requireRole("seller", "admin"),
-    async (req, res) => {
-      try {
-        const { upload, getPublicUrl } = await storageProviderPromise;
-        upload.single("image")(req, res, (err) => {
-          if (err) {
-            if (err.code === "LIMIT_FILE_SIZE") {
-              return res.status(413).json({ error: "File too large. Maximum size is 5 MB." });
-            }
-            return res.status(400).json({ error: err.message || "Invalid file." });
+    requireRole("seller", "admin", "driver"),
+    requireOwnedShop,
+    (req, res, next) => {
+      uploadMulter.single("image")(req, res, (err) => {
+        if (err) {
+          if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(413).json({ error: "File too large. Maximum size is 8 MB." });
           }
-          if (!req.file) return res.status(400).json({ error: "No image provided." });
-          const url = getPublicUrl(req);
-          res.json({ data: { url, filename: req.file.filename || req.file.key } });
+          return res.status(400).json({ error: err.message || "Invalid file." });
+        }
+        next();
+      });
+    },
+    async (req, res, next) => {
+      try {
+        if (!req.file) return res.status(400).json({ error: "No image provided." });
+
+        const role = req.user.role;
+        const ownerType = role === "seller" ? "shop" : role === "driver" ? "driver" : "admin";
+        const ownerId = role === "seller" ? req.ownedShopId
+          : role === "driver" ? (req.user.driverId || req.user.sub)
+          : "admin";
+        const shopId = role === "seller" ? req.ownedShopId : null;
+
+        const { asset, dimensionWarning } = await createMediaAsset({
+          ownerType,
+          ownerId,
+          shopId,
+          uploadedByUserId: req.user.sub,
+          uploadedByRole: role,
+          buffer: req.file.buffer,
+          originalFilename: req.file.originalname,
+        });
+
+        // `url`/`filename` kept for every existing caller (seller product
+        // forms, driver proof-of-delivery) that only reads those two
+        // fields; mediaAssetId/width/height/urls are additive. `url` now
+        // resolves to the optimized card-size WebP variant (never the raw
+        // upload -- the original buffer is never persisted).
+        res.json({
+          data: {
+            url: asset.publicUrl,
+            urls: asset.urls,
+            filename: asset.originalFilename,
+            mediaAssetId: asset.id,
+            width: asset.width,
+            height: asset.height,
+            dimensionWarning,
+          },
         });
       } catch (err) {
-        res.status(500).json({ error: "Storage provider unavailable." });
+        next(err);
       }
     },
   );
@@ -169,6 +208,8 @@ export function createApp() {
   app.use("/api/admin/merchandising", adminCollectionsRouter);
   app.use("/api/seller", sellerBrandRouter);
   app.use("/api/seller", sellerPerformanceRouter);
+  app.use("/api/seller", sellerMediaRouter);
+  app.use("/api/admin", adminMediaRouter);
   app.use("/api/marketplace", marketplaceRouter);
   app.use("/api/seller-applications", sellerApplicationsRouter);
   app.use("/api/orders", ordersRouter);

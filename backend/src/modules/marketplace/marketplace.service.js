@@ -20,6 +20,14 @@ import {
   assertShopCanUseProductCategory,
   normalizeProductCategory,
 } from "../../shared/shopEntitlements.js";
+import {
+  applyProductMediaLinks,
+  getProductMediaForList,
+  hasPublicSafePrimaryImage,
+  validateExistingProductMediaSelection,
+  validateProductMediaSelection,
+  commitProductMediaSelection,
+} from "../media/media.service.js";
 
 export const createProductSchema = z.object({
   name: z.string().min(1).max(120).trim(),
@@ -34,6 +42,13 @@ export const createProductSchema = z.object({
   stock: z.coerce.number().int().min(0).default(0),
   imageName: z.string().optional(),
   imagePath: z.string().nullable().optional(),
+  // Preferred media path (Phase 2) -- references to the seller's own
+  // MediaAsset records, verified server-side in applyProductMediaLinks.
+  // raw imagePath above is kept for backward compatibility only; see the
+  // Phase 2 delivery report.
+  primaryMediaAssetId: z.string().optional(),
+  galleryMediaAssetIds: z.array(z.string()).max(10).optional(),
+  status: z.enum(["Draft", "Needs approval"]).optional(),
   cakeType: z.string().optional(),
   servings: z.string().optional(),
   flavors: z.array(z.string()).optional(),
@@ -126,6 +141,8 @@ export const updateSellerProductSchema = z.object({
   leadTimeDays:           z.coerce.number().int().min(0).optional(),
   customMessageAvailable: z.coerce.boolean().optional(),
   imagePath:              z.string().nullable().optional(),
+  primaryMediaAssetId:    z.string().nullable().optional(),
+  galleryMediaAssetIds:   z.array(z.string()).max(10).optional(),
   // Seller may explicitly set Draft (hide) or Needs approval (submit from Draft)
   status:                 z.enum(["Draft", "Needs approval"]).optional(),
   shopId:                 z.string().optional(), // admin override only
@@ -320,6 +337,58 @@ function sanitizePublicProductRefRecord(record, publicProductIds) {
   return remainingProductRefs.length ? result : null;
 }
 
+// ── Media attachment for public product payloads ──────────────────────────
+// sanitizePublicProduct stays synchronous (it's used inline inside array
+// .map() calls throughout this file); primaryImage/images are merged on
+// afterward in one batched, async pass at each public entry point instead.
+// Falls back to legacy imagePath when a product has no MediaAsset links
+// yet (Task 10 compatibility): primary media -> legacy imagePath -> (the
+// customer UI's own category-art fallback, outside this file's concern).
+//
+// Every image -- MediaAsset-backed or legacy-imagePath-backed -- is
+// normalized to the same { thumbnail, card, detail } shape so ProductCard
+// can always read .card, ProductDetailPage can always read .detail, and
+// thumbnail strips can always read .thumbnail, regardless of source.
+export function legacyImageVariants(imagePath) {
+  return imagePath ? { thumbnail: imagePath, card: imagePath, detail: imagePath } : null;
+}
+
+function mergeProductMedia(product, media) {
+  if (!product) return product;
+  // Only fall back to the legacy imagePath when the product has NEVER had
+  // a MediaAsset link at all (media?.hasLinks is false). If links exist
+  // but every linked asset is currently quarantined/rejected/deleted,
+  // media.primaryImage/images are correctly empty and must STAY empty --
+  // falling back to product.imagePath here would resurrect a stale URL
+  // cached from whenever the (now-invalid) image was originally linked,
+  // silently undoing moderation. See getProductMedia's doc comment.
+  const legacyEligible = !media?.hasLinks;
+  const primaryImage = media?.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null);
+  const images = media?.images?.length
+    ? media.images
+    : legacyEligible && product.imagePath
+      ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }]
+      : [];
+  // Once links exist, imagePath is always recomputed from the CURRENT
+  // primary image (never the stale DB-stored mirror) -- this keeps a
+  // frontend fallback chain that reads product.imagePath directly
+  // (bypassing primaryImage/images entirely) showing the right image while
+  // it's active, and correctly null the instant it's moderated away.
+  return { ...product, imagePath: legacyEligible ? product.imagePath : (primaryImage?.card || null), primaryImage, images };
+}
+
+async function attachMediaToStorefrontPayload(payload) {
+  const mediaMap = await getProductMediaForList(payload.products.map((p) => p.id));
+  const merge = (product) => mergeProductMedia(product, mediaMap.get(product.id));
+  return {
+    ...payload,
+    products: payload.products.map(merge),
+    rankings: payload.rankings
+      ? { ...payload.rankings, topPerfumes: (payload.rankings.topPerfumes || []).map(merge) }
+      : payload.rankings,
+  };
+}
+
 function getPublicRankings(publicProducts, publicShops, publicProductIds) {
   const perfumesOnly = publicProducts.filter((p) => !p.category || p.category === "perfume");
   return {
@@ -375,25 +444,25 @@ export async function getStorefrontData() {
       ? await Review.find({ productId: { $in: publicProductIds } }).sort({ createdAt: -1 }).lean()
       : [];
 
-    return buildPublicStorefrontPayload({
+    return attachMediaToStorefrontPayload(buildPublicStorefrontPayload({
       products,
       shops,
       reviews,
       promotions: state.promotions,
       collections: state.collections,
       roles: state.roles,
-    });
+    }));
   }
 
   const state = seedRepository.getState();
-  return buildPublicStorefrontPayload({
+  return attachMediaToStorefrontPayload(buildPublicStorefrontPayload({
     products: state.products,
     shops: state.shops,
     reviews: state.reviews,
     promotions: state.promotions,
     collections: state.collections,
     roles: state.roles,
-  });
+  }));
 }
 
 function customerSummariesFromOrders(orders, knownCustomers) {
@@ -448,7 +517,7 @@ export async function getSellerData(shopId = "shop-oud-lane") {
 
     return {
       shop,
-      products,
+      products: await attachMediaToProducts(products),
       customers: customerSummariesFromOrders(orders, knownCustomers),
     };
   }
@@ -461,7 +530,33 @@ export async function getSellerData(shopId = "shop-oud-lane") {
     return state.orders.some((order) => order.customerEmail === customer.email && (order.shopIds || []).includes(shop.id));
   });
 
-  return { shop, products, customers };
+  return { shop, products: await attachMediaToProducts(products), customers };
+}
+
+/** Seller/admin views get the raw (unsanitized) product plus full gallery --
+ *  unlike the public path, there's no fallback-only merge needed since
+ *  these consumers are trusted with the complete media list. */
+async function attachMediaToProducts(products) {
+  const mediaMap = await getProductMediaForList(products.map((p) => p.id));
+  return products.map((product) => {
+    const media = mediaMap.get(product.id) || { primaryImage: null, images: [], primaryMediaAssetId: null, galleryMediaAssetIds: [], hasLinks: false };
+    // Same hasLinks gating as the public mergeProductMedia -- a seller
+    // should see "no visible image" (not a resurrected stale imagePath)
+    // once their linked primary gets quarantined/rejected, while
+    // primaryMediaAssetId/galleryMediaAssetIds below (raw, unfiltered)
+    // still point at the broken reference so they can find and fix it.
+    const legacyEligible = !media.hasLinks;
+    return {
+      ...product,
+      primaryImage: media.primaryImage || (legacyEligible ? legacyImageVariants(product.imagePath) : null),
+      images: media.images.length ? media.images : (legacyEligible && product.imagePath ? [{ ...legacyImageVariants(product.imagePath), altText: product.name || "" }] : []),
+      // Raw MediaAsset ids -- seller/admin only, so the product edit form
+      // can pre-populate the media picker. Never exposed on the public
+      // sanitizer (see mergeProductMedia).
+      primaryMediaAssetId: media.primaryMediaAssetId,
+      galleryMediaAssetIds: media.galleryMediaAssetIds,
+    };
+  });
 }
 
 async function loadShopForEntitlement(shopId) {
@@ -480,10 +575,36 @@ async function assertSellerProductEntitlement(shopId, category, shop = null) {
   return assertShopCanUseProductCategory(resolvedShop, category);
 }
 
+function primaryImageRequiredError() {
+  const error = new Error("A primary product image is required before submitting for approval.");
+  error.status = 422;
+  return error;
+}
+
+function productRequestedStatus(payload, fallback = "Needs approval") {
+  return payload.status === "Draft" ? "Draft" : fallback;
+}
+
+async function assertPublicSafePrimaryImageForProduct(product, { allowLegacy = true } = {}) {
+  if (await hasPublicSafePrimaryImage(product.id, allowLegacy ? product.imagePath : "")) return;
+  throw primaryImageRequiredError();
+}
+
 export async function createSellerProduct(payload, options = {}) {
   const category = normalizeProductCategory(payload.category || "perfume");
   if (options.enforceSellerEntitlement) {
     await assertSellerProductEntitlement(payload.shopId, category, options.shop);
+  }
+  const requestedStatus = productRequestedStatus(payload);
+  const hasMediaSelection = payload.primaryMediaAssetId !== undefined || payload.galleryMediaAssetIds !== undefined;
+  const validatedMediaSelection = hasMediaSelection
+    ? await validateProductMediaSelection(payload.shopId || "shop-oud-lane", {
+      primaryMediaAssetId: payload.primaryMediaAssetId,
+      galleryMediaAssetIds: payload.galleryMediaAssetIds,
+    })
+    : null;
+  if (requestedStatus !== "Draft" && !validatedMediaSelection?.primaryId) {
+    throw primaryImageRequiredError();
   }
   const idPrefix = {
     perfume: "prf",
@@ -530,13 +651,13 @@ export async function createSellerProduct(payload, options = {}) {
     reviews: 0,
     orders: 0,
     verifiedReviews: 0,
-    status: "Needs approval",
+    status: requestedStatus,
     tags: ["New submission"],
     collection: "New Seller Uploads",
     releaseType: "Seller Upload",
     color: categoryColor[0],
     accent: categoryColor[1],
-    imagePath: payload.imagePath || null,
+    imagePath: null,
   };
 
   if (!product.name) {
@@ -545,9 +666,43 @@ export async function createSellerProduct(payload, options = {}) {
     throw error;
   }
 
+  let created;
   if (env.mongoUri) {
-    const doc = await Product.create(product);
-    const created = doc.toObject();
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        const [doc] = await Product.create([product], { session });
+        created = doc.toObject();
+        if (validatedMediaSelection) {
+          const media = await commitProductMediaSelection(created.id, created.shopId, validatedMediaSelection, { session });
+          created.imagePath = media.primaryImage?.card || created.imagePath;
+          created.primaryImage = media.primaryImage;
+          created.images = media.images;
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+  } else {
+    const state = seedRepository.getState();
+    const previousProducts = state.products.map((item) => ({ ...item }));
+    const previousLinks = state.productMediaLinks.map((item) => ({ ...item }));
+    try {
+      created = seedRepository.addProduct(product);
+      if (validatedMediaSelection) {
+        const media = await commitProductMediaSelection(created.id, created.shopId, validatedMediaSelection);
+        created.imagePath = media.primaryImage?.card || created.imagePath;
+        created.primaryImage = media.primaryImage;
+        created.images = media.images;
+      }
+    } catch (err) {
+      state.products = previousProducts;
+      state.productMediaLinks = previousLinks;
+      throw err;
+    }
+  }
+
+  if (created.status === "Needs approval") {
     await createNotificationsForRole({
       recipientRole: "admin",
       title: "Product requires admin approval",
@@ -556,18 +711,7 @@ export async function createSellerProduct(payload, options = {}) {
       entityType: "product",
       entityId: created.id,
     });
-    return created;
   }
-
-  const created = seedRepository.addProduct(product);
-  await createNotificationsForRole({
-    recipientRole: "admin",
-    title: "Product requires admin approval",
-    message: `${created.name} was submitted for approval by the seller.`,
-    type: "product_needs_approval",
-    entityType: "product",
-    entityId: created.id,
-  });
   return created;
 }
 
@@ -636,7 +780,7 @@ export async function getAdminData() {
     const state = seedRepository.getState();
     return {
       customers: state.customers,
-      products,
+      products: await attachMediaToProducts(products),
       shops,
       payments: state.payments,
       payouts: state.payouts,
@@ -650,7 +794,7 @@ export async function getAdminData() {
   const state = seedRepository.getState();
   return {
     customers: state.customers,
-    products: state.products,
+    products: await attachMediaToProducts(state.products),
     shops: state.shops,
     payments: state.payments,
     payouts: state.payouts,
@@ -815,6 +959,9 @@ export async function updateProductStatus(productId, status, user) {
       throw error;
     }
     assertProductTransition(existing, status, user);
+    if (status === "Live") {
+      await assertPublicSafePrimaryImageForProduct(existing);
+    }
     const product = await Product.findOneAndUpdate({ id: productId }, { status }, { returnDocument: "after" }).lean();
     if (status === "Live" || status === "Rejected") {
       await createNotificationsForRole({
@@ -846,6 +993,9 @@ export async function updateProductStatus(productId, status, user) {
     throw error;
   }
   assertProductTransition(existing, status, user);
+  if (status === "Live") {
+    await assertPublicSafePrimaryImageForProduct(existing);
+  }
   const product = seedRepository.updateProductStatus(productId, status);
   if (!product) {
     const error = new Error("Product was not found.");
@@ -1407,7 +1557,13 @@ const SENSITIVE_PRODUCT_FIELDS = new Set([
   "family", "gender", "notes", "size",
   "allergens", "flavors", "cakeType", "servings",
   "includes", "ingredients", "imagePath",
+  "primaryMediaAssetId", "galleryMediaAssetIds",
 ]);
+
+// These are handled by applyProductMediaLinks (a separate collection),
+// not written directly onto the Product document -- excluded from the
+// generic field-copy loop in buildUpdate() below.
+const MEDIA_LINK_FIELDS = new Set(["primaryMediaAssetId", "galleryMediaAssetIds"]);
 
 function listFrom(value) {
   return Array.isArray(value)
@@ -1441,11 +1597,32 @@ export async function updateSellerProduct(productId, shopId, rawPayload, options
     return false;
   }
 
+  async function validateMediaForUpdateIfNeeded(product) {
+    const mediaTouched = payload.primaryMediaAssetId !== undefined || payload.galleryMediaAssetIds !== undefined;
+    const selection = mediaTouched
+      ? await validateExistingProductMediaSelection(productId, shopId, {
+        primaryMediaAssetId: payload.primaryMediaAssetId,
+        galleryMediaAssetIds: payload.galleryMediaAssetIds,
+      })
+      : null;
+    const nextStatus = payload.status === "Needs approval" || (touchesSensitive && product.status !== "Draft")
+      ? "Needs approval"
+      : payload.status || product.status;
+    if (nextStatus === "Needs approval") {
+      if (selection) {
+        if (!selection.primaryId) throw primaryImageRequiredError();
+      } else {
+        await assertPublicSafePrimaryImageForProduct(product);
+      }
+    }
+    return selection;
+  }
+
   // Build the field-level update object (status resolved separately)
   function buildUpdate(product) {
     const update = {};
     for (const [key, value] of Object.entries(payload)) {
-      if (key !== "status" && key !== "shopId") update[key] = value;
+      if (key !== "status" && key !== "shopId" && !MEDIA_LINK_FIELDS.has(key)) update[key] = value;
     }
 
     if (payload.status === "Draft") {
@@ -1472,13 +1649,18 @@ export async function updateSellerProduct(productId, shopId, rawPayload, options
     if (shouldEnforceCategory(product)) {
       await assertSellerProductEntitlement(shopId, payload.category || product.category, options.shop);
     }
+    const mediaSelection = await validateMediaForUpdateIfNeeded(product);
 
     const update = buildUpdate(product);
-    const updated = await Product.findOneAndUpdate(
+    let updated = await Product.findOneAndUpdate(
       { id: productId },
       { $set: update },
       { returnDocument: "after" }
     ).lean();
+    if (mediaSelection) {
+      const media = await commitProductMediaSelection(productId, shopId, mediaSelection);
+      updated = { ...updated, imagePath: media.primaryImage?.card || updated.imagePath, primaryImage: media.primaryImage, images: media.images };
+    }
     if (updated.status === "Needs approval" && product.status !== "Needs approval") {
       await createNotificationsForRole({
         recipientRole: "admin",
@@ -1499,12 +1681,17 @@ export async function updateSellerProduct(productId, shopId, rawPayload, options
   if (shouldEnforceCategory(product)) {
     await assertSellerProductEntitlement(shopId, payload.category || product.category, options.shop);
   }
+  const mediaSelection = await validateMediaForUpdateIfNeeded(product);
 
   const update = buildUpdate(product);
   if (update.sellerLastEditedAt instanceof Date) {
     update.sellerLastEditedAt = update.sellerLastEditedAt.toISOString();
   }
-  const updated = seedRepository.updateProduct(productId, shopId, update);
+  let updated = seedRepository.updateProduct(productId, shopId, update);
+  if (updated && mediaSelection) {
+    const media = await commitProductMediaSelection(productId, shopId, mediaSelection);
+    updated = { ...updated, imagePath: media.primaryImage?.card || updated.imagePath, primaryImage: media.primaryImage, images: media.images };
+  }
   if (updated?.status === "Needs approval" && product.status !== "Needs approval") {
     await createNotificationsForRole({
       recipientRole: "admin",
@@ -1623,8 +1810,10 @@ export async function searchProducts({ q = "", category, family, gender, occasio
     ]);
 
     const publicProductIds = new Set(publicProductIdDocs.map((product) => normalizeText(product.id)).filter(Boolean));
+    const sanitizedResults = results.map((product) => sanitizePublicProduct(product, publicProductIds)).filter(Boolean);
+    const mediaMap = await getProductMediaForList(sanitizedResults.map((p) => p.id));
     return {
-      results: results.map((product) => sanitizePublicProduct(product, publicProductIds)).filter(Boolean),
+      results: sanitizedResults.map((product) => mergeProductMedia(product, mediaMap.get(product.id))),
       total,
       page: safePage,
       pages: Math.max(1, Math.ceil(total / safeLimit)),
@@ -1669,6 +1858,8 @@ export async function searchProducts({ q = "", category, family, gender, occasio
   const total = results.length;
   const start = (safePage - 1) * safeLimit;
   results = results.slice(start, start + safeLimit).map((product) => sanitizePublicProduct(product, allPublicProductIds)).filter(Boolean);
+  const mediaMap = await getProductMediaForList(results.map((p) => p.id));
+  results = results.map((product) => mergeProductMedia(product, mediaMap.get(product.id)));
 
   return { results, total, page: safePage, pages: Math.max(1, Math.ceil(total / safeLimit)) };
 }

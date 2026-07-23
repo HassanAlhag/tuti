@@ -33,6 +33,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SellerMediaPicker } from "../media/SellerMediaPicker.jsx";
 import { BottleArt } from "@tuti/shared/components/BottleArt.jsx";
 import { EmptyState } from "@tuti/shared/components/EmptyState.jsx";
 import { MetricCard } from "@tuti/shared/components/MetricCard.jsx";
@@ -40,7 +41,7 @@ import { PanelHeader } from "@tuti/shared/components/PanelHeader.jsx";
 import { StatusBadge } from "@tuti/shared/components/StatusBadge.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
 import { computeSellerHealth } from "@tuti/shared/utils/sellerHealth.js";
-import { marketplaceApi, ordersApi, sellerDeliveryOffersApi, sellerDriversApi, sellerFinanceApi, supportTicketsApi, uploadApi } from "@tuti/shared/api/client.js";
+import { marketplaceApi, ordersApi, sellerDeliveryOffersApi, sellerDriversApi, sellerFinanceApi, supportTicketsApi } from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { GENDER_OPTIONS, SCENT_FAMILIES } from "@tuti/shared/constants";
 import { getAllowedOrderActions } from "@tuti/shared/workflows";
@@ -96,10 +97,10 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [editForm, setEditForm]             = useState(null);
   const [editNote, setEditNote]             = useState("");
-  const [editImageFile, setEditImageFile]   = useState(null);
+  const [editMediaResolved, setEditMediaResolved] = useState({});
 
   useEffect(() => {
-    if (!editingProduct) { setEditForm(null); setEditNote(""); setEditImageFile(null); return; }
+    if (!editingProduct) { setEditForm(null); setEditNote(""); setEditMediaResolved({}); return; }
     const p = editingProduct;
     setEditForm({
       name:                   p.name || "",
@@ -118,9 +119,20 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
       occasionTags:           Array.isArray(p.occasionTags) ? p.occasionTags.join(", ") : "",
       leadTimeDays:           p.leadTimeDays ?? 0,
       customMessageAvailable: Boolean(p.customMessageAvailable),
+      primaryMediaAssetId:    p.primaryMediaAssetId || null,
+      galleryMediaAssetIds:   p.galleryMediaAssetIds || [],
     });
+    // Seed the picker's URL cache from the already-resolved gallery so
+    // thumbnails render immediately without a refetch.
+    const resolved = {};
+    const urlFor = (image) => image?.card || image?.thumbnail || image?.detail || "";
+    if (p.primaryMediaAssetId && p.images?.[0]) resolved[p.primaryMediaAssetId] = urlFor(p.images[0]);
+    (p.galleryMediaAssetIds || []).forEach((id, i) => {
+      const image = p.images?.[i + 1];
+      if (image) resolved[id] = urlFor(image);
+    });
+    setEditMediaResolved(resolved);
     setEditNote("");
-    setEditImageFile(null);
   }, [editingProduct]);
 
   useEffect(() => {
@@ -156,6 +168,9 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
     mutationFn: ({ productId, status }) => marketplaceApi.updateSellerProduct(productId, { status }),
     onSuccess: () => invalidateSellerData(),
   });
+
+  /* ── Add-form media picker cache (assetId -> resolved url) ────── */
+  const [addMediaResolved, setAddMediaResolved] = useState({});
 
   /* ── Bulk stock adjustment ──────────────────────────────────── */
   const [bulkMode,   setBulkMode]   = useState(false);
@@ -225,17 +240,8 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
       payload.allergens    = split(editForm.allergens);
     }
     payload.occasionTags = split(editForm.occasionTags);
-
-    if (editImageFile) {
-      setEditNote("Uploading image…");
-      try {
-        const { url } = await uploadApi.uploadImage(editImageFile);
-        payload.imagePath = url;
-      } catch (err) {
-        setEditNote(err?.message || "Image upload failed.");
-        return;
-      }
-    }
+    payload.primaryMediaAssetId = editForm.primaryMediaAssetId || null;
+    payload.galleryMediaAssetIds = editForm.galleryMediaAssetIds || [];
 
     // Rejected products always resubmit for approval on save, regardless of which fields changed.
     if (editingProduct.status === "Rejected") {
@@ -277,7 +283,15 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   const outOfStock         = products.filter((p) => p.stock <= 0);
 
   function handleAddCategoryChange(val) {
-    setForm({ ...DEFAULT_BY_TYPE[shopType], name: form.name, price: form.price, stock: form.stock, imageName: form.imageName, category: val });
+    setForm({
+      ...DEFAULT_BY_TYPE[shopType],
+      name: form.name,
+      price: form.price,
+      stock: form.stock,
+      primaryMediaAssetId: form.primaryMediaAssetId,
+      galleryMediaAssetIds: form.galleryMediaAssetIds,
+      category: val,
+    });
   }
 
   /* ── Edit-form category helpers ─────────────────────────────── */
@@ -289,7 +303,10 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   /* ── Status-change helpers ──────────────────────────────────── */
   function sensitiveFieldsChanged() {
     if (!editingProduct || !editForm) return false;
-    if (editImageFile) return true;
+    if ((editForm.primaryMediaAssetId || null) !== (editingProduct.primaryMediaAssetId || null)) return true;
+    const origGallery = (editingProduct.galleryMediaAssetIds || []).join(",");
+    const nextGallery = (editForm.galleryMediaAssetIds || []).join(",");
+    if (origGallery !== nextGallery) return true;
     const p = editingProduct;
     const origNotes    = Array.isArray(p.notes)        ? p.notes.join(", ")        : (p.notes || "");
     const origFlavors  = Array.isArray(p.flavors)      ? p.flavors.join(", ")      : "";
@@ -548,23 +565,14 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
 
             {/* Product image */}
             <div className="sd-form-block">
-              <label className="sd-block-label">Product image</label>
-              {editingProduct.imagePath && !editImageFile && (
-                <div className="sd-edit-image-current">
-                  <img src={editingProduct.imagePath} alt="Current product image" />
-                  <small>Current image</small>
-                </div>
-              )}
-              <label className="sd-drop-zone">
-                <Upload size={22} />
-                <span>{editImageFile?.name || (editingProduct.imagePath ? "Click or drag to replace" : "Click or drag to upload")}</span>
-                <small>JPG, PNG, WebP · Max 5 MB · Changing image requires re-approval</small>
-                <input
-                  accept="image/*"
-                  type="file"
-                  onChange={(e) => setEditImageFile(e.target.files?.[0] || null)}
-                />
-              </label>
+              <label className="sd-block-label">Product images</label>
+              <p className="sd-form-hint">Changing images requires re-approval.</p>
+              <SellerMediaPicker
+                primaryMediaAssetId={editForm.primaryMediaAssetId}
+                galleryMediaAssetIds={editForm.galleryMediaAssetIds}
+                resolvedImages={editMediaResolved}
+                onChange={(primary, gallery) => setEditForm({ ...editForm, primaryMediaAssetId: primary, galleryMediaAssetIds: gallery })}
+              />
             </div>
 
             {/* Visibility */}
@@ -764,20 +772,13 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
 
             {/* Image */}
             <div className="sd-form-block sd-form-block--last">
-              <label className="sd-block-label">Product image</label>
-              <label className="sd-drop-zone">
-                <Upload size={22} />
-                <span>{form.imageName || "Click or drag to upload"}</span>
-                <small>JPG, PNG, WebP · Max 5 MB</small>
-                <input
-                  accept="image/*"
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null;
-                    setForm({ ...form, imageName: file?.name || "", _imageFile: file });
-                  }}
-                />
-              </label>
+              <label className="sd-block-label">Product images</label>
+              <SellerMediaPicker
+                primaryMediaAssetId={form.primaryMediaAssetId || null}
+                galleryMediaAssetIds={form.galleryMediaAssetIds || []}
+                resolvedImages={addMediaResolved}
+                onChange={(primary, gallery) => setForm({ ...form, primaryMediaAssetId: primary, galleryMediaAssetIds: gallery })}
+              />
             </div>
 
             <div className="sd-form-footer">

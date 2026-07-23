@@ -29,6 +29,8 @@ const state = {
   shops:              structuredClone(shops),
   sellerTransactions: [],
   payoutRecords:      [],                             // real Payout model records (Phase 3)
+  mediaAssets:        [],                             // Phase 2 media foundation
+  productMediaLinks:  [],                             // Phase 2 media foundation
 };
 
 export const seedRepository = {

@@ -96,13 +96,46 @@ function Stars({ score, size = 14 }) {
   );
 }
 
+// Primary media (MediaAsset gallery, optimized "detail"/"thumbnail"
+// variants) first, legacy single imagePath fallback, category art
+// (BottleArt/CSS) last. A thumbnail strip only renders when there's more
+// than one image, so single-image legacy products keep their existing
+// layout exactly as before.
 function ProductVisual({ product }) {
   const type = getProductType(product);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
-  if (product?.imagePath) {
+  const images = product?.images?.length
+    ? product.images
+    : product?.imagePath
+      ? [{ thumbnail: product.imagePath, card: product.imagePath, detail: product.imagePath, altText: product.name || "" }]
+      : [];
+
+  if (images.length) {
+    const active = images[Math.min(selectedIndex, images.length - 1)];
+    const activeUrl = active.detail || active.card || active.thumbnail;
     return (
       <div className="tuti-pdp__uploaded-media">
-        <img src={product.imagePath} alt={product.name} />
+        <img src={activeUrl} alt={active.altText || product.name} />
+        {images.length > 1 ? (
+          <div className="tuti-pdp__gallery-thumbs" role="group" aria-label={`${product.name} images`}>
+            {images.map((image, index) => {
+              const thumbUrl = image.thumbnail || image.card || image.detail;
+              return (
+                <button
+                  key={thumbUrl + index}
+                  type="button"
+                  className={index === selectedIndex ? "tuti-pdp__gallery-thumb is-active" : "tuti-pdp__gallery-thumb"}
+                  aria-pressed={index === selectedIndex}
+                  aria-label={`View image ${index + 1} of ${images.length}`}
+                  onClick={() => setSelectedIndex(index)}
+                >
+                  <img src={thumbUrl} alt="" loading="lazy" />
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -367,14 +400,14 @@ export function ProductDetailPage({
     description: product
       ? `${product.name} — ${product.description || (product.category === "perfume" ? "Luxury perfume" : product.category === "cake" ? "Custom cake" : "Premium Gift Box")}. Available on Tuti with cash on delivery.`
       : undefined,
-    ogImage: product?.imagePath || undefined,
+    ogImage: product?.primaryImage?.detail || product?.primaryImage?.card || product?.imagePath || undefined,
     canonical: product ? `https://tuti.ae/products/${product.slug || product.id}` : undefined,
     jsonLd: product ? {
       "@context": "https://schema.org",
       "@type": "Product",
       name: product.name,
       description: product.description || product.name,
-      image: product.imagePath || undefined,
+      image: product.primaryImage?.detail || product.primaryImage?.card || product.imagePath || undefined,
       sku: product.id,
       brand: productShop?.name ? { "@type": "Brand", name: productShop.name } : undefined,
       offers: {
