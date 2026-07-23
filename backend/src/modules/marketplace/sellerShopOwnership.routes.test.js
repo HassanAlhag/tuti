@@ -48,6 +48,30 @@ const MISMATCHED_SHOP = {
   name: "Mismatched Owner Boutique",
   ownerId: "different-owner-999",
 };
+const CAKE_SHOP = {
+  ...OWNED_SHOP,
+  id: "shop-cake-entitlement-001",
+  name: "Cake Entitlement Boutique",
+  ownerId: "cake-owner-001",
+  category: "cake",
+  categories: ["cake"],
+};
+const MIXED_SHOP = {
+  ...OWNED_SHOP,
+  id: "shop-mixed-entitlement-001",
+  name: "Mixed Entitlement Boutique",
+  ownerId: "mixed-owner-001",
+  category: "mixed",
+  categories: ["perfume", "cake", "dessert"],
+};
+const GIFT_BOX_SHOP = {
+  ...OWNED_SHOP,
+  id: "shop-gift-box-entitlement-001",
+  name: "Gift Box Entitlement Boutique",
+  ownerId: "gift-box-owner-001",
+  category: "gift_box",
+  categories: ["gift_box"],
+};
 
 let server;
 let baseUrl;
@@ -60,7 +84,14 @@ function tokenFor(user) {
 function resetState() {
   const state = seedRepository.getState();
   state.shops.length = 0;
-  state.shops.push(structuredClone(OWNED_SHOP), structuredClone(UNOWNED_SHOP), structuredClone(MISMATCHED_SHOP));
+  state.shops.push(
+    structuredClone(OWNED_SHOP),
+    structuredClone(UNOWNED_SHOP),
+    structuredClone(MISMATCHED_SHOP),
+    structuredClone(CAKE_SHOP),
+    structuredClone(MIXED_SHOP),
+    structuredClone(GIFT_BOX_SHOP)
+  );
   state.products.length = 0;
 }
 
@@ -238,6 +269,59 @@ test("seller can update own product but cannot act on another seeded shop", asyn
   const crossPatch = await patchSellerProduct(owner, otherCreate.payload.data.id, { price: 500 });
   assert.equal(crossPatch.response.status, 403);
   assert.equal(crossPatch.payload.error, "You do not own this product.");
+});
+
+test("seller product creation enforces category entitlements", async () => {
+  const perfumeSeller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Perfume Seller" };
+  const cakeSeller = { sub: CAKE_SHOP.ownerId, role: "seller", shopId: CAKE_SHOP.id, name: "Cake Seller" };
+  const mixedSeller = { sub: MIXED_SHOP.ownerId, role: "seller", shopId: MIXED_SHOP.id, name: "Mixed Seller" };
+  const giftBoxSeller = { sub: GIFT_BOX_SHOP.ownerId, role: "seller", shopId: GIFT_BOX_SHOP.id, name: "Gift Box Seller" };
+
+  assert.equal((await postSellerProduct(perfumeSeller, { category: "perfume" })).response.status, 201);
+  assert.equal((await postSellerProduct(perfumeSeller, { category: "gift_box" })).response.status, 201);
+  assert.equal((await postSellerProduct(perfumeSeller, { category: "cake" })).response.status, 403);
+  assert.equal((await postSellerProduct(perfumeSeller, { category: "dessert" })).response.status, 403);
+
+  assert.equal((await postSellerProduct(cakeSeller, { category: "cake" })).response.status, 201);
+  assert.equal((await postSellerProduct(cakeSeller, { category: "dessert" })).response.status, 201);
+  assert.equal((await postSellerProduct(cakeSeller, { category: "gift_box" })).response.status, 201);
+  assert.equal((await postSellerProduct(cakeSeller, { category: "perfume" })).response.status, 403);
+
+  for (const category of ["perfume", "cake", "dessert", "gift_box"]) {
+    assert.equal((await postSellerProduct(mixedSeller, { category })).response.status, 201);
+  }
+
+  assert.equal((await postSellerProduct(giftBoxSeller, { category: "gift_box" })).response.status, 201);
+  assert.equal((await postSellerProduct(giftBoxSeller, { category: "perfume" })).response.status, 403);
+  assert.equal((await postSellerProduct(giftBoxSeller, { category: "cake" })).response.status, 403);
+});
+
+test("seller product creation rejects legacy bundle and ignores client-supplied shopId for entitlement", async () => {
+  const perfumeSeller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Perfume Seller" };
+
+  const bundle = await postSellerProduct(perfumeSeller, { category: "bundle" });
+  assert.equal(bundle.response.status, 422);
+  assert.equal(bundle.payload.error, "Legacy bundle products cannot be created by sellers. Use Gift Box instead.");
+
+  const forgedShopId = await postSellerProduct(perfumeSeller, {
+    category: "cake",
+    shopId: CAKE_SHOP.id,
+  });
+  assert.equal(forgedShopId.response.status, 403);
+});
+
+test("seller product category update cannot move product outside entitlement", async () => {
+  const perfumeSeller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Perfume Seller" };
+
+  const product = await postSellerProduct(perfumeSeller, { category: "perfume", name: "Perfume to Retype" });
+  assert.equal(product.response.status, 201);
+
+  const blocked = await patchSellerProduct(perfumeSeller, product.payload.data.id, { category: "cake" });
+  assert.equal(blocked.response.status, 403);
+
+  const allowed = await patchSellerProduct(perfumeSeller, product.payload.data.id, { category: "gift_box" });
+  assert.equal(allowed.response.status, 200);
+  assert.equal(allowed.payload.data.category, "gift_box");
 });
 
 test("requireOwnedShop does not affect admin requests", async () => {

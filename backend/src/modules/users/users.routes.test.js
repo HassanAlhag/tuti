@@ -17,6 +17,20 @@ let baseUrl;
 let fakeUsers;
 let fakeShops;
 
+function makeShopDoc(shop) {
+  const doc = {
+    ...shop,
+    save: async () => {
+      const index = fakeShops.findIndex((item) => item.id === doc.id);
+      if (index >= 0) fakeShops[index] = doc;
+      else fakeShops.push(doc);
+      return doc;
+    },
+    toObject: () => ({ ...doc }),
+  };
+  return doc;
+}
+
 function makeUserDoc(user) {
   const doc = {
     _id: user._id,
@@ -113,9 +127,9 @@ function resetModelStubs() {
   });
   Shop.findOne = async (filter = {}) => fakeShops.find((shop) => shop.id === filter.id) || null;
   Shop.create = async (payload) => {
-    const shop = { ...payload };
+    const shop = makeShopDoc(payload);
     fakeShops.push(shop);
-    return { ...shop, toObject: () => ({ ...shop }) };
+    return shop;
   };
 }
 
@@ -226,6 +240,74 @@ test("admin can update users", async () => {
   assert.equal(payload.data.name, "Updated Target");
 });
 
+test("admin can update seller entitlements on the actual Shop categories", async () => {
+  fakeUsers.set("seller-user-001", makeUserDoc({
+    _id: "seller-user-001",
+    name: "Seller User",
+    email: "seller@example.com",
+    role: "seller",
+    shopId: "shop-seller-001",
+    shopCategory: "perfume",
+    shopCategories: ["perfume"],
+  }));
+  fakeShops.push(makeShopDoc({
+    id: "shop-seller-001",
+    name: "Seller Shop",
+    owner: "Seller User",
+    ownerId: "seller-user-001",
+    city: "Dubai",
+    category: "perfume",
+    categories: ["perfume"],
+  }));
+
+  const { response, payload } = await usersRequest("/api/users/seller-user-001", {
+    method: "PATCH",
+    user: adminUser(),
+    body: { shopCategories: ["cake", "dessert"] },
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload.data.shopCategories, ["cake", "dessert"]);
+  assert.equal(payload.data.shopCategory, "cake");
+  const shop = fakeShops.find((item) => item.id === "shop-seller-001");
+  assert.deepEqual(shop.categories, ["cake", "dessert"]);
+  assert.equal(shop.category, "cake");
+});
+
+test("admin mixed entitlement synchronizes User and Shop compatibility fields", async () => {
+  fakeUsers.set("seller-user-002", makeUserDoc({
+    _id: "seller-user-002",
+    name: "Mixed Seller",
+    email: "mixed@example.com",
+    role: "seller",
+    shopId: "shop-mixed-001",
+    shopCategory: "perfume",
+    shopCategories: ["perfume"],
+  }));
+  fakeShops.push(makeShopDoc({
+    id: "shop-mixed-001",
+    name: "Mixed Shop",
+    owner: "Mixed Seller",
+    ownerId: "seller-user-002",
+    city: "Dubai",
+    category: "perfume",
+    categories: ["perfume"],
+  }));
+
+  const { response, payload } = await usersRequest("/api/users/seller-user-002", {
+    method: "PATCH",
+    user: adminUser(),
+    body: { shopCategories: ["perfume", "cake"] },
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload.data.shopCategories, ["perfume", "cake"]);
+  assert.equal(payload.data.shopCategory, "mixed");
+  const shop = fakeShops.find((item) => item.id === "shop-mixed-001");
+  assert.deepEqual(shop.categories, ["perfume", "cake"]);
+  assert.equal(shop.category, "mixed");
+});
+
 test("admin can reset user password", async () => {
   const { response, payload } = await usersRequest("/api/users/target-user-001/password", {
     method: "PATCH",
@@ -278,4 +360,3 @@ test("support with stale users.manage cannot reset user password", async () => {
   assert.equal(payload.error, "Insufficient permissions.");
   assert.equal(fakeUsers.get("target-user-001").password, originalPassword);
 });
-

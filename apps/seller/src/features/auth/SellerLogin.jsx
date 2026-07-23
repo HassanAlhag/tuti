@@ -87,7 +87,6 @@ const SHOP_CATEGORY_OPTIONS = [
   { id: "cake",     label: "Cake" },
   { id: "dessert",  label: "Dessert" },
   { id: "gift_box", label: "Gift Box" },
-  { id: "bundle",   label: "Bundle" },
 ];
 
 export function SellerLogin({ idleExpired = false, onResume }) {
@@ -124,10 +123,7 @@ export function SellerLogin({ idleExpired = false, onResume }) {
   }, []);
 
   const normalizedShopCategories = useMemo(() => {
-    const mapped = shopCategories.map((item) =>
-      item === "bundle" ? "gift_box" : item
-    );
-    return [...new Set(mapped)].slice(0, 5);
+    return [...new Set(shopCategories)].slice(0, 5);
   }, [shopCategories]);
 
   function toggleShopCategory(value) {

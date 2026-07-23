@@ -16,6 +16,10 @@ import { canTransitionProductStatus } from "../../shared/workflows/productWorkfl
 import { createNotificationsForRole } from "../notifications/notifications.service.js";
 import { getSeedOrders } from "../orders/orders.service.js";
 import { logAuditEvent } from "../audit/audit.service.js";
+import {
+  assertShopCanUseProductCategory,
+  normalizeProductCategory,
+} from "../../shared/shopEntitlements.js";
 
 export const createProductSchema = z.object({
   name: z.string().min(1).max(120).trim(),
@@ -106,6 +110,7 @@ function customerIdForReview(user) {
 /* ── Seller product edit schema ──────────────────────────────────── */
 export const updateSellerProductSchema = z.object({
   name:                   z.string().min(1).max(120).trim().optional(),
+  category:               z.enum(["perfume", "cake", "dessert", "gift_box", "bundle"]).optional(),
   price:                  z.coerce.number().positive().optional(),
   stock:                  z.coerce.number().int().min(0).optional(),
   description:            z.string().max(2000).optional(),
@@ -459,14 +464,32 @@ export async function getSellerData(shopId = "shop-oud-lane") {
   return { shop, products, customers };
 }
 
-export async function createSellerProduct(payload) {
-  const category = payload.category || "perfume";
+async function loadShopForEntitlement(shopId) {
+  if (!shopId) return null;
+  if (env.mongoUri) return Shop.findOne({ id: shopId }).lean();
+  return seedRepository.getShop(shopId);
+}
+
+async function assertSellerProductEntitlement(shopId, category, shop = null) {
+  const resolvedShop = shop || await loadShopForEntitlement(shopId);
+  if (!resolvedShop) {
+    const error = new Error("Seller shop not found.");
+    error.status = 403;
+    throw error;
+  }
+  return assertShopCanUseProductCategory(resolvedShop, category);
+}
+
+export async function createSellerProduct(payload, options = {}) {
+  const category = normalizeProductCategory(payload.category || "perfume");
+  if (options.enforceSellerEntitlement) {
+    await assertSellerProductEntitlement(payload.shopId, category, options.shop);
+  }
   const idPrefix = {
     perfume: "prf",
     cake: "cke",
     dessert: "dss",
     gift_box: "gft",
-    bundle: "bdl",
   }[category] || "prd";
   const listFrom = (value) => Array.isArray(value)
     ? value
@@ -479,10 +502,9 @@ export async function createSellerProduct(payload) {
     cake: ["#b94d68", "#f4b6c4"],
     dessert: ["#7c3d24", "#d7b56d"],
     gift_box: ["#1f3a37", "#d9a441"],
-    bundle: ["#1f3a37", "#d9a441"],
   }[category] || ["#52796f", "#e9c46a"];
 
-  const isGiftProduct = category === "gift_box" || category === "bundle";
+  const isGiftProduct = category === "gift_box";
   const product = {
     id: `${idPrefix}-${randomUUID()}`,
     category,
@@ -1393,7 +1415,7 @@ function listFrom(value) {
     : String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-export async function updateSellerProduct(productId, shopId, rawPayload) {
+export async function updateSellerProduct(productId, shopId, rawPayload, options = {}) {
   const parsed = updateSellerProductSchema.safeParse(rawPayload);
   if (!parsed.success) {
     const err = new Error("Invalid product update: " + parsed.error.issues.map((i) => i.message).join(", "));
@@ -1409,6 +1431,15 @@ export async function updateSellerProduct(productId, shopId, rawPayload) {
   if (payload.occasionTags != null) payload.occasionTags = listFrom(payload.occasionTags);
 
   const touchesSensitive = Object.keys(payload).some((k) => SENSITIVE_PRODUCT_FIELDS.has(k));
+
+  function shouldEnforceCategory(product) {
+    if (!options.enforceSellerEntitlement) return false;
+    if (payload.category != null) return true;
+    if (payload.status === "Needs approval") return true;
+    if (touchesSensitive && product.status !== "Draft") return true;
+    if (touchesSensitive && product.status === "Draft" && payload.status !== "Draft") return true;
+    return false;
+  }
 
   // Build the field-level update object (status resolved separately)
   function buildUpdate(product) {
@@ -1438,6 +1469,9 @@ export async function updateSellerProduct(productId, shopId, rawPayload) {
     const product = await Product.findOne({ id: productId }).lean();
     if (!product) { const e = new Error("Product not found."); e.status = 404; throw e; }
     if (product.shopId !== shopId) { const e = new Error("You do not own this product."); e.status = 403; throw e; }
+    if (shouldEnforceCategory(product)) {
+      await assertSellerProductEntitlement(shopId, payload.category || product.category, options.shop);
+    }
 
     const update = buildUpdate(product);
     const updated = await Product.findOneAndUpdate(
@@ -1462,6 +1496,9 @@ export async function updateSellerProduct(productId, shopId, rawPayload) {
   const product = seedRepository.getState().products.find((p) => p.id === productId);
   if (!product) { const e = new Error("Product not found."); e.status = 404; throw e; }
   if (product.shopId !== shopId) { const e = new Error("You do not own this product."); e.status = 403; throw e; }
+  if (shouldEnforceCategory(product)) {
+    await assertSellerProductEntitlement(shopId, payload.category || product.category, options.shop);
+  }
 
   const update = buildUpdate(product);
   if (update.sellerLastEditedAt instanceof Date) {

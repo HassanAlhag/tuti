@@ -4,8 +4,13 @@ import { Shop } from "../../models/Shop.js";
 import { User } from "../../models/User.js";
 import { PERMISSIONS, USER_ROLES, normalizePermissions, permissionsForRole, roleDefinitions } from "./user.roles.js";
 import { escapeRegex } from "../../shared/regex.js";
+import {
+  categoryCover,
+  derivePrimaryShopCategory,
+  normalizeShopCategories,
+  SHOP_CATEGORY_VALUES,
+} from "../../shared/shopEntitlements.js";
 
-const SHOP_CATEGORIES = ["perfume", "cake", "dessert", "gift_box", "mixed"];
 const permissionIds = PERMISSIONS.map((permission) => permission.id);
 
 const permissionSchema = z.string().refine((value) => permissionIds.includes(value), {
@@ -22,7 +27,7 @@ export const createUserSchema = z.object({
   shopName: z.string().max(100).optional(),
   shopCity: z.string().max(80).optional(),
   shopStory: z.string().max(300).optional(),
-  shopCategories: z.array(z.enum(SHOP_CATEGORIES)).min(1).max(5).optional(),
+  shopCategories: z.array(z.enum(SHOP_CATEGORY_VALUES)).min(1).max(5).optional(),
   deliveryModel: z.enum(["seller_delivery", "pickup", "platform_later"]).optional(),
 });
 
@@ -35,7 +40,7 @@ export const updateUserSchema = z.object({
   shopName: z.string().max(100).optional(),
   shopCity: z.string().max(80).optional(),
   shopStory: z.string().max(300).optional(),
-  shopCategories: z.array(z.enum(SHOP_CATEGORIES)).min(1).max(5).optional(),
+  shopCategories: z.array(z.enum(SHOP_CATEGORY_VALUES)).min(1).max(5).optional(),
   deliveryModel: z.enum(["seller_delivery", "pickup", "platform_later"]).optional(),
 });
 
@@ -63,35 +68,10 @@ function initialsFrom(name) {
     .toUpperCase() || "TS";
 }
 
-function normalizeShopCategories(payload) {
-  const selected = Array.isArray(payload.shopCategories) && payload.shopCategories.length
-    ? payload.shopCategories
-    : ["mixed"];
-  return [...new Set(selected)];
-}
-
-function primaryShopCategory(categories) {
-  if (!categories?.length) return "mixed";
-  if (categories.includes("mixed") || categories.length > 1) return "mixed";
-  return categories[0];
-}
-
-function categoryCover(categories) {
-  const selected = normalizeShopCategories({ shopCategories: categories });
-  if (selected.includes("mixed") || selected.length > 1) return "Multi-category boutique";
-  return {
-    perfume: "Perfume boutique",
-    cake: "Cake studio",
-    dessert: "Dessert and sweets shop",
-    gift_box: "Luxury gift boxes",
-    mixed: "Perfume, cakes, and gifts",
-  }[selected[0]] || "Tuti seller";
-}
-
 function makeSellerShop(payload, ownerId, shopId) {
   const shopName = payload.shopName?.trim() || `${payload.name}'s Tuti Shop`;
   const categories = normalizeShopCategories(payload);
-  const category = primaryShopCategory(categories);
+  const category = derivePrimaryShopCategory(categories);
 
   return {
     id: shopId || makeShopId(shopName),
@@ -136,7 +116,7 @@ async function createSellerShopIfNeeded(user, payload) {
   if (user.role !== "seller") return null;
   if (user.shopId) {
     const existing = await Shop.findOne({ id: user.shopId });
-    if (existing) return existing;
+    if (existing) return syncSellerShopEntitlements(user, existing, payload);
   }
 
   const shop = makeSellerShop(payload, user._id, user.shopId || makeShopId(payload.shopName || user.name));
@@ -145,6 +125,30 @@ async function createSellerShopIfNeeded(user, payload) {
   user.shopCategories = shop.categories;
   await user.save();
   return Shop.create(shop);
+}
+
+async function syncSellerShopEntitlements(user, shop, payload = {}) {
+  const shouldUpdateCategories = Array.isArray(payload.shopCategories) && payload.shopCategories.length;
+  const categories = shouldUpdateCategories
+    ? normalizeShopCategories(payload)
+    : normalizeShopCategories(shop.categories?.length ? shop.categories : user.shopCategories?.length ? user.shopCategories : shop.category);
+  const primary = derivePrimaryShopCategory(categories);
+
+  if (payload.shopName) shop.name = payload.shopName.trim();
+  if (payload.shopCity) shop.city = payload.shopCity.trim();
+  if (payload.shopStory !== undefined) shop.story = String(payload.shopStory || "").trim();
+  if (payload.deliveryModel) shop.deliveryModel = payload.deliveryModel;
+  if (shouldUpdateCategories) {
+    shop.categories = categories;
+    shop.category = primary;
+    shop.cover = shop.cover || categoryCover(categories);
+  }
+
+  user.shopId = shop.id;
+  user.shopCategories = categories;
+  user.shopCategory = primary;
+  await Promise.all([shop.save(), user.save()]);
+  return shop;
 }
 
 export async function listUsers({ q = "", role = "", status = "", page = 1, limit = 20 }) {
@@ -210,7 +214,7 @@ export async function createUser(payload) {
     isActive: payload.isActive,
     permissions: normalizePermissions(payload.role, payload.permissions),
     shopId,
-    shopCategory: payload.role === "seller" ? primaryShopCategory(categories) : null,
+    shopCategory: payload.role === "seller" ? derivePrimaryShopCategory(categories) : null,
     shopCategories: categories,
   });
 
@@ -253,8 +257,8 @@ export async function updateUser(userId, payload, actorId) {
 
   if (nextRole === "seller") {
     const categories = payload.shopCategories ? normalizeShopCategories(payload) : user.shopCategories;
-    user.shopCategories = categories?.length ? categories : ["mixed"];
-    user.shopCategory = primaryShopCategory(user.shopCategories);
+    user.shopCategories = normalizeShopCategories(categories?.length ? categories : "mixed");
+    user.shopCategory = derivePrimaryShopCategory(user.shopCategories);
     await createSellerShopIfNeeded(user, { ...payload, name: user.name, shopCategories: user.shopCategories });
   } else if (roleChanged) {
     user.shopId = null;

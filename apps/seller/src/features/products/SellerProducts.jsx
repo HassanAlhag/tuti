@@ -52,7 +52,6 @@ import {
 } from "../shared/SellerDashboardPrimitives.jsx";
 import {
   DEFAULT_BY_TYPE,
-  SHOP_CATEGORIES,
   SHOP_TYPE_META,
   SupportPill,
   SellerSupportTicketDetail,
@@ -68,6 +67,7 @@ import {
   formatSupportCategory,
   formatSupportDate,
   getShopType,
+  getAllowedProductCategories,
   getSellerPrimaryAction,
   getStockHealth,
   isDriverAssignableOrder,
@@ -248,7 +248,7 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   /* ── Derived product categories ─────────────────────────────── */
   const shopType              = getShopType(shop);
   const { label: typeLabel, Icon: ShopIcon } = SHOP_TYPE_META[shopType];
-  const categories            = SHOP_CATEGORIES[shopType];
+  const categories            = getAllowedProductCategories(shop);
   const allowedCategoryValues = categories.map((c) => c.value);
 
   const defaultForm = DEFAULT_BY_TYPE[shopType];
@@ -265,7 +265,7 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   const addCategory  = form.category;
   const addIsPerfume = addCategory === "perfume";
   const addIsCake    = addCategory === "cake" || addCategory === "dessert";
-  const addIsGiftBox = addCategory === "gift_box" || addCategory === "bundle";
+  const addIsGiftBox = addCategory === "gift_box";
 
   if (!shop) return <EmptyState icon={Package} text="Loading products…" />;
 
@@ -284,7 +284,7 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
   const editCat      = editingProduct?.category || "";
   const editIsPerfume= editCat === "perfume";
   const editIsCake   = editCat === "cake" || editCat === "dessert";
-  const editIsGiftBox= editCat === "gift_box" || editCat === "bundle";
+  const editIsGiftBox= editCat === "gift_box";
 
   /* ── Status-change helpers ──────────────────────────────────── */
   function sensitiveFieldsChanged() {
@@ -648,7 +648,7 @@ export function SellerProducts({ productDraft, seller, setProductDraft = () => {
                     required
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder={addIsPerfume ? "e.g. Amber Oud Night" : addIsCake ? "e.g. Rose Velvet Dream" : "e.g. Eid Luxury Gift Set"}
+                    placeholder={addIsPerfume ? "e.g. Amber Oud Night" : addIsCake ? "e.g. Rose Velvet Dream" : "e.g. Eid Luxury Gift Box"}
                   />
                 </label>
                 {addIsPerfume && (

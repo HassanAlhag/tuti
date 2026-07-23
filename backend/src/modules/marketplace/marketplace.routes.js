@@ -162,7 +162,12 @@ marketplaceRouter.post(
   async (req, res, next) => {
     try {
       const shopId = req.user.role === "admin" ? req.body.shopId : req.ownedShopId;
-      res.status(201).json({ data: await createSellerProduct({ ...req.body, shopId }) });
+      res.status(201).json({
+        data: await createSellerProduct(
+          { ...req.body, shopId },
+          req.user.role === "seller" ? { enforceSellerEntitlement: true, shop: req.ownedShop } : {}
+        ),
+      });
     } catch (err) { next(err); }
   }
 );
@@ -184,7 +189,14 @@ marketplaceRouter.patch(
       const shopId = req.user.role === "admin"
         ? (req.body.shopId || req.user.shopId)
         : req.ownedShopId;
-      res.json({ data: await updateSellerProduct(req.params.productId, shopId, req.body) });
+      res.json({
+        data: await updateSellerProduct(
+          req.params.productId,
+          shopId,
+          req.body,
+          req.user.role === "seller" ? { enforceSellerEntitlement: true, shop: req.ownedShop } : {}
+        ),
+      });
     } catch (err) { next(err); }
   }
 );

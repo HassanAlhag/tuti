@@ -53,32 +53,71 @@ import {
 
 /* ─── Shop-type helpers ────────────────────────────────────────── */
 function getShopType(shop) {
-  const cat = (shop?.category || "").toLowerCase();
-  if (cat === "cakes" || cat === "cake" || cat === "bakery") return "cakes";
-  if (cat === "gift_sets" || cat === "gifts" || cat === "gift") return "gifts";
+  const categories = normalizeShopCategories(shop);
+  if (categories.includes("perfume") && (categories.includes("cake") || categories.includes("dessert"))) return "mixed";
+  if (categories.includes("cake") || categories.includes("dessert")) return "cakes";
+  if (categories.includes("gift_box")) return "gifts";
   return "perfume";
 }
 
 const SHOP_TYPE_META = {
   perfume: { label: "Perfume shop",        Icon: Sparkles, accent: "brand"  },
   cakes:   { label: "Cake & dessert shop",  Icon: Cake,     accent: "rose"   },
-  gifts:   { label: "Gift set shop",        Icon: Gift,     accent: "amber"  },
+  gifts:   { label: "Gift Box shop",        Icon: Gift,     accent: "amber"  },
+  mixed:   { label: "Mixed boutique",       Icon: Store,    accent: "brand"  },
 };
+
+const PRODUCT_CATEGORY_OPTIONS = [
+  { value: "perfume",  label: "Perfume" },
+  { value: "cake",     label: "Cake" },
+  { value: "dessert",  label: "Dessert" },
+  { value: "gift_box", label: "Gift Box" },
+];
+
+function normalizeCategory(value) {
+  const cat = String(value || "").toLowerCase();
+  if (cat === "cakes" || cat === "bakery") return "cake";
+  if (cat === "gifts" || cat === "gift" || cat === "gift_sets" || cat === "gift-set") return "gift_box";
+  return cat;
+}
+
+function normalizeShopCategories(shop) {
+  const source = Array.isArray(shop?.categories) && shop.categories.length
+    ? shop.categories
+    : Array.isArray(shop?.shopCategories) && shop.shopCategories.length
+      ? shop.shopCategories
+      : [shop?.category || shop?.shopCategory || "perfume"];
+  const selected = [...new Set(source.map(normalizeCategory).filter(Boolean))];
+  if (selected.includes("mixed")) return ["perfume", "cake", "dessert"];
+  return selected;
+}
+
+function getAllowedProductCategories(shop) {
+  const categories = normalizeShopCategories(shop);
+  const allowed = new Set();
+  if (categories.includes("perfume")) allowed.add("perfume");
+  if (categories.includes("cake") || categories.includes("dessert")) {
+    allowed.add("cake");
+    allowed.add("dessert");
+  }
+  if (categories.length) allowed.add("gift_box");
+  return PRODUCT_CATEGORY_OPTIONS.filter((option) => allowed.has(option.value));
+}
 
 const SHOP_CATEGORIES = {
   perfume: [
     { value: "perfume",  label: "Perfume"         },
-    { value: "gift_box", label: "Gift box"         },
+    { value: "gift_box", label: "Gift Box"         },
   ],
   cakes: [
     { value: "cake",     label: "Cake"            },
-    { value: "dessert",  label: "Dessert / sweets" },
-    { value: "gift_box", label: "Gift box"         },
+    { value: "dessert",  label: "Dessert" },
+    { value: "gift_box", label: "Gift Box"         },
   ],
   gifts: [
-    { value: "gift_box", label: "Gift box"         },
-    { value: "bundle",   label: "Bundle"           },
+    { value: "gift_box", label: "Gift Box"         },
   ],
+  mixed: PRODUCT_CATEGORY_OPTIONS,
 };
 
 const DEFAULT_BY_TYPE = {
@@ -105,8 +144,8 @@ const DEFAULT_BY_TYPE = {
 };
 
 function productTypeLabel(p) {
+  if (p.category === "bundle")   return "Gift box";
   if (p.category === "gift_box") return "Gift box";
-  if (p.category === "bundle")   return "Bundle";
   if (p.category === "dessert")  return "Dessert";
   if (p.category === "cake")     return "Cake";
   return "Perfume";
@@ -428,4 +467,4 @@ function SellerSupportTicketDetail({ ticket, orderMap, onOpenOrder, replyDraft, 
   );
 }
 
-export { getShopType, SHOP_TYPE_META, SHOP_CATEGORIES, DEFAULT_BY_TYPE, productTypeLabel, getStockHealth, orderNextAction, getSellerPrimaryAction, renderOrderMetadata, renderOrderItemSummary, formatResolutionLabel, formatSellerOrderStatusLabel, formatCaseStatusLabel, formatDriverStatus, isSellerDriverActive, driverStatusTone, formatDriverVehicle, ownShopOrder, isDriverAssignableOrder, resolveOrderDeliveryZone, formatOfferExpiry, formatOfferCountdown, driverMatchesBroadcastZone, SUPPORT_STATUS_OPTIONS, SUPPORT_PRIORITY_OPTIONS, SUPPORT_CATEGORY_OPTIONS, formatSupportDate, formatSupportCategory, supportStatusTone, supportPriorityTone, SupportPill, supportOrderLabel, SellerSupportTicketDetail };
+export { getShopType, getAllowedProductCategories, SHOP_TYPE_META, SHOP_CATEGORIES, DEFAULT_BY_TYPE, productTypeLabel, getStockHealth, orderNextAction, getSellerPrimaryAction, renderOrderMetadata, renderOrderItemSummary, formatResolutionLabel, formatSellerOrderStatusLabel, formatCaseStatusLabel, formatDriverStatus, isSellerDriverActive, driverStatusTone, formatDriverVehicle, ownShopOrder, isDriverAssignableOrder, resolveOrderDeliveryZone, formatOfferExpiry, formatOfferCountdown, driverMatchesBroadcastZone, SUPPORT_STATUS_OPTIONS, SUPPORT_PRIORITY_OPTIONS, SUPPORT_CATEGORY_OPTIONS, formatSupportDate, formatSupportCategory, supportStatusTone, supportPriorityTone, SupportPill, supportOrderLabel, SellerSupportTicketDetail };

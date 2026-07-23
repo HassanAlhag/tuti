@@ -15,6 +15,10 @@ import { seedRepository } from "../../repositories/seedRepository.js";
 import { logAuditEvent } from "../audit/audit.service.js";
 import { escapeRegex } from "../../shared/regex.js";
 import { createNotificationsForRole } from "../notifications/notifications.service.js";
+import {
+  derivePrimaryShopCategory,
+  normalizeShopCategories,
+} from "../../shared/shopEntitlements.js";
 
 // ── Seed data ─────────────────────────────────────────────────────────
 const SEED_APPLICATIONS = [
@@ -499,7 +503,8 @@ export async function convertToSeller(applicationId, user) {
   const shopName  = app.businessName;
   const shopCity  = app.city;
   const shopStory = `${app.businessName} — verified Tuti seller.`;
-  const category  = app.category === "other" || app.category === "mixed" ? "mixed" : app.category;
+  const categories = normalizeShopCategories(app.category === "other" ? "mixed" : app.category);
+  const category = derivePrimaryShopCategory(categories);
   const tempPassword = `Tuti-${randomUUID().slice(0, 10)}`;
 
   if (!app.email) {
@@ -531,7 +536,7 @@ export async function convertToSeller(applicationId, user) {
       role:           "seller",
       shopId,
       shopCategory:   category,
-      shopCategories: [category],
+      shopCategories: categories,
       permissions:    normalizePermissions("seller"),
     });
 
@@ -553,7 +558,7 @@ export async function convertToSeller(applicationId, user) {
       story:           shopStory,
       cover:           shopName,
       category,
-      categories:      [category],
+      categories,
       deliveryModel:   app.deliveryMethod || "seller_delivery",
       onboardingStep:  "Admin review",
       repCode:         app.salesRepCode || "",
@@ -627,7 +632,7 @@ export async function convertToSeller(applicationId, user) {
     story:           shopStory,
     cover:           shopName,
     category,
-    categories:      [category],
+    categories,
     deliveryModel:   app.deliveryMethod || "seller_delivery",
     onboardingStep:  "Admin review",
     repCode:         app.salesRepCode || "",

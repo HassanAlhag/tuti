@@ -135,6 +135,9 @@ export const shops = [
     avatar: "RV",
     story: "Soft florals, rose oils, and modern gift-ready perfume.",
     cover: "Fresh floral atelier",
+    category: "perfume",
+    categories: ["perfume"],
+    deliveryModel: "seller_delivery",
     paymentRules: {
       commissionRate:   13,
       holdDays:         7,

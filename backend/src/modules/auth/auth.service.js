@@ -11,6 +11,12 @@ import { SalesRep } from "../../models/SalesRep.js";
 import { SellerReferral } from "../../models/SellerReferral.js";
 import { normalizePermissions } from "../users/user.roles.js";
 import { DEMO_SELLER_USER_ID } from "../../seed/marketplace.seed.js";
+import {
+  categoryCover,
+  derivePrimaryShopCategory,
+  normalizeShopCategories,
+  SHOP_CATEGORY_VALUES,
+} from "../../shared/shopEntitlements.js";
 
 // The demo seller session (seed/dev mode only) always resolves to this
 // exact shop, whose seed record's ownerId is DEMO_SELLER_USER_ID -- see
@@ -30,8 +36,8 @@ export const registerSchema = z.object({
   // the real owner. Zod strips unknown keys by default, so any shopId a
   // client sends here is silently discarded before register() ever sees it.
   shopName: z.string().max(100).optional(),
-  shopCategory: z.enum(["perfume", "cake", "dessert", "gift_box", "mixed"]).optional(),
-  shopCategories: z.array(z.enum(["perfume", "cake", "dessert", "gift_box", "mixed"])).min(1).max(5).optional(),
+  shopCategory: z.enum(SHOP_CATEGORY_VALUES).optional(),
+  shopCategories: z.array(z.enum(SHOP_CATEGORY_VALUES)).min(1).max(5).optional(),
   shopCity: z.string().max(80).optional(),
   shopStory: z.string().max(300).optional(),
   deliveryModel: z.enum(["seller_delivery", "pickup", "platform_later"]).optional(),
@@ -116,36 +122,10 @@ function generateTempPassword() {
   return randomBytes(9).toString("base64url");
 }
 
-function normalizeShopCategories(payload) {
-  const categories = Array.isArray(payload.shopCategories) && payload.shopCategories.length
-    ? payload.shopCategories
-    : [payload.shopCategory || "mixed"];
-  return [...new Set(categories)];
-}
-
-function primaryShopCategory(categories) {
-  if (!categories?.length) return "mixed";
-  if (categories.includes("mixed")) return "mixed";
-  if (categories.length > 1) return "mixed";
-  return categories[0];
-}
-
-function categoryCover(categories) {
-  const selected = normalizeShopCategories({ shopCategories: categories });
-  if (selected.includes("mixed") || selected.length > 1) return "Multi-category boutique";
-  return {
-    perfume: "Perfume boutique",
-    cake: "Cake studio",
-    dessert: "Dessert and sweets shop",
-    gift_box: "Luxury gift boxes",
-    mixed: "Perfume, cakes, and gifts",
-  }[selected[0]] || "Tuti seller";
-}
-
 function makeSellerShop(payload, ownerId, shopId) {
   const shopName = payload.shopName?.trim() || `${payload.name}'s Tuti Shop`;
   const categories = normalizeShopCategories(payload);
-  const category = primaryShopCategory(categories);
+  const category = derivePrimaryShopCategory(categories);
   return {
     id: shopId,
     name: shopName,
@@ -303,7 +283,7 @@ export async function register(payload) {
     // creating the Shop can never leave an orphaned seller User behind.
     const repAttribution = await resolveRepAttribution(payload.repCode);
     const categories = normalizeShopCategories(payload);
-    const category = primaryShopCategory(categories);
+    const category = derivePrimaryShopCategory(categories);
 
     const session = await mongoose.startSession();
     let user;

@@ -13,18 +13,13 @@ import {
 import { brand } from "@tuti/shared/brand.js";
 import { uploadApi, marketplaceApi } from "@tuti/shared/api/client.js";
 import { useAuthStore } from "@tuti/shared/store/authStore.js";
+import { getAllowedProductCategories } from "../shared/sellerDashboardHelpers.jsx";
 
 const STEPS = [
   { id: "welcome",  label: "Welcome",  icon: Store },
   { id: "brand",    label: "Brand",    icon: Sparkles },
   { id: "product",  label: "Product",  icon: Package },
   { id: "launch",   label: "Launch",   icon: Rocket },
-];
-
-const CATEGORY_OPTIONS = [
-  { value: "perfume",  label: "Perfume" },
-  { value: "cake",     label: "Cake" },
-  { value: "gift_box", label: "Gift box" },
 ];
 
 const BRAND_CHECKLIST = [
@@ -152,10 +147,12 @@ function BrandStep({ brandProfile, onGoToBrand, onNext, onSkip }) {
   );
 }
 
-function ProductStep({ shopId, onProductCreated, onSkip }) {
+function ProductStep({ shop, onProductCreated, onSkip }) {
   const { user } = useAuthStore();
+  const categoryOptions = getAllowedProductCategories(shop);
+  const defaultCategory = categoryOptions[0]?.value || "gift_box";
   const [form, setForm] = useState({
-    name: "", category: "perfume", price: 320, stock: 10, notes: "oud, amber, musk",
+    name: "", category: defaultCategory, price: 320, stock: 10, notes: "oud, amber, musk",
     family: "Oud", gender: "Unisex",
   });
   const [imageFile, setImageFile] = useState(null);
@@ -187,7 +184,7 @@ function ProductStep({ shopId, onProductCreated, onSkip }) {
         ...form,
         price: Number(form.price),
         stock: Number(form.stock),
-        shopId: shopId || user?.shopId,
+        shopId: shop?.id || user?.shopId,
         ...(imagePath ? { imagePath } : {}),
       };
       await marketplaceApi.createSellerProduct(payload);
@@ -225,7 +222,7 @@ function ProductStep({ shopId, onProductCreated, onSkip }) {
           <label className="so-label">
             Category
             <select value={form.category} onChange={(e) => set("category", e.target.value)}>
-              {CATEGORY_OPTIONS.map(({ value, label }) => (
+              {categoryOptions.map(({ value, label }) => (
                 <option key={value} value={value}>{label}</option>
               ))}
             </select>
@@ -370,7 +367,7 @@ export function SellerOnboarding({ seller, brandProfile, onGoToSection, onFinish
           )}
           {stepId === "product" && (
             <ProductStep
-              shopId={shopId}
+              shop={seller?.shop}
               onProductCreated={handleProductCreated}
               onSkip={() => goToStep("launch")}
             />
