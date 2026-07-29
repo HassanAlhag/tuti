@@ -258,6 +258,29 @@ const CUSTOMER_TIMELINE_EXCEPTIONAL = {
   "Disputed":  { heading: "Under review",      note: "A dispute is under review with our support team." },
 };
 
+// Customer-safe delivery-failure copy (see backend/src/shared/deliveryFailurePolicy.js
+// getCustomerSafeFailureMessage -- kept in sync here since this app has no
+// access to that backend module). Deliberately generic: never mentions the
+// driver's name, internal notes, admin/next-action labels, or reassignment
+// discussion -- only what the customer needs to know.
+const CUSTOMER_SAFE_FAILURE_MESSAGES = {
+  CUSTOMER_UNREACHABLE: "We tried to reach you for your delivery but couldn't connect. We'll try again soon.",
+  CUSTOMER_NOT_AVAILABLE: "Our driver arrived but no one was available to receive the order. We'll try again soon.",
+  CUSTOMER_REFUSED: "Your delivery could not be completed. Our support team will contact you shortly.",
+  WRONG_ADDRESS: "We couldn't find the delivery address. Please confirm your address so we can try again.",
+  INCOMPLETE_ADDRESS: "Your delivery address looks incomplete. Please confirm your address so we can try again.",
+  CUSTOMER_REQUESTED_RESCHEDULE: "Your delivery has been rescheduled to the requested time.",
+  PAYMENT_NOT_AVAILABLE: "Payment could not be completed on delivery. We'll try again soon.",
+  ORDER_DAMAGED: "Your order could not be delivered due to a quality issue. Our team is reviewing this and will reach out.",
+  VEHICLE_BREAKDOWN: "Your delivery is delayed. A new driver will be assigned shortly.",
+  DRIVER_EMERGENCY: "Your delivery is delayed. A new driver will be assigned shortly.",
+  UNSAFE_LOCATION: "Our driver was unable to safely complete this delivery. Our support team will contact you.",
+  ACCESS_RESTRICTED: "Our driver could not access the delivery location. We'll try again soon.",
+  WEATHER_OR_ROAD_ISSUE: "Your delivery is delayed due to road/weather conditions. We'll try again soon.",
+  SELLER_PACKAGING_ISSUE: "Your order is being returned to the seller for a packaging issue. Our team will follow up.",
+  OTHER: "Your delivery could not be completed. Our support team will contact you shortly.",
+};
+
 export function CustomerTimeline({ order }) {
   const status = order?.status || "Pending";
   const exceptional = CUSTOMER_TIMELINE_EXCEPTIONAL[status];
@@ -271,6 +294,23 @@ export function CustomerTimeline({ order }) {
       </div>
     );
   }
+
+  // A delivery attempt failed/was rescheduled -- this never changes
+  // order.status by itself (see deliveryAssignmentWorkflow.js), so it's
+  // checked separately from the status-driven exceptional states above.
+  const assignmentStatus = order?.driverAssignment?.status;
+  if (assignmentStatus === "delivery_failed" || assignmentStatus === "rescheduled") {
+    const message = CUSTOMER_SAFE_FAILURE_MESSAGES[order?.driverAssignment?.lastFailureReason] || CUSTOMER_SAFE_FAILURE_MESSAGES.OTHER;
+    return (
+      <div className="tuti-account__timeline">
+        <div className="tuti-account__timeline-exceptional">
+          <strong>{assignmentStatus === "rescheduled" ? "Delivery rescheduled" : "Delivery delayed"}</strong>
+          <span>{message}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="tuti-account__timeline">
       {CUSTOMER_TIMELINE_STEPS.map((step, i) => {

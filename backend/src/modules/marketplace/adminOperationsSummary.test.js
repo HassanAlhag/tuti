@@ -9,6 +9,8 @@ const { __resetSupportTicketsForTests, createSupportTicket } = await import("../
 const {
   __resetSeedDriversForTests,
   __getSeedDriverForTests,
+  __resetDriverShopAccessForTests,
+  __grantActiveAccessForTests,
   createSellerDeliveryOffer,
   listAdminDeliveryOffersSnapshot,
 } = await import("../drivers/drivers.service.js");
@@ -157,6 +159,7 @@ const DELIVERED_COD_UNSETTLED_ORDER = {
 function resetState() {
   __resetSeedOrdersForTests();
   __resetSeedDriversForTests();
+  __resetDriverShopAccessForTests();
   __resetSupportTicketsForTests();
   seedRepository.__resetSellerTransactionsForTests();
   seedRepository.__resetPayoutsForTests();
@@ -204,6 +207,10 @@ function seedDrivers() {
     status: "inactive",
     isActive: false,
   });
+
+  __grantActiveAccessForTests("drv-001", SHOP_ALPHA.id);
+  __grantActiveAccessForTests("drv-002", SHOP_ALPHA.id);
+  __grantActiveAccessForTests("drv-003", SHOP_BETA.id);
 }
 
 function seedOrders() {

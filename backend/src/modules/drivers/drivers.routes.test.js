@@ -12,6 +12,10 @@ const { driversRouter } = await import("./drivers.routes.js");
 const {
   __getSeedDriverForTests,
   __resetSeedDriversForTests,
+  __resetDriverShopAccessForTests,
+  __grantActiveAccessForTests,
+  requestExistingDriverForShop,
+  listDriverShopAccessForDriver,
 } = await import("./drivers.service.js");
 const {
   getSeedOrders,
@@ -89,9 +93,28 @@ async function patchDelivery(driverId, user, body = {}) {
   return { response, payload };
 }
 
+async function getDriverRoute(path, user) {
+  const response = await fetch(`${baseUrl}/api/drivers${path}`, {
+    headers: authHeaders(user),
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
+async function postDriverRoute(path, user, body = {}) {
+  const response = await fetch(`${baseUrl}/api/drivers${path}`, {
+    method: "POST",
+    headers: authHeaders(user),
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
 function resetAll() {
   __resetSeedOrdersForTests();
   __resetSeedDriversForTests();
+  __resetDriverShopAccessForTests();
   __resetNotificationsForTests();
   seedRepository.__resetSellerTransactionsForTests();
 }
@@ -108,6 +131,7 @@ function seedAssignedOrder(overrides = {}) {
   __injectSeedOrderForTests(order);
   const driver = __getSeedDriverForTests(order.driverAssignment.driverId);
   driver.status = "on_delivery";
+  __grantActiveAccessForTests(order.driverAssignment.driverId, order.shopIds?.[0] || SHOP_ID);
   return order;
 }
 
@@ -216,4 +240,61 @@ test("driver delivery route: admin can complete delivery for any driverId", asyn
   assert.equal(payload.data.orderId, ORDER_ID);
   assert.equal(payload.data.status, "Delivered");
   assert.equal(payload.data.driverAssignment.proofOfDeliveryUrl, PROOF_URL);
+});
+
+test("driver access admin routes: admin can list pending, approve, reject, and read shop/driver links", async () => {
+  const requested = await requestExistingDriverForShop(SHOP_ID, "seller-route-001", { driverId: DRIVER_ID });
+
+  const pending = await getDriverRoute("/access/pending", adminUser());
+  assert.equal(pending.response.status, 200);
+  assert.ok(pending.payload.data.some((row) => row.id === requested.id));
+
+  const approve = await postDriverRoute(`/access/${requested.id}/approve`, adminUser(), { canReceiveBroadcasts: true });
+  assert.equal(approve.response.status, 200);
+  assert.equal(approve.payload.data.status, "active");
+
+  const shops = await getDriverRoute(`/${DRIVER_ID}/shops`, adminUser());
+  assert.equal(shops.response.status, 200);
+  assert.ok(shops.payload.data.some((row) => row.shopId === SHOP_ID && row.status === "active"));
+
+  const shopDrivers = await getDriverRoute(`/shops/${SHOP_ID}/drivers`, adminUser());
+  assert.equal(shopDrivers.response.status, 200);
+  assert.ok(shopDrivers.payload.data.some((row) => row.driverId === DRIVER_ID));
+
+  const rejectedRequest = await requestExistingDriverForShop("shop-oud-lane", "seller-route-002", { driverId: OTHER_DRIVER_ID });
+  const reject = await postDriverRoute(`/access/${rejectedRequest.id}/reject`, adminUser(), { reason: "Not approved" });
+  assert.equal(reject.response.status, 200);
+  assert.equal(reject.payload.data.status, "rejected");
+  assert.equal(reject.payload.data.rejectionReason, "Not approved");
+});
+
+test("driver access admin routes: direct assignment attaches one driver to multiple shops explicitly", async () => {
+  const direct = await postDriverRoute("/access/direct", adminUser(), {
+    driverId: DRIVER_ID,
+    shopIds: [SHOP_ID, "shop-oud-lane"],
+  });
+
+  assert.equal(direct.response.status, 201);
+  assert.equal(direct.payload.data.length, 2);
+  assert.deepEqual(new Set(direct.payload.data.map((row) => row.shopId)), new Set([SHOP_ID, "shop-oud-lane"]));
+  assert.ok(direct.payload.data.every((row) => row.status === "active" && row.requestedByType === "admin"));
+
+  const rows = await listDriverShopAccessForDriver(DRIVER_ID);
+  assert.equal(rows.length, 2);
+});
+
+test("driver access admin routes: non-admin and invalid ids receive controlled responses", async () => {
+  const seller = { sub: "seller-route-001", role: "seller", shopId: SHOP_ID };
+
+  const pendingAsSeller = await getDriverRoute("/access/pending", seller);
+  assert.equal(pendingAsSeller.response.status, 403);
+
+  const directAsSeller = await postDriverRoute("/access/direct", seller, { driverId: DRIVER_ID, shopIds: [SHOP_ID] });
+  assert.equal(directAsSeller.response.status, 403);
+
+  const missingAccess = await postDriverRoute("/access/dsa-missing/approve", adminUser(), {});
+  assert.equal(missingAccess.response.status, 404);
+
+  const invalidDirect = await postDriverRoute("/access/direct", adminUser(), { driverId: DRIVER_ID, shopIds: ["shop-missing"] });
+  assert.equal(invalidDirect.response.status, 404);
 });

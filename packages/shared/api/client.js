@@ -36,7 +36,16 @@ async function request(path, options = {}, retry = true) {
     if (token) return request(path, options, false);
   }
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || "API request failed.");
+  if (!response.ok) {
+    // .status lets callers distinguish a real server response (e.g. a 403
+    // ownership/authorization rejection) from a genuine network/connection
+    // failure -- a raw fetch() throw (server unreachable, DNS failure,
+    // CORS block, etc.) has no .status at all, since no response was ever
+    // received. Never collapse those two into the same generic message.
+    const error = new Error(payload.error || "API request failed.");
+    error.status = response.status;
+    throw error;
+  }
   return payload.data;
 }
 
@@ -268,6 +277,10 @@ export const driversApi = {
   assign:          (driverId, orderId)   => request(`/drivers/${driverId}/assign/${orderId}`, { method: "POST", body: JSON.stringify({}) }),
   recordDelivery:  (driverId, orderId, payload) => request(`/drivers/${driverId}/orders/${orderId}/delivery`, { method: "PATCH", body: JSON.stringify(payload) }),
   remitCod:        (driverId, amount)    => request(`/drivers/${driverId}/cod-remit`, { method: "PATCH", body: JSON.stringify({ amount }) }),
+  // Delivery-failure resolution (admin)
+  retryDelivery:      (orderId)          => request(`/drivers/orders/${orderId}/delivery/retry`, { method: "POST", body: JSON.stringify({}) }),
+  reassignDelivery:   (orderId, payload) => request(`/drivers/orders/${orderId}/delivery/reassign`, { method: "POST", body: JSON.stringify(payload) }),
+  returnDeliveryToSeller: (orderId)      => request(`/drivers/orders/${orderId}/delivery/return-to-seller`, { method: "POST", body: JSON.stringify({}) }),
   // COD settlement (admin only)
   getCodSettlementCandidates: (driverId) =>
     request(`/marketplace/admin/drivers/${driverId}/cod-settlement-candidates`),
@@ -281,6 +294,7 @@ export const driverPortalApi = {
   getDelivery: (orderId) => request(`/driver/deliveries/${orderId}`),
   recordDelivery: (orderId, payload) => request(`/driver/deliveries/${orderId}/delivery`, { method: "PATCH", body: JSON.stringify(payload) }),
   confirmPickup: (orderId) => request(`/driver/deliveries/${orderId}/pickup`, { method: "PATCH" }),
+  reportFailure: (orderId, payload) => request(`/driver/deliveries/${orderId}/fail`, { method: "POST", body: JSON.stringify(payload) }),
   listHistory: (params = {}) => {
     const q = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== "")).toString();
     return request(`/driver/history${q ? `?${q}` : ""}`);
@@ -298,6 +312,10 @@ export const sellerDriversApi = {
   recordDelivery: (driverId, orderId, payload) =>
     request(`/marketplace/seller/drivers/${driverId}/orders/${orderId}/delivery`, { method: "PATCH", body: JSON.stringify(payload) }),
   getCodSummary: () => request("/marketplace/seller/drivers/cod-summary"),
+  // Delivery-failure resolution (seller)
+  retryDelivery: (orderId) => request(`/marketplace/seller/orders/${orderId}/delivery/retry`, { method: "POST", body: JSON.stringify({}) }),
+  reassignDelivery: (orderId, payload) => request(`/marketplace/seller/orders/${orderId}/delivery/reassign`, { method: "POST", body: JSON.stringify(payload) }),
+  returnDeliveryToSeller: (orderId) => request(`/marketplace/seller/orders/${orderId}/delivery/return-to-seller`, { method: "POST", body: JSON.stringify({}) }),
 };
 
 export const sellerDeliveryOffersApi = {

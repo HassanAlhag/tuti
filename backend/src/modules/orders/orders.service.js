@@ -26,6 +26,7 @@ import {
 } from "../finance/sellerBalance.js";
 import { reverseOrderCommissions as reverseSalesRepCommissions } from "../finance/commissionReversal.js";
 import { logAuditEvent } from "../audit/audit.service.js";
+import { getCustomerSafeFailureMessage } from "../../shared/deliveryFailurePolicy.js";
 
 const orderItemMetadataSchema = z.object({
   cakeWriting: z.string().max(120).optional(),
@@ -523,10 +524,74 @@ function makeOrderFromPayload(payload, userId, idempotencyKey, fingerprint, gues
   };
 }
 
+const CUSTOMER_SAFE_DELIVERY_REASON_CODES = Object.freeze({
+  CUSTOMER_UNREACHABLE: "CONTACT_DETAILS_REQUIRED",
+  CUSTOMER_NOT_AVAILABLE: "CONTACT_DETAILS_REQUIRED",
+  WRONG_ADDRESS: "CONTACT_DETAILS_REQUIRED",
+  INCOMPLETE_ADDRESS: "CONTACT_DETAILS_REQUIRED",
+  CUSTOMER_REQUESTED_RESCHEDULE: "DELIVERY_RESCHEDULED",
+  VEHICLE_BREAKDOWN: "DELIVERY_DELAYED",
+  DRIVER_EMERGENCY: "DELIVERY_DELAYED",
+  WEATHER_OR_ROAD_ISSUE: "DELIVERY_DELAYED",
+  ORDER_DAMAGED: "ORDER_REVIEW_IN_PROGRESS",
+  SELLER_PACKAGING_ISSUE: "ORDER_REVIEW_IN_PROGRESS",
+  UNSAFE_LOCATION: "DELIVERY_REVIEW_IN_PROGRESS",
+  CUSTOMER_REFUSED: "DELIVERY_REVIEW_IN_PROGRESS",
+  PAYMENT_NOT_AVAILABLE: "DELIVERY_REVIEW_IN_PROGRESS",
+  ACCESS_RESTRICTED: "DELIVERY_REVIEW_IN_PROGRESS",
+  OTHER: "DELIVERY_REVIEW_IN_PROGRESS",
+});
+
+function inferCustomerDeliveryState(order, assignment) {
+  if (assignment?.deliveredAt || assignment?.status === "completed" || order?.status === "Delivered") return "delivered";
+  if (assignment?.status === "rescheduled") return "rescheduled";
+  if (assignment?.status === "delivery_failed") return "delivery_issue";
+  if (["picked_up", "out_for_delivery"].includes(assignment?.status) || assignment?.pickedUpAt) return "in_transit";
+  if (assignment?.driverId) return "assigned";
+  return "pending";
+}
+
+function serializeCustomerDelivery(order) {
+  const assignment = order?.driverAssignment || null;
+  const reason = assignment?.lastFailureReason || null;
+  const messageCode = reason ? (CUSTOMER_SAFE_DELIVERY_REASON_CODES[reason] || "DELIVERY_REVIEW_IN_PROGRESS") : null;
+  const state = inferCustomerDeliveryState(order, assignment);
+  const retryScheduledAt = state === "rescheduled" || messageCode === "DELIVERY_RESCHEDULED"
+    ? (assignment?.retryScheduledAt || null)
+    : null;
+
+  return {
+    state,
+    messageCode,
+    deliveredAt: assignment?.deliveredAt || null,
+    retryScheduledAt,
+    customerActionRequired: messageCode === "CONTACT_DETAILS_REQUIRED",
+    message: reason ? getCustomerSafeFailureMessage(reason) : null,
+  };
+}
+
 function stripInternalOrderFields(order) {
   if (!order) return order;
   const { guestConfirmationToken: _gct, idempotencyKey: _ik, requestFingerprint: _rf, ...safe } = order;
   return safe;
+}
+
+function serializeOrderForAudience(order, role = null) {
+  const safe = stripInternalOrderFields(order);
+  if (!safe) return safe;
+  const customerFacing = role === "customer" || role === "guest";
+  if (!customerFacing) return safe;
+
+  const {
+    driverAssignment: _driverAssignment,
+    driverAssignmentHistory: _driverAssignmentHistory,
+    deliveryAttempts: _deliveryAttempts,
+    supportCase: _supportCase,
+    resolutionDecision: _resolutionDecision,
+    ...customerSafe
+  } = safe;
+  customerSafe.delivery = serializeCustomerDelivery(safe);
+  return customerSafe;
 }
 
 export async function createOrder(payload, userId, idempotencyKey = null) {
@@ -555,7 +620,7 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
           err.status = 409;
           throw err;
         }
-        return stripInternalOrderFields(existing);
+        return serializeOrderForAudience(existing, "guest");
       }
     }
 
@@ -576,7 +641,7 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
       const doc = await Order.create(order);
       const created = doc.toObject();
       await notifyOrderCreated(created);
-      const safe = stripInternalOrderFields(created);
+      const safe = serializeOrderForAudience(created, rawGuestToken ? "guest" : "customer");
       if (rawGuestToken) safe.guestToken = rawGuestToken;
       return safe;
     } catch (error) {
@@ -590,7 +655,7 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
             conflictErr.status = 409;
             throw conflictErr;
           }
-          return stripInternalOrderFields(existing);
+          return serializeOrderForAudience(existing, "guest");
         }
       }
       throw error;
@@ -608,7 +673,7 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
           err.status = 409;
           throw err;
         }
-        return stripInternalOrderFields(existing);
+        return serializeOrderForAudience(existing, "guest");
       }
     }
   }
@@ -628,7 +693,7 @@ export async function createOrder(payload, userId, idempotencyKey = null) {
   if (validatedKey) seedIdempotencyKeys.set(validatedKey, order.orderId);
   seedRepository.getState().orders.unshift(order);
   await notifyOrderCreated(order);
-  const safe = stripInternalOrderFields(order);
+  const safe = serializeOrderForAudience(order, rawGuestToken ? "guest" : "customer");
   if (rawGuestToken) safe.guestToken = rawGuestToken;
   return safe;
 }
@@ -644,7 +709,7 @@ export async function listOrders({ userId, role, shopId, page = 1, limit = 20 })
       Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Order.countDocuments(filter),
     ]);
-    return { orders, total, page, pages: Math.ceil(total / limit) };
+    return { orders: orders.map((order) => serializeOrderForAudience(order, role)), total, page, pages: Math.ceil(total / limit) };
   }
 
   let orders = [...seedOrders.values()];
@@ -652,7 +717,12 @@ export async function listOrders({ userId, role, shopId, page = 1, limit = 20 })
   if (role === "seller") orders = orders.filter((o) => o.shopIds.includes(shopId));
   orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const start = (page - 1) * limit;
-  return { orders: orders.slice(start, start + limit), total: orders.length, page, pages: Math.ceil(orders.length / limit) };
+  return {
+    orders: orders.slice(start, start + limit).map((order) => serializeOrderForAudience(order, role)),
+    total: orders.length,
+    page,
+    pages: Math.ceil(orders.length / limit),
+  };
 }
 
 export async function getOrder(orderId, user, guestToken = null) {
@@ -660,13 +730,14 @@ export async function getOrder(orderId, user, guestToken = null) {
     const order = await Order.findOne({ orderId }).lean();
     if (!order) { const err = new Error("Order not found."); err.status = 404; throw err; }
     assertOrderAccess(order, user, guestToken);
-    return stripInternalOrderFields(order);
+    const audience = user?.role || "guest";
+    return serializeOrderForAudience(order, audience);
   }
 
   const order = seedOrders.get(orderId);
   if (!order) { const err = new Error("Order not found."); err.status = 404; throw err; }
   assertOrderAccess(order, user, guestToken);
-  return stripInternalOrderFields(order);
+  return serializeOrderForAudience(order, user?.role || "guest");
 }
 
 function assertOrderAccess(order, user, guestToken) {

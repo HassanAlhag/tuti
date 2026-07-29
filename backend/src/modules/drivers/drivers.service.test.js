@@ -8,12 +8,16 @@ process.env.MONGO_URI = "";
 
 const {
   confirmDriverPickup,
-  createSellerDriver,
+  inviteDriverForShop,
   getDriverDelivery,
   recordSellerDriverDelivery,
   recordDriverDelivery,
+  createDriverSchema,
+  driverDeliverySchema,
   __getSeedDriverForTests,
   __resetSeedDriversForTests,
+  __resetDriverShopAccessForTests,
+  __grantActiveAccessForTests,
 } = await import("./drivers.service.js");
 const {
   getSeedOrders,
@@ -63,6 +67,7 @@ const assignedCodOrder = {
 function resetAll() {
   __resetSeedOrdersForTests();
   __resetSeedDriversForTests();
+  __resetDriverShopAccessForTests();
   __resetNotificationsForTests();
   seedRepository.__resetSellerTransactionsForTests();
 }
@@ -79,6 +84,9 @@ function seedAssignedOrder(overrides = {}) {
   __injectSeedOrderForTests(order);
   const driver = __getSeedDriverForTests(DRIVER_ID);
   driver.status = "on_delivery";
+  const assignedDriverId = order.driverAssignment?.driverId || DRIVER_ID;
+  const assignedShopId = order.shopIds?.[0] || SHOP_ID;
+  __grantActiveAccessForTests(assignedDriverId, assignedShopId);
   return order;
 }
 
@@ -93,6 +101,38 @@ function deliveryUser() {
 }
 
 beforeEach(resetAll);
+
+test("driver delivery schema: proof URL optional compatibility and validation", () => {
+  assert.equal(driverDeliverySchema.safeParse({}).success, true, "omitted proof URL must be accepted");
+  const empty = driverDeliverySchema.safeParse({ proofOfDeliveryUrl: "" });
+  assert.equal(empty.success, true, "empty proof URL must remain backward compatible");
+  assert.equal(empty.data.proofOfDeliveryUrl, "");
+
+  const malformed = driverDeliverySchema.safeParse({ proofOfDeliveryUrl: "not-a-valid-url" });
+  assert.equal(malformed.success, false, "malformed non-empty proof URL must be rejected");
+
+  const valid = driverDeliverySchema.safeParse({ proofOfDeliveryUrl: PROOF_URL });
+  assert.equal(valid.success, true, "valid proof URL must be accepted");
+  assert.equal(valid.data.proofOfDeliveryUrl, PROOF_URL);
+});
+
+test("create driver schema: email optional compatibility and validation", () => {
+  const base = { name: "Schema Driver", phone: "+971501112222" };
+  const omitted = createDriverSchema.safeParse(base);
+  assert.equal(omitted.success, true, "omitted email must be accepted");
+  assert.equal(omitted.data.email, "");
+
+  const empty = createDriverSchema.safeParse({ ...base, email: "" });
+  assert.equal(empty.success, true, "empty email must remain backward compatible");
+  assert.equal(empty.data.email, "");
+
+  const malformed = createDriverSchema.safeParse({ ...base, email: "not-an-email" });
+  assert.equal(malformed.success, false, "malformed non-empty email must be rejected");
+
+  const valid = createDriverSchema.safeParse({ ...base, email: "schema-driver@example.com" });
+  assert.equal(valid.success, true, "valid email must be accepted");
+  assert.equal(valid.data.email, "schema-driver@example.com");
+});
 
 test("driver delivery: assigned COD delivery completes without safeShopId runtime failure", async () => {
   seedAssignedOrder();
@@ -156,11 +196,29 @@ test("driver delivery: general driver proof-of-delivery URL is kept and normaliz
     { codCollected: true, codAmount: 310, note: "Delivered to reception.", proofOfDeliveryUrl: PROOF_URL },
     deliveryUser()
   );
-  const normalized = await getDriverDelivery(DRIVER_ID, SHOP_ID, ORDER_ID);
+  const normalized = await getDriverDelivery(DRIVER_ID, ORDER_ID);
 
   assert.equal(result.driverAssignment.proofOfDeliveryUrl, PROOF_URL);
   assert.equal(normalized.driverAssignment.proofOfDeliveryUrl, PROOF_URL);
   assert.equal(normalized.driverAssignment.pickedUpAt, assignedCodOrder.driverAssignment.pickedUpAt);
+});
+
+test("driver delivery: driver task payload keeps assignment details without access records", async () => {
+  seedAssignedOrder({
+    driverAssignmentHistory: [{
+      driverId: "drv-old",
+      note: "Internal reassignment note",
+      evidenceMediaIds: ["media-old"],
+    }],
+  });
+
+  const normalized = await getDriverDelivery(DRIVER_ID, ORDER_ID);
+  const raw = JSON.stringify(normalized);
+
+  assert.equal(normalized.driverAssignment.driverId, DRIVER_ID);
+  assert.equal(normalized.driverAssignment.codAmount, 310);
+  assert.equal(normalized.driverAssignmentHistory.length, 1);
+  assert.equal(raw.includes("accessId"), false);
 });
 
 test("driver pickup: pickup timestamp is set and normalized without COD side effects", async () => {
@@ -168,7 +226,7 @@ test("driver pickup: pickup timestamp is set and normalized without COD side eff
   const driverBefore = structuredClone(__getSeedDriverForTests(DRIVER_ID));
 
   const result = await confirmDriverPickup(DRIVER_ID, ORDER_ID, deliveryUser());
-  const normalized = await getDriverDelivery(DRIVER_ID, SHOP_ID, ORDER_ID);
+  const normalized = await getDriverDelivery(DRIVER_ID, ORDER_ID);
 
   assert.equal(result.status, "Shipped");
   assert.ok(result.driverAssignment.pickedUpAt);
@@ -234,7 +292,7 @@ test("driver delivery: COD completion does not create COD settlement or seller l
 });
 
 test("driver delivery: seller driver proof-of-delivery URL is kept", async () => {
-  const sellerDriver = await createSellerDriver(
+  const { driver: sellerDriver } = await inviteDriverForShop(
     SHOP_ID,
     "Rose Vault",
     "seller-user-001",
@@ -271,4 +329,36 @@ test("driver delivery: seller driver proof-of-delivery URL is kept", async () =>
   assert.equal(result.driverAssignment.codAmount, 310);
   assert.equal(result.driverAssignment.codSettledAt, null);
   assert.equal(result.driverAssignment.codSettlementRef, null);
+});
+
+test("driver delivery: seller completion wrapper rejects inactive assignment states before mutation", async () => {
+  for (const status of ["delivery_failed", "rescheduled", "cancelled", "returned_to_seller", "superseded"]) {
+    resetAll();
+    await __grantActiveAccessForTests(DRIVER_ID, SHOP_ID);
+    seedAssignedOrder({
+      orderId: `ORD-SELLER-INACTIVE-${status}`,
+      driverAssignment: {
+        status,
+        lastFailureReason: status === "delivery_failed" ? "CUSTOMER_UNREACHABLE" : null,
+        retryScheduledAt: status === "rescheduled" ? "2026-06-01T12:00:00.000Z" : null,
+      },
+    });
+    const before = structuredClone(getOrder(`ORD-SELLER-INACTIVE-${status}`));
+
+    await assert.rejects(
+      () => recordSellerDriverDelivery(
+        DRIVER_ID,
+        `ORD-SELLER-INACTIVE-${status}`,
+        SHOP_ID,
+        { codCollected: true, codAmount: 310, proofOfDeliveryUrl: PROOF_URL },
+        { sub: "seller-user-001", role: "seller", name: "Rose Vault Seller", shopId: SHOP_ID }
+      ),
+      (err) => {
+        assert.equal(err.status, 409);
+        return true;
+      }
+    );
+
+    assert.deepEqual(getOrder(`ORD-SELLER-INACTIVE-${status}`), before);
+  }
 });

@@ -1133,6 +1133,52 @@ export const payoutQueue = [
 
 export const orderHistory = [
   {
+    // Demo/manual-test fixture for the driver "delivery failed" workflow --
+    // a mid-route COD delivery already picked up by a driver, ready for a
+    // failure report to be filed against it (see shared/deliveryFailurePolicy.js).
+    orderId: "ORD-9330",
+    customerId: "cus-lina",
+    checkoutMode: "guest",
+    paymentMethod: "cod",
+    customerName: "Lina M.",
+    customerEmail: "lina@example.com",
+    phone: "+971 52 774 6211",
+    items: [
+      { productId: "prf-001", productName: "Midnight Oud Reserve", shopId: "shop-oud-lane", price: 310, quantity: 1 },
+    ],
+    subtotal: 310,
+    platformFee: 40,
+    vendorNet: 270,
+    status: "Shipped",
+    paymentStatus: "COD pending",
+    deliveryAddress: "Al Majaz, Sharjah",
+    deliveryDate: "2026-06-02",
+    deliveryTime: "18:00",
+    giftMessage: "",
+    notes: "",
+    shopIds: ["shop-oud-lane"],
+    statusHistory: [],
+    driverAssignment: {
+      id: "assign-ord-9330-01",
+      driverId: "drv-002",
+      driverName: "Khalid Bin Hamdan",
+      driverPhone: "+971 50 987 6543",
+      assignedAt: "2026-06-02T09:00:00.000Z",
+      pickedUpAt: "2026-06-02T09:30:00.000Z",
+      deliveredAt: null,
+      codCollected: false,
+      codAmount: 310,
+      note: "",
+      status: "picked_up",
+      attemptCount: 0,
+      lastFailureReason: null,
+      nextAction: null,
+      retryScheduledAt: null,
+    },
+    createdAt: "2026-06-02T08:00:00.000Z",
+    updatedAt: "2026-06-02T09:30:00.000Z",
+  },
+  {
     orderId: "ORD-9321",
     customerId: "cus-aisha",
     checkoutMode: "account",

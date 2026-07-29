@@ -25,6 +25,7 @@ import { Order } from "../../models/Order.js";
 import { getSeedOrders } from "../orders/orders.service.js";
 import { decrementDriverCodBalance, getDriverById } from "../drivers/drivers.service.js";
 import { recordCodCredit } from "./sellerBalance.js";
+import { recordCodRemittance } from "./driverCashLedger.js";
 
 // ── Eligibility predicates ────────────────────────────────────────────────────
 
@@ -132,6 +133,15 @@ async function mongoSettle({ driverId, orderIds, adminId, notes, settlementRef }
     );
     totalCash += order.driverAssignment?.codAmount ?? 0;
     await recordCodCredit(order, adminId);
+    await recordCodRemittance({
+      driverId,
+      shopId: order.shopIds?.[0],
+      orderId: order.orderId,
+      assignmentId: order.driverAssignment?.id || null,
+      amount: order.driverAssignment?.codAmount ?? 0,
+      settlementRef,
+      recordedByUserId: adminId,
+    });
   }
 
   const driverBalanceAfter = await decrementDriverCodBalance(driverId, totalCash);
@@ -180,6 +190,15 @@ async function seedSettle({ driverId, orderIds, adminId, notes, settlementRef })
     order.driverAssignment.codSettlementRef = settlementRef;
     totalCash += order.driverAssignment?.codAmount ?? 0;
     await recordCodCredit(order, adminId);
+    await recordCodRemittance({
+      driverId,
+      shopId: order.shopIds?.[0],
+      orderId: order.orderId,
+      assignmentId: order.driverAssignment?.id || null,
+      amount: order.driverAssignment?.codAmount ?? 0,
+      settlementRef,
+      recordedByUserId: adminId,
+    });
   }
 
   const driverBalanceAfter = await decrementDriverCodBalance(driverId, totalCash);

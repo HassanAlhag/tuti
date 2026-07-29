@@ -29,6 +29,33 @@ import { formatCurrency } from "@tuti/shared/utils/money.js";
 
 const LOGIN_COPY = "Sign in with the credentials provided by your seller.";
 
+// Mirrors backend/src/shared/deliveryFailurePolicy.js -- the backend is the
+// real enforcer of note/evidence requirements; these flags only drive the
+// form's inline hints so a driver isn't surprised by a 422.
+const DELIVERY_FAILURE_REASONS = [
+  { value: "CUSTOMER_UNREACHABLE", label: "Customer unreachable", noteRequired: false, evidenceRequired: false },
+  { value: "CUSTOMER_NOT_AVAILABLE", label: "Customer not available", noteRequired: false, evidenceRequired: false },
+  { value: "CUSTOMER_REFUSED", label: "Customer refused delivery", noteRequired: true, evidenceRequired: false },
+  { value: "WRONG_ADDRESS", label: "Wrong address", noteRequired: true, evidenceRequired: false },
+  { value: "INCOMPLETE_ADDRESS", label: "Incomplete address", noteRequired: true, evidenceRequired: false },
+  { value: "CUSTOMER_REQUESTED_RESCHEDULE", label: "Customer requested reschedule", noteRequired: false, evidenceRequired: false, retryAtRequired: true },
+  { value: "PAYMENT_NOT_AVAILABLE", label: "Payment not available (COD)", noteRequired: false, evidenceRequired: false },
+  { value: "ORDER_DAMAGED", label: "Order damaged", noteRequired: true, evidenceRequired: true },
+  { value: "VEHICLE_BREAKDOWN", label: "Vehicle breakdown", noteRequired: false, evidenceRequired: false },
+  { value: "DRIVER_EMERGENCY", label: "Driver emergency", noteRequired: false, evidenceRequired: false },
+  { value: "UNSAFE_LOCATION", label: "Unsafe location", noteRequired: true, evidenceRequired: false },
+  { value: "ACCESS_RESTRICTED", label: "Access restricted (gate/building)", noteRequired: false, evidenceRequired: false },
+  { value: "WEATHER_OR_ROAD_ISSUE", label: "Weather or road issue", noteRequired: false, evidenceRequired: false },
+  { value: "SELLER_PACKAGING_ISSUE", label: "Seller packaging issue", noteRequired: true, evidenceRequired: true },
+  { value: "OTHER", label: "Other", noteRequired: true, evidenceRequired: false },
+];
+
+const ASSIGNMENT_STATUS_LABELS = {
+  delivery_failed: "Delivery attempt failed — awaiting retry/reassignment",
+  rescheduled: "Rescheduled — awaiting the new delivery time",
+  returned_to_seller: "Returned to seller",
+};
+
 function formatDateTime(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -354,7 +381,19 @@ export default function App() {
   const [podUrl, setPodUrl] = useState("");
   const [podUploading, setPodUploading] = useState(false);
   const [podError, setPodError] = useState("");
+
+  const [showFailureForm, setShowFailureForm] = useState(false);
+  const [failureReason, setFailureReason] = useState("");
+  const [failureNote, setFailureNote] = useState("");
+  const [customerReached, setCustomerReached] = useState(false);
+  const [contactAttempts, setContactAttempts] = useState(0);
+  const [requestedRetryAt, setRequestedRetryAt] = useState("");
+  const [failureEvidence, setFailureEvidence] = useState([]);
+  const [failureEvidenceUploading, setFailureEvidenceUploading] = useState(false);
+  const [failureEvidenceError, setFailureEvidenceError] = useState("");
+  const [failureError, setFailureError] = useState("");
   const podInputRef = useRef(null);
+  const failureEvidenceInputRef = useRef(null);
   const [historyFrom, setHistoryFrom] = useState("");
   const [historyTo, setHistoryTo] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
@@ -451,6 +490,9 @@ export default function App() {
   const selectedTask = selectedTaskQuery.data
     || deliveries.find((task) => task.orderId === detailOrderId)
     || null;
+  const selectedAssignmentStatus = selectedTask?.driverAssignment?.status;
+  const isBlockedByFailure = ["delivery_failed", "rescheduled", "returned_to_seller"].includes(selectedAssignmentStatus);
+  const selectedFailureReasonMeta = DELIVERY_FAILURE_REASONS.find((r) => r.value === failureReason);
 
   useEffect(() => {
     if (!selectedTask) return;
@@ -458,6 +500,15 @@ export default function App() {
     setCodCollected(selectedTask.paymentMethod === "cod");
     setDeliveryNote("");
     setTaskError("");
+    setShowFailureForm(false);
+    setFailureReason("");
+    setFailureNote("");
+    setCustomerReached(false);
+    setContactAttempts(0);
+    setRequestedRetryAt("");
+    setFailureEvidence([]);
+    setFailureEvidenceError("");
+    setFailureError("");
   }, [detailOrderId, selectedTask?.status, selectedTask?.driverAssignment?.deliveredAt]);
 
   const activeDeliveries = deliveries.filter((task) => task.status !== "Delivered").length;
@@ -535,6 +586,28 @@ export default function App() {
       await queryClient.invalidateQueries({ queryKey: ["driver"] });
     },
     onError: (err) => setTaskError(err?.message || "Unable to complete delivery."),
+  });
+
+  const failMutation = useMutation({
+    mutationFn: ({ orderId, payload }) => driverPortalApi.reportFailure(orderId, payload),
+    onSuccess: async (result) => {
+      setFailureError("");
+      setTaskNote(
+        result?.idempotentReplay
+          ? "This delivery failure was already reported."
+          : "Delivery failure reported. Your seller/admin will follow up on next steps."
+      );
+      setShowFailureForm(false);
+      setFailureReason("");
+      setFailureNote("");
+      setCustomerReached(false);
+      setContactAttempts(0);
+      setRequestedRetryAt("");
+      setFailureEvidence([]);
+      setFailureEvidenceError("");
+      await queryClient.invalidateQueries({ queryKey: ["driver"] });
+    },
+    onError: (err) => setFailureError(err?.message || "Unable to report delivery failure."),
   });
 
   const supportCreateMutation = useMutation({
@@ -729,6 +802,43 @@ export default function App() {
       setPodUploading(false);
       if (podInputRef.current) podInputRef.current.value = "";
     }
+  }
+
+  async function handleFailureEvidenceUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFailureEvidenceUploading(true);
+    setFailureEvidenceError("");
+    try {
+      const result = await uploadApi.uploadImage(file);
+      setFailureEvidence((prev) => [...prev, { mediaAssetId: result.mediaAssetId, url: result.url }]);
+    } catch (err) {
+      setFailureEvidenceError(err?.message || "Photo upload failed.");
+    } finally {
+      setFailureEvidenceUploading(false);
+      if (failureEvidenceInputRef.current) failureEvidenceInputRef.current.value = "";
+    }
+  }
+
+  function handleRemoveFailureEvidence(mediaAssetId) {
+    setFailureEvidence((prev) => prev.filter((item) => item.mediaAssetId !== mediaAssetId));
+  }
+
+  async function handleReportFailure(e) {
+    e.preventDefault();
+    if (!selectedTask || !failureReason) return;
+    setFailureError("");
+    await failMutation.mutateAsync({
+      orderId: selectedTask.orderId,
+      payload: {
+        reason: failureReason,
+        note: failureNote.trim(),
+        customerReached,
+        contactAttempts: Number(contactAttempts) || 0,
+        requestedRetryAt: requestedRetryAt ? new Date(requestedRetryAt).toISOString() : null,
+        evidenceMediaAssetIds: failureEvidence.map((item) => item.mediaAssetId),
+      },
+    });
   }
 
   async function handleConfirmPickup() {
@@ -1390,7 +1500,25 @@ export default function App() {
                               </a>
                             ) : null}
                           </div>
+                        ) : isBlockedByFailure ? (
+                          <div className="dp-failure-banner">
+                            <AlertTriangle size={16} />
+                            <div>
+                              <strong>{ASSIGNMENT_STATUS_LABELS[selectedAssignmentStatus] || "Delivery attempt failed"}</strong>
+                              {selectedTask.driverAssignment?.lastFailureReason ? (
+                                <span>
+                                  Reason: {DELIVERY_FAILURE_REASONS.find((r) => r.value === selectedTask.driverAssignment.lastFailureReason)?.label
+                                    || selectedTask.driverAssignment.lastFailureReason}
+                                </span>
+                              ) : null}
+                              {selectedTask.driverAssignment?.retryScheduledAt ? (
+                                <span>Requested retry: {formatDateTime(selectedTask.driverAssignment.retryScheduledAt)}</span>
+                              ) : null}
+                              <span>Your seller or admin will retry, reassign, or return this order — check back once it's actionable again.</span>
+                            </div>
+                          </div>
                         ) : (
+                          <>
                           <form className="dp-delivery-form" onSubmit={handleMarkDelivered}>
                             {/* Pickup confirmation — only show when order is not yet Shipped */}
                             {selectedTask.status !== "Shipped" && (
@@ -1468,6 +1596,123 @@ export default function App() {
                               {completeMutation.isPending ? "Saving…" : "Mark delivered"}
                             </button>
                           </form>
+
+                          <div className="dp-failure-report">
+                            {!showFailureForm ? (
+                              <button
+                                type="button"
+                                className="secondary-action full-width danger"
+                                onClick={() => setShowFailureForm(true)}
+                              >
+                                <AlertTriangle size={16} />
+                                Report failed delivery
+                              </button>
+                            ) : (
+                              <form className="dp-delivery-form" onSubmit={handleReportFailure}>
+                                <label className="dp-field">
+                                  <span>Reason</span>
+                                  <select value={failureReason} onChange={(e) => setFailureReason(e.target.value)} required>
+                                    <option value="" disabled>Select a reason…</option>
+                                    {DELIVERY_FAILURE_REASONS.map((reason) => (
+                                      <option key={reason.value} value={reason.value}>{reason.label}</option>
+                                    ))}
+                                  </select>
+                                </label>
+
+                                {selectedFailureReasonMeta?.retryAtRequired ? (
+                                  <label className="dp-field">
+                                    <span>Requested retry date/time</span>
+                                    <input
+                                      type="datetime-local"
+                                      value={requestedRetryAt}
+                                      onChange={(e) => setRequestedRetryAt(e.target.value)}
+                                      required
+                                    />
+                                  </label>
+                                ) : null}
+
+                                <label className="dp-field">
+                                  <span>Note{selectedFailureReasonMeta?.noteRequired ? " (required)" : " (optional)"}</span>
+                                  <textarea
+                                    rows="3"
+                                    value={failureNote}
+                                    onChange={(e) => setFailureNote(e.target.value)}
+                                    placeholder="What happened?"
+                                  />
+                                </label>
+
+                                <label className="dp-field dp-checkbox-field">
+                                  <input type="checkbox" checked={customerReached} onChange={(e) => setCustomerReached(e.target.checked)} />
+                                  <span>Customer was reached</span>
+                                </label>
+
+                                <label className="dp-field">
+                                  <span>Contact attempts</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    value={contactAttempts}
+                                    onChange={(e) => setContactAttempts(e.target.value)}
+                                  />
+                                </label>
+
+                                <div className="dp-field">
+                                  <span>Evidence photo{selectedFailureReasonMeta?.evidenceRequired ? " (required)" : " (optional)"}</span>
+                                  <div className="dp-pod-upload">
+                                    {failureEvidence.map((item) => (
+                                      <div className="dp-pod-preview" key={item.mediaAssetId}>
+                                        <img src={item.url} alt="Delivery failure evidence" />
+                                        <button
+                                          type="button"
+                                          className="dp-pod-remove"
+                                          onClick={() => handleRemoveFailureEvidence(item.mediaAssetId)}
+                                          aria-label="Remove photo"
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </div>
+                                    ))}
+                                    <button
+                                      type="button"
+                                      className="dp-pod-btn"
+                                      onClick={() => failureEvidenceInputRef.current?.click()}
+                                      disabled={failureEvidenceUploading}
+                                    >
+                                      <Camera size={16} />
+                                      {failureEvidenceUploading ? "Uploading…" : "Add photo"}
+                                    </button>
+                                    <input
+                                      ref={failureEvidenceInputRef}
+                                      type="file"
+                                      accept="image/*"
+                                      capture="environment"
+                                      style={{ display: "none" }}
+                                      onChange={handleFailureEvidenceUpload}
+                                    />
+                                  </div>
+                                  {failureEvidenceError ? <small className="dp-form-error">{failureEvidenceError}</small> : null}
+                                </div>
+
+                                {failureError ? <small className="dp-form-error">{failureError}</small> : null}
+
+                                <div className="dp-form-row">
+                                  <button type="button" className="secondary-action" onClick={() => setShowFailureForm(false)}>
+                                    Cancel
+                                  </button>
+                                  <button
+                                    className="primary-action full-width danger"
+                                    type="submit"
+                                    disabled={failMutation.isPending || failureEvidenceUploading || !failureReason}
+                                  >
+                                    <AlertTriangle size={16} />
+                                    {failMutation.isPending ? "Reporting…" : "Report failed delivery"}
+                                  </button>
+                                </div>
+                              </form>
+                            )}
+                          </div>
+                          </>
                         )}
                       </>
                     ) : (

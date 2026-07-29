@@ -18,10 +18,17 @@ process.env.MONGO_URI = "";
 process.env.JWT_SECRET = "seller-shop-ownership-route-test-secret-32ch";
 
 const { marketplaceRouter, sellerBrandRouter } = await import("./marketplace.routes.js");
+const { driversRouter } = await import("../drivers/drivers.routes.js");
 const { sellerPerformanceRouter } = await import("./seller-performance.routes.js");
 const { supportRouter } = await import("../support/support.routes.js");
 const { notificationsRouter } = await import("../notifications/notifications.routes.js");
 const { seedRepository } = await import("../../repositories/seedRepository.js");
+const {
+  __resetSeedDriversForTests,
+  __resetDriverShopAccessForTests,
+  __grantActiveAccessForTests,
+  listDriverShopAccessForShop,
+} = await import("../drivers/drivers.service.js");
 
 const OWNER_SUB = "user-legit-owner-001";
 const ATTACKER_SUB = "user-attacker-002";
@@ -93,6 +100,8 @@ function resetState() {
     structuredClone(GIFT_BOX_SHOP)
   );
   state.products.length = 0;
+  __resetSeedDriversForTests();
+  __resetDriverShopAccessForTests();
 }
 
 before(async () => {
@@ -101,6 +110,7 @@ before(async () => {
   const app = express();
   app.use(express.json());
   app.use("/api/marketplace", marketplaceRouter);
+  app.use("/api/drivers", driversRouter);
   app.use("/api/seller", sellerBrandRouter);
   app.use("/api/seller", sellerPerformanceRouter);
   app.use("/api/support", supportRouter);
@@ -158,6 +168,24 @@ async function getSellerRoute(user, path) {
   let payload = null;
   try { payload = text ? JSON.parse(text) : null; } catch { payload = text; }
   return { response, payload };
+}
+
+async function postSellerRoute(user, path, body = {}) {
+  const response = await fetch(`${baseUrl}/api/marketplace${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenFor(user)}` },
+    body: JSON.stringify(body),
+  });
+  return { response, payload: await response.json() };
+}
+
+async function postDriverRoute(user, path, body = {}) {
+  const response = await fetch(`${baseUrl}/api/drivers${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${tokenFor(user)}` },
+    body: JSON.stringify(body),
+  });
+  return { response, payload: await response.json() };
 }
 
 async function getBrandProfile(user) {
@@ -234,8 +262,14 @@ test("requireOwnedShop rejects a seller JWT with no shop at all", async () => {
   assert.equal(response.status, 403);
 });
 
-test("requireOwnedShop rejects a seller whose shop has no ownerId", async () => {
-  const user = { sub: OWNER_SUB, role: "seller", shopId: UNOWNED_SHOP.id, name: "Missing Owner Seller" };
+// This user has no ownerId match on ANY seeded shop (unlike OWNER_SUB, who
+// genuinely owns OWNED_SHOP elsewhere in the fixture set) -- isolates the
+// "genuinely no owned shop exists anywhere" case from the fallback-resolves
+// case covered separately below.
+const NOBODYS_SUB = "user-owns-nothing-006";
+
+test("requireOwnedShop rejects a seller whose claimed shop has no ownerId, and who owns no other shop either", async () => {
+  const user = { sub: NOBODYS_SUB, role: "seller", shopId: UNOWNED_SHOP.id, name: "Missing Owner Seller" };
 
   const { response, payload } = await getSellerOverview(user);
 
@@ -243,13 +277,40 @@ test("requireOwnedShop rejects a seller whose shop has no ownerId", async () => 
   assert.equal(payload.error, "Shop ownership could not be verified.");
 });
 
-test("requireOwnedShop rejects a seller whose shop ownerId mismatches sub", async () => {
-  const user = { sub: OWNER_SUB, role: "seller", shopId: MISMATCHED_SHOP.id, name: "Mismatched Seller" };
+test("requireOwnedShop rejects a seller whose claimed shop's ownerId mismatches sub, and who owns no other shop either", async () => {
+  const user = { sub: NOBODYS_SUB, role: "seller", shopId: MISMATCHED_SHOP.id, name: "Mismatched Seller" };
 
   const { response, payload } = await getSellerOverview(user);
 
   assert.equal(response.status, 403);
   assert.equal(payload.error, "Shop ownership could not be verified.");
+});
+
+// ── Ownership self-heals via the Shop.ownerId fallback ────────────────────
+// A seller whose JWT/claimed shopId is missing, stale, or simply wrong
+// still resolves safely PROVIDED they genuinely own a different real shop
+// -- requireOwnedShop falls back to resolving ownership by Shop.ownerId
+// directly rather than hard-failing on a data inconsistency that isn't
+// actually an ownership problem. It must never let them into someone
+// else's shop -- only ever the shop they actually own.
+
+test("seller with a stale/wrong shopId claim still resolves to the shop they actually own", async () => {
+  const user = { sub: OWNER_SUB, role: "seller", shopId: MISMATCHED_SHOP.id, name: "Legit Owner" };
+
+  const { response, payload } = await getSellerOverview(user);
+
+  assert.equal(response.status, 200);
+  // Resolves to OWNER_SUB's real owned shop, never to the wrongly-claimed one.
+  assert.equal(payload.data.shop.id, OWNED_SHOP.id);
+});
+
+test("seller with no shopId claim at all still resolves to the shop they actually own", async () => {
+  const user = { sub: OWNER_SUB, role: "seller", shopId: null, name: "Legit Owner" };
+
+  const { response, payload } = await getSellerOverview(user);
+
+  assert.equal(response.status, 200);
+  assert.equal(payload.data.shop.id, OWNED_SHOP.id);
 });
 
 test("seller can update own product but cannot act on another seeded shop", async () => {
@@ -322,6 +383,86 @@ test("seller product category update cannot move product outside entitlement", a
   const allowed = await patchSellerProduct(perfumeSeller, product.payload.data.id, { category: "gift_box" });
   assert.equal(allowed.response.status, 200);
   assert.equal(allowed.payload.data.category, "gift_box");
+});
+
+test("seller driver access routes use req.ownedShopId and ignore client-supplied shopId", async () => {
+  const sellerWithStaleClaim = { sub: OWNER_SUB, role: "seller", shopId: MISMATCHED_SHOP.id, name: "Legit Owner" };
+
+  const request = await postSellerRoute(sellerWithStaleClaim, "/seller/drivers/request-existing", {
+    driverId: "drv-001",
+    shopId: CAKE_SHOP.id,
+  });
+
+  assert.equal(request.response.status, 201);
+  assert.equal(request.payload.data.driverId, "drv-001");
+  assert.equal(request.payload.data.shopId, OWNED_SHOP.id);
+
+  const ownedRows = await listDriverShopAccessForShop(OWNED_SHOP.id);
+  const cakeRows = await listDriverShopAccessForShop(CAKE_SHOP.id);
+  assert.equal(ownedRows.length, 1);
+  assert.equal(cakeRows.length, 0);
+});
+
+test("seller driver search exposes controlled identity fields only", async () => {
+  const seller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Legit Owner" };
+
+  const search = await postSellerRoute(seller, "/seller/drivers/search", { phone: "+971 55 111 2233" });
+
+  assert.equal(search.response.status, 200);
+  assert.equal(search.payload.data.driverId, "drv-001");
+  assert.equal(search.payload.data.phoneLast4, "2233");
+  assert.equal(search.payload.data.email, undefined);
+  assert.equal(search.payload.data.phone, undefined);
+});
+
+test("seller can invite a new driver request but cannot approve it through admin driver routes", async () => {
+  const seller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Legit Owner" };
+
+  const invite = await postSellerRoute(seller, "/seller/drivers", {
+    name: "Route Invited Driver",
+    phone: "+971 50 900 1000",
+    email: "route-invited-driver@example.com",
+    vehicleType: "motorcycle",
+    shopId: CAKE_SHOP.id,
+  });
+
+  assert.equal(invite.response.status, 201);
+  assert.equal(invite.payload.data.linkedExistingDriver, false);
+  assert.equal(invite.payload.data.access.shopId, OWNED_SHOP.id);
+  assert.equal(invite.payload.data.access.status, "pending_admin_approval");
+
+  const approveAsSeller = await postDriverRoute(seller, `/access/${invite.payload.data.access.id}/approve`, {});
+  assert.equal(approveAsSeller.response.status, 403);
+});
+
+test("seller can cancel own pending request and cannot access another shop's access row by guessing accessId", async () => {
+  const seller = { sub: OWNER_SUB, role: "seller", shopId: OWNED_SHOP.id, name: "Legit Owner" };
+  const cakeSeller = { sub: CAKE_SHOP.ownerId, role: "seller", shopId: CAKE_SHOP.id, name: "Cake Seller" };
+
+  const own = await postSellerRoute(seller, "/seller/drivers/request-existing", { driverId: "drv-001" });
+  assert.equal(own.response.status, 201);
+  const cancel = await postSellerRoute(seller, `/seller/drivers/access/${own.payload.data.id}/cancel`);
+  assert.equal(cancel.response.status, 200);
+  assert.equal(cancel.payload.data.status, "revoked");
+
+  await __grantActiveAccessForTests("drv-002", CAKE_SHOP.id);
+  const [otherAccess] = await listDriverShopAccessForShop(CAKE_SHOP.id);
+  const suspendOther = await postSellerRoute(seller, `/seller/drivers/access/${otherAccess.id}/suspend`);
+  assert.equal(suspendOther.response.status, 403);
+
+  const cakeList = await getSellerRoute(cakeSeller, "/seller/drivers");
+  assert.equal(cakeList.response.status, 200);
+  assert.equal(cakeList.payload.data.length, 1);
+});
+
+test("non-seller roles cannot use seller-only driver access endpoints", async () => {
+  for (const role of ["customer", "driver", "admin"]) {
+    const user = { sub: `${role}-route-test`, role, shopId: OWNED_SHOP.id, driverId: "drv-001" };
+    const list = await getSellerRoute(user, "/seller/drivers");
+    assert.equal(list.response.status, 403, `${role} should not list seller drivers`);
+    const request = await postSellerRoute(user, "/seller/drivers/request-existing", { driverId: "drv-001" });
+    assert.equal(request.response.status, 403, `${role} should not request seller driver access`);
+  }
 });
 
 test("requireOwnedShop does not affect admin requests", async () => {

@@ -70,14 +70,25 @@ import {
   createSellerDeliveryOffer,
   createDriverSchema,
   createSellerDriverLogin,
-  createSellerDriver,
+  inviteDriverForShop,
+  searchDriverForShop,
+  searchDriverSchema,
+  requestExistingDriverForShop,
+  requestExistingDriverSchema,
+  cancelDriverAccessRequest,
+  suspendShopDriverAccess,
+  revokeShopDriverAccessForSeller,
   driverDeliverySchema,
   getSellerDriverCodSummary,
   getSellerDeliveryOffer,
   listAdminDeliveryOffers,
   listSellerDeliveryOffers,
   listSellerDrivers,
+  reassignDeliverySchema,
+  reassignFailedDelivery,
   recordSellerDriverDelivery,
+  retryFailedDelivery,
+  returnFailedDeliveryToSeller,
   sellerDriverAssignSchema,
   updateDriverSchema,
   updateSellerDriver,
@@ -265,6 +276,38 @@ marketplaceRouter.get("/seller/drivers/cod-summary", authenticate, requireRole("
   } catch (err) { next(err); }
 });
 
+// Seller: search for an existing driver by a controlled identifier
+// (phone/email) -- never a full listing, only an exact-match lookup.
+marketplaceRouter.post(
+  "/seller/drivers/search",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  validate(searchDriverSchema),
+  async (req, res, next) => {
+    try {
+      res.json({ data: await searchDriverForShop(req.ownedShopId, req.body) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: request adding an existing driver -- starts pending_admin_approval.
+marketplaceRouter.post(
+  "/seller/drivers/request-existing",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  validate(requestExistingDriverSchema),
+  async (req, res, next) => {
+    try {
+      res.status(201).json({ data: await requestExistingDriverForShop(req.ownedShopId, req.user.sub, req.body) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: invite/create a driver who may not exist yet. Dedup-checked by
+// phone/email server-side -- if a match already exists, this links to
+// it instead of creating a duplicate Driver record.
 marketplaceRouter.post(
   "/seller/drivers",
   authenticate,
@@ -273,7 +316,46 @@ marketplaceRouter.post(
   validate(createDriverSchema),
   async (req, res, next) => {
     try {
-      res.status(201).json({ data: await createSellerDriver(req.ownedShopId, req.user.shopName || "", req.user.sub, req.body) });
+      res.status(201).json({ data: await inviteDriverForShop(req.ownedShopId, req.user.shopName || "", req.user.sub, req.body) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: cancel a request they made that's still pending admin approval.
+marketplaceRouter.post(
+  "/seller/drivers/access/:accessId/cancel",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  async (req, res, next) => {
+    try {
+      res.json({ data: await cancelDriverAccessRequest(req.ownedShopId, req.params.accessId) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: suspend/remove a driver from their OWN shop only. Never
+// approves/activates a relationship -- that is admin-only.
+marketplaceRouter.post(
+  "/seller/drivers/access/:accessId/suspend",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  async (req, res, next) => {
+    try {
+      res.json({ data: await suspendShopDriverAccess(req.ownedShopId, req.params.accessId, req.user.sub) });
+    } catch (err) { next(err); }
+  }
+);
+
+marketplaceRouter.post(
+  "/seller/drivers/access/:accessId/revoke",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  async (req, res, next) => {
+    try {
+      res.json({ data: await revokeShopDriverAccessForSeller(req.ownedShopId, req.params.accessId, req.user.sub) });
     } catch (err) { next(err); }
   }
 );
@@ -325,6 +407,46 @@ marketplaceRouter.patch(
   async (req, res, next) => {
     try {
       res.json({ data: await recordSellerDriverDelivery(req.params.driverId, req.params.orderId, req.ownedShopId, req.body, req.user) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: retry a failed/rescheduled delivery with the same driver
+marketplaceRouter.post(
+  "/seller/orders/:orderId/delivery/retry",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  async (req, res, next) => {
+    try {
+      res.json({ data: await retryFailedDelivery(req.ownedShopId, req.params.orderId, req.user) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: reassign a failed delivery to a different driver
+marketplaceRouter.post(
+  "/seller/orders/:orderId/delivery/reassign",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  validate(reassignDeliverySchema),
+  async (req, res, next) => {
+    try {
+      res.json({ data: await reassignFailedDelivery(req.ownedShopId, req.params.orderId, req.body, req.user) });
+    } catch (err) { next(err); }
+  }
+);
+
+// Seller: end the failed delivery attempt and take the order back for re-fulfillment
+marketplaceRouter.post(
+  "/seller/orders/:orderId/delivery/return-to-seller",
+  authenticate,
+  requireRole("seller"),
+  requireOwnedShop,
+  async (req, res, next) => {
+    try {
+      res.json({ data: await returnFailedDeliveryToSeller(req.ownedShopId, req.params.orderId, req.user) });
     } catch (err) { next(err); }
   }
 );

@@ -702,3 +702,26 @@ export async function getProductMediaForList(productIds) {
   const results = await Promise.all(uniqueIds.map(async (id) => [id, await getProductMedia(id)]));
   return new Map(results);
 }
+
+/**
+ * Verifies every id resolves to an active MediaAsset actually owned by
+ * this specific owner (e.g. a driver reporting delivery-failure evidence)
+ * -- never trusts a client-supplied mediaAssetId's ownership without a
+ * database check. Throws (404/422) on any asset that's missing,
+ * quarantined/rejected, or owned by someone else. Returns the deduped id
+ * list on success.
+ */
+export async function assertOwnedMediaAssets(ownerType, ownerId, mediaAssetIds = []) {
+  const uniqueIds = [...new Set(mediaAssetIds)].filter(Boolean);
+  if (!uniqueIds.length) return uniqueIds;
+
+  const assets = await Promise.all(uniqueIds.map((id) => findMediaAssetById(id)));
+  assets.forEach((asset, index) => {
+    const id = uniqueIds[index];
+    if (!asset || asset.status === "deleted") throw createHttpError(404, `Evidence media ${id} not found.`);
+    if (asset.ownerType !== ownerType || asset.ownerId !== ownerId) throw createHttpError(403, `Evidence media ${id} does not belong to this account.`);
+    if (asset.status !== "active") throw createHttpError(422, `Evidence media ${id} is quarantined and cannot be used.`);
+    if (asset.moderationStatus === "rejected") throw createHttpError(422, `Evidence media ${id} was rejected and cannot be used.`);
+  });
+  return uniqueIds;
+}

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // Force seed mode for all tests so no MongoDB connection is required
 process.env.MONGO_URI = "";
 
-const { createOrder, getOrder, __resetSeedOrdersForTests, __injectSeedOrderForTests } = await import("./orders.service.js");
+const { createOrder, getOrder, listOrders, getSeedOrders, __resetSeedOrdersForTests, __injectSeedOrderForTests } = await import("./orders.service.js");
 const { seedRepository } = await import("../../repositories/seedRepository.js");
 
 const initialStockSnapshot = new Map(
@@ -70,6 +70,72 @@ function injectAccessOrder(overrides = {}) {
     updatedAt: new Date().toISOString(),
     ...overrides,
   });
+}
+
+function injectAssignedAccessOrder(overrides = {}) {
+  injectAccessOrder({
+    orderId: "ORD-CUSTOMER-DELIVERY-SAFE",
+    customerId: "user-cust-access",
+    shopIds: ["shop-oud-lane"],
+    status: "Shipped",
+    driverAssignment: {
+      id: "asg-internal-001",
+      assignmentId: "assignment-internal-001",
+      driverId: "drv-raw-001",
+      driverName: "Internal Driver",
+      driverPhone: "+971555550000",
+      status: "rescheduled",
+      assignedAt: "2026-06-01T09:00:00.000Z",
+      pickedUpAt: "2026-06-01T09:30:00.000Z",
+      deliveredAt: null,
+      retryScheduledAt: "2026-06-01T13:00:00.000Z",
+      lastFailureReason: "CUSTOMER_REQUESTED_RESCHEDULE",
+      note: "Driver says customer asked for later.",
+      evidenceMediaIds: ["media-internal-1"],
+      evidence: [{ id: "evidence-internal-1" }],
+      customerReached: true,
+      contactAttempts: 2,
+      nextAction: "RESCHEDULE",
+      attemptCount: 2,
+      supersededAt: null,
+      supersededByAssignmentId: null,
+    },
+    driverAssignmentHistory: [{
+      driverId: "drv-old-001",
+      note: "Internal previous driver note",
+      evidenceMediaIds: ["media-history-1"],
+    }],
+    supportCase: { status: "internal_review", notes: "Support-only note" },
+    resolutionDecision: { action: "admin_review", note: "Admin-only decision" },
+    ...overrides,
+  });
+}
+
+function assertNoRawDeliveryFields(payload) {
+  const json = JSON.stringify(payload);
+  assert.equal(payload.driverAssignment, undefined, "raw driverAssignment must not be exposed");
+  assert.equal(payload.driverAssignmentHistory, undefined, "driverAssignmentHistory must not be exposed");
+  assert.equal(payload.supportCase, undefined, "support review info must not be exposed");
+  assert.equal(payload.resolutionDecision, undefined, "admin review info must not be exposed");
+  for (const raw of [
+    "drv-raw-001",
+    "asg-internal-001",
+    "assignment-internal-001",
+    "CUSTOMER_REQUESTED_RESCHEDULE",
+    "Driver says customer asked for later.",
+    "media-internal-1",
+    "evidence-internal-1",
+    "customerReached",
+    "contactAttempts",
+    "RETRY_SAME_DRIVER",
+    "attemptCount",
+    "supersededByAssignmentId",
+    "Internal previous driver note",
+    "Support-only note",
+    "Admin-only decision",
+  ]) {
+    assert.equal(json.includes(raw), false, `customer payload must not contain ${raw}`);
+  }
 }
 
 test("access: authenticated customer can read their own order", async () => {
@@ -275,6 +341,86 @@ test("access: support can read any order", async () => {
   const supportUser = makeAuthUser("support-001", "support");
   const fetched = await getOrder("ORD-TEST-SUPPORT01", supportUser);
   assert.equal(fetched.orderId, "ORD-TEST-SUPPORT01");
+});
+
+test("access: customer order detail exposes only customer-safe delivery data", async () => {
+  injectAssignedAccessOrder();
+
+  const fetched = await getOrder("ORD-CUSTOMER-DELIVERY-SAFE", makeAuthUser("user-cust-access"));
+
+  assertNoRawDeliveryFields(fetched);
+  assert.deepEqual(fetched.delivery, {
+    state: "rescheduled",
+    messageCode: "DELIVERY_RESCHEDULED",
+    deliveredAt: null,
+    retryScheduledAt: "2026-06-01T13:00:00.000Z",
+    customerActionRequired: false,
+    message: "Your delivery has been rescheduled to the requested time.",
+  });
+});
+
+test("access: customer order list excludes raw assignment details", async () => {
+  injectAssignedAccessOrder();
+
+  const result = await listOrders({ userId: "user-cust-access", role: "customer" });
+
+  assert.equal(result.orders.length, 1);
+  assertNoRawDeliveryFields(result.orders[0]);
+  assert.equal(result.orders[0].delivery.messageCode, "DELIVERY_RESCHEDULED");
+});
+
+test("access: customer delivery issue maps unreachable failures to safe action copy", async () => {
+  injectAssignedAccessOrder({
+    orderId: "ORD-CUSTOMER-UNREACHABLE",
+    driverAssignment: {
+      id: "asg-internal-002",
+      driverId: "drv-raw-001",
+      status: "delivery_failed",
+      lastFailureReason: "CUSTOMER_UNREACHABLE",
+      retryScheduledAt: "2026-06-01T14:00:00.000Z",
+      note: "Called three times.",
+      evidenceMediaIds: ["media-secret"],
+      nextAction: "RETRY_SAME_DRIVER",
+    },
+  });
+
+  const fetched = await getOrder("ORD-CUSTOMER-UNREACHABLE", makeAuthUser("user-cust-access"));
+
+  assertNoRawDeliveryFields(fetched);
+  assert.equal(fetched.delivery.state, "delivery_issue");
+  assert.equal(fetched.delivery.messageCode, "CONTACT_DETAILS_REQUIRED");
+  assert.equal(fetched.delivery.customerActionRequired, true);
+  assert.equal(fetched.delivery.retryScheduledAt, null);
+  assert.equal(fetched.delivery.message, "We tried to reach you for your delivery but couldn't connect. We'll try again soon.");
+});
+
+test("access: guest tracking response uses the same customer-safe delivery serializer", async () => {
+  const created = await createOrder(makePayload("guest-tracking@example.com"), null, null);
+  injectAssignedAccessOrder({
+    orderId: created.orderId,
+    customerId: null,
+    guestConfirmationToken: getSeedOrders().find((order) => order.orderId === created.orderId)?.guestConfirmationToken,
+  });
+
+  const fetched = await getOrder(created.orderId, null, created.guestToken);
+
+  assertNoRawDeliveryFields(fetched);
+  assert.equal(fetched.delivery.messageCode, "DELIVERY_RESCHEDULED");
+});
+
+test("access: seller and admin order payloads retain operational assignment details", async () => {
+  injectAssignedAccessOrder();
+
+  const sellerOrder = await getOrder("ORD-CUSTOMER-DELIVERY-SAFE", makeAuthUser("seller-001", "seller", "shop-oud-lane"));
+  assert.equal(sellerOrder.driverAssignment.driverId, "drv-raw-001");
+  assert.equal(sellerOrder.driverAssignment.note, "Driver says customer asked for later.");
+  assert.equal(sellerOrder.driverAssignment.nextAction, "RESCHEDULE");
+  assert.equal(sellerOrder.driverAssignmentHistory.length, 1);
+
+  const adminOrder = await getOrder("ORD-CUSTOMER-DELIVERY-SAFE", makeAuthUser("admin-001", "admin"));
+  assert.equal(adminOrder.driverAssignment.driverId, "drv-raw-001");
+  assert.equal(adminOrder.driverAssignment.evidenceMediaIds[0], "media-internal-1");
+  assert.equal(adminOrder.supportCase.status, "internal_review");
 });
 
 test("access: order not found returns 404", async () => {

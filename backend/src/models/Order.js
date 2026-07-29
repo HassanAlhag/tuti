@@ -139,6 +139,10 @@ const resolutionDecisionSchema = new mongoose.Schema(
 
 const driverAssignmentSchema = new mongoose.Schema(
   {
+    // Stable per-assignment id -- lets a DeliveryAttempt reference exactly
+    // which assignment it belongs to, and lets reassignment supersede an
+    // assignment (new id) rather than mutating the old one in place.
+    id:           { type: String, default: null },
     driverId:     { type: String, required: true },
     driverName:   { type: String, default: "" },
     driverPhone:  { type: String, default: "" },
@@ -149,6 +153,22 @@ const driverAssignmentSchema = new mongoose.Schema(
     codAmount:    { type: Number, default: 0 },
     note:         { type: String, default: "" },
     proofOfDeliveryUrl: { type: String, default: "" },
+    // ── Delivery-attempt sub-state (see shared/workflows/deliveryAssignmentWorkflow.js
+    // and shared/deliveryFailurePolicy.js) -- deliberately separate from
+    // Order.status: a failed attempt never changes the commercial order
+    // status by itself. Missing/undefined on any pre-existing document is
+    // treated as "accepted" by every read path for backward compatibility.
+    status: {
+      type: String,
+      enum: ["accepted", "picked_up", "out_for_delivery", "delivery_failed", "rescheduled", "returned_to_seller", "completed", "cancelled"],
+      default: "accepted",
+    },
+    attemptCount:       { type: Number, default: 0 },
+    lastFailureReason:  { type: String, default: null },
+    nextAction:         { type: String, default: null },
+    retryScheduledAt:   { type: Date, default: null },
+    supersededAt:       { type: Date, default: null },
+    supersededByAssignmentId: { type: String, default: null },
     // ── COD settlement markers (set by admin during cash reconciliation) ──
     codSettledAt:      { type: Date,   default: null },
     codSettledBy:      { type: String, default: null },
@@ -211,6 +231,11 @@ const orderSchema = new mongoose.Schema(
     supportCase:        { type: supportCaseSchema, default: undefined },
     resolutionDecision: { type: resolutionDecisionSchema, default: undefined },
     driverAssignment:   { type: driverAssignmentSchema, default: undefined },
+    // Superseded assignments (reassignment, return-to-seller) are pushed
+    // here before driverAssignment is replaced/cleared -- preserves the
+    // full driver-assignment history for seller/admin review even though
+    // only one assignment is ever "current" at a time.
+    driverAssignmentHistory: { type: [driverAssignmentSchema], default: undefined },
     // Idempotency key — supplied by client per checkout attempt; sparse unique so null orders coexist
     idempotencyKey:     { type: String, default: null },
     // Fingerprint of items+email for detecting changed-payload conflicts on duplicate key

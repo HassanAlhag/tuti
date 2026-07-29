@@ -27,6 +27,36 @@ const BLANK_FORM = { name: "", phone: "", email: "", vehicleType: "motorcycle", 
 
 const normalize = (value) => String(value || "").toLowerCase().trim();
 
+// Mirrors backend/src/shared/deliveryFailurePolicy.js reason codes.
+const DELIVERY_FAILURE_REASON_LABELS = {
+  CUSTOMER_UNREACHABLE: "Customer unreachable",
+  CUSTOMER_NOT_AVAILABLE: "Customer not available",
+  CUSTOMER_REFUSED: "Customer refused delivery",
+  WRONG_ADDRESS: "Wrong address",
+  INCOMPLETE_ADDRESS: "Incomplete address",
+  CUSTOMER_REQUESTED_RESCHEDULE: "Customer requested reschedule",
+  PAYMENT_NOT_AVAILABLE: "Payment not available (COD)",
+  ORDER_DAMAGED: "Order damaged",
+  VEHICLE_BREAKDOWN: "Vehicle breakdown",
+  DRIVER_EMERGENCY: "Driver emergency",
+  UNSAFE_LOCATION: "Unsafe location",
+  ACCESS_RESTRICTED: "Access restricted",
+  WEATHER_OR_ROAD_ISSUE: "Weather or road issue",
+  SELLER_PACKAGING_ISSUE: "Seller packaging issue",
+  OTHER: "Other",
+};
+
+const FAILED_ASSIGNMENT_STATUSES = ["delivery_failed", "rescheduled"];
+
+function getAssignmentStatus(order) {
+  const a = order?.driverAssignment;
+  if (!a) return null;
+  if (a.status) return a.status;
+  if (a.deliveredAt) return "completed";
+  if (a.pickedUpAt) return "picked_up";
+  return "accepted";
+}
+
 const formatShortDateTime = (value) => {
   if (!value) return "—";
   const date = new Date(value);
@@ -96,6 +126,9 @@ export function AdminDrivers() {
   const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
   const [settleError,      setSettleError]      = useState("");
   const [settleResult,     setSettleResult]     = useState(null);
+  const [failureModal,       setFailureModal]       = useState(null);
+  const [reassignDriverId,   setReassignDriverId]   = useState("");
+  const [failureActionError, setFailureActionError] = useState("");
 
   // ── Data fetches ─────────────────────────────────────────────────────
   const { data: driversData, isLoading: driversLoading } = useQuery({
@@ -120,6 +153,7 @@ export function AdminDrivers() {
     : deliveryOffersData?.offers || deliveryOffersData?.deliveryOffers || [];
   const assignableOrders = orders.filter((o) => ["Ready for Delivery", "Shipped"].includes(o.status));
   const activeAssignableDrivers = drivers.filter(isAssignableDriver);
+  const failedDeliveries = orders.filter((o) => FAILED_ASSIGNMENT_STATUSES.includes(getAssignmentStatus(o)));
 
   const shopFilterOptions = [
     { value: "all", label: "All shops" },
@@ -199,6 +233,42 @@ export function AdminDrivers() {
       setAssignError("");
     },
     onError: (err) => setAssignError(err?.message || "Assignment failed."),
+  });
+
+  function invalidateFailedDeliveryData() {
+    qc.invalidateQueries({ queryKey: ["drivers"] });
+    qc.invalidateQueries({ queryKey: ["admin-orders-assignable"] });
+  }
+
+  const retryFailedDeliveryMutation = useMutation({
+    mutationFn: (orderId) => driversApi.retryDelivery(orderId),
+    onSuccess: () => {
+      invalidateFailedDeliveryData();
+      setFailureModal(null);
+      setFailureActionError("");
+    },
+    onError: (err) => setFailureActionError(err?.message || "Unable to retry this delivery."),
+  });
+
+  const reassignFailedDeliveryMutation = useMutation({
+    mutationFn: ({ orderId, driverId }) => driversApi.reassignDelivery(orderId, { driverId }),
+    onSuccess: () => {
+      invalidateFailedDeliveryData();
+      setFailureModal(null);
+      setReassignDriverId("");
+      setFailureActionError("");
+    },
+    onError: (err) => setFailureActionError(err?.message || "Unable to reassign this delivery."),
+  });
+
+  const returnToSellerMutation = useMutation({
+    mutationFn: (orderId) => driversApi.returnDeliveryToSeller(orderId),
+    onSuccess: () => {
+      invalidateFailedDeliveryData();
+      setFailureModal(null);
+      setFailureActionError("");
+    },
+    onError: (err) => setFailureActionError(err?.message || "Unable to return this delivery to the seller."),
   });
 
   const { data: candidatesData, isLoading: candidatesLoading } = useQuery({
@@ -617,6 +687,59 @@ export function AdminDrivers() {
         )}
       </section>
 
+      {/* Failed delivery attempts requiring admin/support action */}
+      <section className="panel">
+        <PanelHeader icon={AlertTriangle} title="Failed deliveries" action={`${failedDeliveries.length} open`} />
+        {failedDeliveries.length === 0 ? (
+          <EmptyState icon={AlertTriangle} text="No failed delivery attempts right now." />
+        ) : (
+          <div className="drivers-table">
+            <div className="drivers-table-head">
+              <span>Order</span>
+              <span>Shop</span>
+              <span>Driver</span>
+              <span>Reason / next action</span>
+              <span>Attempts</span>
+              <span>Actions</span>
+            </div>
+            {failedDeliveries.map((order) => (
+              <div className="drivers-table-row" key={order.orderId}>
+                <div className="drivers-driver-col">
+                  <strong>{order.orderId}</strong>
+                  <span>{order.customerName}</span>
+                </div>
+                <div className="drivers-shop-col">
+                  <span>{order.shopIds?.[0] || "—"}</span>
+                </div>
+                <div className="drivers-vehicle-col">
+                  <span>{order.driverAssignment?.driverName || order.driverAssignment?.driverId}</span>
+                </div>
+                <div className="drivers-status-col">
+                  <span className="drivers-status-badge drivers-status-badge--warning">
+                    {DELIVERY_FAILURE_REASON_LABELS[order.driverAssignment?.lastFailureReason] || "Delivery attempt failed"}
+                  </span>
+                  {order.driverAssignment?.nextAction ? (
+                    <span>Next: {order.driverAssignment.nextAction.replaceAll("_", " ").toLowerCase()}</span>
+                  ) : null}
+                </div>
+                <div className="drivers-deliveries-col">
+                  <strong>{order.driverAssignment?.attemptCount ?? 0}</strong>
+                </div>
+                <div className="drivers-actions">
+                  <button
+                    className="secondary-action compact"
+                    type="button"
+                    onClick={() => { setFailureModal(order); setFailureActionError(""); setReassignDriverId(""); }}
+                  >
+                    Resolve
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Delivery offer monitoring */}
       <section className="panel drivers-offers-panel">
         <PanelHeader icon={Package} title="Broadcast delivery offers" action={`${deliveryOffers.length} total`} />
@@ -761,6 +884,72 @@ export function AdminDrivers() {
             </p>
           </div>
         </section>
+      )}
+
+      {failureModal && (
+        <div className="drivers-modal-overlay">
+          <div className="drivers-modal">
+            <div className="drivers-modal-head">
+              <strong>Resolve delivery failure — {failureModal.orderId}</strong>
+              <button className="icon-button" type="button" onClick={() => setFailureModal(null)}><X size={16} /></button>
+            </div>
+            <div className="drivers-assign-form">
+              <div className="drivers-context-strip">
+                <strong>Reason</strong>
+                <span>{DELIVERY_FAILURE_REASON_LABELS[failureModal.driverAssignment?.lastFailureReason] || "—"}</span>
+                <span>Attempts so far: {failureModal.driverAssignment?.attemptCount ?? 0}</span>
+                {failureModal.driverAssignment?.retryScheduledAt ? (
+                  <span>Requested retry: {new Date(failureModal.driverAssignment.retryScheduledAt).toLocaleString()}</span>
+                ) : null}
+              </div>
+
+              {failureActionError && <p className="admin-contract-error">{failureActionError}</p>}
+
+              <button
+                className="secondary-action compact full-width"
+                type="button"
+                disabled={retryFailedDeliveryMutation.isPending}
+                onClick={() => retryFailedDeliveryMutation.mutate(failureModal.orderId)}
+              >
+                {retryFailedDeliveryMutation.isPending ? "Retrying…" : "Retry with the same driver"}
+              </button>
+
+              <label className="admin-contract-field">
+                <span>Reassign to a different driver</span>
+                <select value={reassignDriverId} onChange={(e) => setReassignDriverId(e.target.value)}>
+                  <option value="">— select driver —</option>
+                  {drivers.filter((d) => isAssignableDriver(d) && d.id !== failureModal.driverAssignment?.driverId).map((d) => (
+                    <option key={d.id} value={d.id}>{d.name} · {getDriverShopLabel(d)}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="secondary-action compact full-width"
+                type="button"
+                disabled={reassignFailedDeliveryMutation.isPending || !reassignDriverId}
+                onClick={() => reassignFailedDeliveryMutation.mutate({ orderId: failureModal.orderId, driverId: reassignDriverId })}
+              >
+                {reassignFailedDeliveryMutation.isPending ? "Reassigning…" : "Reassign delivery"}
+              </button>
+
+              <p className="drivers-remit-note">
+                Returning to seller ends this driver's attempt and moves the order back to Ready for Delivery.
+              </p>
+              <button
+                className="ghost-action compact full-width"
+                type="button"
+                disabled={returnToSellerMutation.isPending}
+                onClick={() => returnToSellerMutation.mutate(failureModal.orderId)}
+              >
+                {returnToSellerMutation.isPending ? "Returning…" : "Return to seller"}
+              </button>
+
+              <div className="admin-contract-modal-actions">
+                <button className="ghost-action compact" type="button" onClick={() => setFailureModal(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
