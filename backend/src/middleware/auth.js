@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { Shop } from "../models/Shop.js";
+import { User } from "../models/User.js";
 import { seedRepository } from "../repositories/seedRepository.js";
 
 export function authenticate(req, res, next) {
@@ -54,15 +55,34 @@ export function optionalAuth(req, _res, next) {
 
 /**
  * A JWT's `shopId` claim is only ever as trustworthy as whatever produced
- * it. Every seller-scoped route currently authorizes by comparing
- * `record.shopId === req.user.shopId` — a bare claim-equality check with
- * no database confirmation that this specific user is the shop's real
- * owner. This middleware closes that gap: it loads the Shop record the
- * claim points at and verifies the shop's own `ownerId` resolves back to
- * the authenticated user before allowing the request through. Admins are
- * untouched (they legitimately act across all shops via a request-supplied
- * shopId, handled by each route). Attach after `authenticate`/`requireRole`
- * and before the route handler on every seller-scoped route.
+ * it, and can go stale if ownership is ever reassigned or recorded
+ * inconsistently after the token was issued. Every seller-scoped route
+ * needs the shop that's actually, currently, database-recorded as owned
+ * by this authenticated user -- never a bare claim-equality check, and
+ * never anything read from client-supplied input (query/body shopId is
+ * never consulted here for the seller role).
+ *
+ * Resolution order:
+ *   1. Re-read the persisted seller User (Mongo mode only -- seed mode has
+ *      no separate User store to drift from the token, so the JWT claim
+ *      already IS the current value there) to get its current `shopId`,
+ *      falling back to the JWT's own `shopId` claim if that lookup is
+ *      unavailable.
+ *   2. Try to resolve that shopId to a Shop, and accept it only if the
+ *      Shop's own `ownerId` actually matches this authenticated user.
+ *   3. If that fails for any reason (missing shopId, shop doesn't exist,
+ *      shopId points at a shop this user doesn't actually own), fall back
+ *      to the reverse lookup: find whichever Shop is recorded with
+ *      `ownerId` equal to this user. This is what lets a seller through
+ *      safely when User.shopId/the JWT claim is missing or stale, as long
+ *      as a real owned Shop still exists -- rather than hard-failing on a
+ *      data inconsistency that isn't actually an ownership problem.
+ *   4. Only return 403 if neither path resolves an owned Shop.
+ *
+ * Admins are untouched (they legitimately act across all shops via a
+ * request-supplied shopId, handled by each route). Attach after
+ * `authenticate`/`requireRole` and before the route handler on every
+ * seller-scoped route.
  *
  * Deliberate scope decision: this checks OWNERSHIP only, not shop business
  * status. A seller whose shop is Suspended/Terminated/Pending review still
@@ -80,27 +100,39 @@ export function optionalAuth(req, _res, next) {
 export async function requireOwnedShop(req, res, next) {
   if (req.user?.role !== "seller") return next();
 
-  const shopId = req.user.shopId;
-  if (!shopId) {
-    return res.status(403).json({ error: "No shop is associated with this account." });
+  const userId = req.user?.sub != null ? String(req.user.sub) : "";
+  if (!userId) {
+    return res.status(403).json({ error: "Shop ownership could not be verified." });
   }
 
   try {
-    const shop = env.mongoUri
-      ? await Shop.findOne({ id: shopId }).lean()
-      : seedRepository.getShop(shopId);
-
-    if (!shop) {
-      return res.status(403).json({ error: "Shop ownership could not be verified." });
+    async function loadShopById(id) {
+      if (!id) return null;
+      return env.mongoUri ? Shop.findOne({ id }).lean() : seedRepository.getShop(id);
     }
 
-    // ownerId may be a Mongo ObjectId (Mongo mode) or a plain string (seed
-    // mode) on either side of the comparison -- normalize both to strings
-    // rather than relying on ===, which would fail ObjectId-vs-ObjectId
-    // comparisons of equal value and always fail ObjectId-vs-string ones.
-    const ownerId = shop.ownerId != null ? String(shop.ownerId) : "";
-    const userId = req.user.sub != null ? String(req.user.sub) : "";
-    if (!ownerId || !userId || ownerId !== userId) {
+    function isOwnedByUser(shop) {
+      // ownerId may be a Mongo ObjectId (Mongo mode) or a plain string
+      // (seed mode) -- normalize both sides to strings rather than relying
+      // on ===, which would fail ObjectId-vs-ObjectId comparisons of equal
+      // value and always fail ObjectId-vs-string ones.
+      return Boolean(shop) && String(shop.ownerId || "") === userId;
+    }
+
+    let claimedShopId = req.user.shopId || null;
+    if (env.mongoUri) {
+      const user = await User.findById(userId).select("shopId").lean().catch(() => null);
+      if (user?.shopId) claimedShopId = user.shopId;
+    }
+
+    let shop = await loadShopById(claimedShopId);
+    if (!isOwnedByUser(shop)) {
+      shop = env.mongoUri
+        ? await Shop.findOne({ ownerId: userId }).lean().catch(() => null)
+        : seedRepository.getState().shops.find((s) => String(s.ownerId || "") === userId) || null;
+    }
+
+    if (!isOwnedByUser(shop)) {
       return res.status(403).json({ error: "Shop ownership could not be verified." });
     }
 
