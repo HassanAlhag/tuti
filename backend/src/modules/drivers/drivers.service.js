@@ -33,7 +33,7 @@ import {
   listActiveShopIdsForDriver,
   listDriverShopAccessForShop,
   listDriverShopAccessForDriver,
-  listPendingDriverShopAccessRequests,
+  listPendingDriverShopAccessRequests as listRawPendingDriverShopAccessRequests,
   requestDriverShopAccess,
   adminCreateApprovedAccess,
   approveDriverShopAccess,
@@ -57,7 +57,6 @@ export {
   adminCreateApprovedAccess,
   suspendDriverShopAccess as adminSuspendDriverShopAccess,
   revokeDriverShopAccess as adminRevokeDriverShopAccess,
-  listPendingDriverShopAccessRequests,
   listDriverShopAccessForShop,
   listDriverShopAccessForDriver,
   getDriverShopAccessById,
@@ -400,6 +399,7 @@ export async function listSellerDrivers(shopId, { status } = {}) {
       accessId: access.id,
       driverId: access.driverId,
       status: access.status,
+      accessStatus: access.status,
       requestedByType: access.requestedByType,
       approvedAt: access.approvedAt,
       rejectionReason: access.rejectionReason,
@@ -414,6 +414,7 @@ export async function listSellerDrivers(shopId, { status } = {}) {
       vehicleType: driver?.vehicleType || "motorcycle",
       zone: driver?.zone || "",
       isActive: driver?.isActive !== false,
+      driverStatus: driver?.status || "active",
       driverGlobalStatus: driver?.status || "active",
       loginEnabled: driver?.loginEnabled || false,
       codBalance: driver?.codBalance || 0,
@@ -475,7 +476,11 @@ export async function requestExistingDriverForShop(shopId, userId, { driverId })
     e.status = 409;
     throw e;
   }
-  return access;
+  return {
+    ...access,
+    accessStatus: access.status,
+    driverStatus: driver.status || "active",
+  };
 }
 
 /**
@@ -499,7 +504,15 @@ export async function inviteDriverForShop(shopId, shopName, userId, rawPayload) 
   const existingDriver = await findDriverByContact({ phone: driverPayload.phone, email: driverPayload.email });
   if (existingDriver) {
     const access = await requestExistingDriverForShop(safeShopId, userId, { driverId: existingDriver.id });
-    return { linkedExistingDriver: true, driver: existingDriver, access };
+    return {
+      linkedExistingDriver: true,
+      driver: existingDriver,
+      access: {
+        ...access,
+        accessStatus: access.status,
+        driverStatus: existingDriver.status || "active",
+      },
+    };
   }
 
   const resolvedShopName = await resolveShopName(safeShopId, shopName || "");
@@ -558,7 +571,16 @@ export async function inviteDriverForShop(shopId, shopName, userId, rawPayload) 
       requestedByType: "seller",
       requestedByUserId: userId || null,
     });
-    return { linkedExistingDriver: false, driver: tempPassword ? { ...createdDriver, tempPassword } : createdDriver, access, shopName: resolvedShopName };
+    return {
+      linkedExistingDriver: false,
+      driver: tempPassword ? { ...createdDriver, tempPassword } : createdDriver,
+      access: {
+        ...access,
+        accessStatus: access.status,
+        driverStatus: createdDriver.status || "active",
+      },
+      shopName: resolvedShopName,
+    };
   } catch (error) {
     if (env.mongoUri) await Driver.deleteOne({ id: createdDriver.id });
     else seedDrivers.delete(createdDriver.id);
@@ -615,6 +637,34 @@ export async function listShopsConnectedToDriver(driverId) {
 
 export async function listDriversConnectedToShop(shopId) {
   return listSellerDrivers(shopId);
+}
+
+export async function listPendingDriverShopAccessRequests() {
+  const accessRows = await listRawPendingDriverShopAccessRequests();
+  if (!accessRows.length) return [];
+
+  const drivers = await loadDriversByIds(accessRows.map((access) => access.driverId));
+  const driverById = new Map(drivers.map((driver) => [driver.id, driver]));
+  const shopNameById = new Map();
+  for (const shopId of uniqueValues(accessRows.map((access) => access.shopId))) {
+    shopNameById.set(shopId, await resolveShopName(shopId, shopId));
+  }
+
+  return accessRows.map((access) => {
+    const driver = driverById.get(access.driverId);
+    return {
+      ...access,
+      accessId: access.id,
+      accessStatus: access.status,
+      driverStatus: driver?.status || "active",
+      driverName: driver?.name || "(driver record missing)",
+      driverPhone: driver?.phone || "",
+      driverEmail: driver?.email || "",
+      vehicleType: driver?.vehicleType || "",
+      zone: driver?.zone || "",
+      shopName: shopNameById.get(access.shopId) || access.shopId,
+    };
+  });
 }
 
 export async function updateSellerDriver(driverId, shopId, rawPayload) {

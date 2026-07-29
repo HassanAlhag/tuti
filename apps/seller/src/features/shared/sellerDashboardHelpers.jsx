@@ -45,6 +45,11 @@ import { useAuthStore } from "@tuti/shared/store/authStore.js";
 import { GENDER_OPTIONS, SCENT_FAMILIES } from "@tuti/shared/constants";
 import { getAllowedOrderActions } from "@tuti/shared/workflows";
 import {
+  driverStatusTone,
+  formatDriverStatus,
+  isSellerDriverActive,
+} from "./driverAccessViewModel.js";
+import {
   SellerChecklistPanel,
   SellerInsightCard,
   SellerPageHeader,
@@ -211,22 +216,6 @@ function formatSellerOrderStatusLabel(status) {
 
 function formatCaseStatusLabel(status) {
   return String(status || "open").replace(/_/g, " ");
-}
-
-function formatDriverStatus(status) {
-  if (status === "on_delivery") return "On delivery";
-  if (status === "inactive") return "Inactive";
-  return "Active";
-}
-
-function isSellerDriverActive(driver) {
-  return Boolean(driver) && driver.isActive !== false && driver.status !== "inactive";
-}
-
-function driverStatusTone(driver) {
-  if (driver.status === "on_delivery") return "amber";
-  if (driver.status === "inactive" || driver.isActive === false) return "danger";
-  return "success";
 }
 
 function formatDriverVehicle(vehicleType) {

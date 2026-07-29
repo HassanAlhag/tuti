@@ -23,6 +23,7 @@ const {
   listDriverDeliveries,
   recordDriverDelivery,
   retryFailedDelivery,
+  reassignFailedDelivery,
   listDriverShopAccessForShop,
   listDriverShopAccessForDriver,
   assignSellerDriverToOrder,
@@ -38,6 +39,7 @@ const { __resetNotificationsForTests } = await import("../notifications/notifica
 const { seedRepository } = await import("../../repositories/seedRepository.js");
 
 const DRIVER_ID = "drv-001"; // global/unowned in seed fixture -- shared across shops in these tests
+const OTHER_DRIVER_ID = "drv-002";
 const SHOP_A = "shop-rose-vault";
 const SHOP_B = "shop-oud-lane";
 const SELLER_A = { sub: "seller-a", role: "seller", name: "Rose Vault Seller" };
@@ -113,8 +115,26 @@ test("seller cannot see another shop's relationships", async () => {
 test("seller can request an existing driver, and the request starts pending", async () => {
   const access = await requestExistingDriverForShop(SHOP_A, SELLER_A.sub, { driverId: DRIVER_ID });
   assert.equal(access.status, "pending_admin_approval");
+  assert.equal(access.accessStatus, "pending_admin_approval");
+  assert.equal(access.driverStatus, "active");
   assert.equal(access.requestedByType, "seller");
   assert.equal(access.requestedByUserId, SELLER_A.sub);
+  assert.equal(access.approvedByUserId, null);
+  assert.equal(access.approvedAt, null);
+});
+
+test("seller roster separates active and pending shop access from global driver status", async () => {
+  await requestExistingDriverForShop(SHOP_A, SELLER_A.sub, { driverId: DRIVER_ID });
+
+  const activeOnly = await listSellerDrivers(SHOP_A, { status: "active" });
+  assert.equal(activeOnly.length, 0);
+
+  const pendingOnly = await listSellerDrivers(SHOP_A, { status: "pending_admin_approval" });
+  assert.equal(pendingOnly.length, 1);
+  assert.equal(pendingOnly[0].driverId, DRIVER_ID);
+  assert.equal(pendingOnly[0].status, "pending_admin_approval");
+  assert.equal(pendingOnly[0].accessStatus, "pending_admin_approval");
+  assert.equal(pendingOnly[0].driverStatus, "active");
 });
 
 // 5 + 15. seller cannot approve a request / driver is not connectable without admin approval
@@ -134,11 +154,52 @@ test("admin approves a pending request, and the driver becomes assignable", asyn
   const requested = await requestExistingDriverForShop(SHOP_A, SELLER_A.sub, { driverId: DRIVER_ID });
   const approved = await approveDriverShopAccess(requested.id, ADMIN.sub);
   assert.equal(approved.status, "active");
+  assert.equal(approved.accessStatus, "active");
   assert.equal(approved.approvedByUserId, ADMIN.sub);
   assert.ok(approved.approvedAt);
 
   const { access } = await assertDriverEligibleForShop({ driverId: DRIVER_ID, shopId: SHOP_A, action: "assign" });
   assert.equal(access.status, "active");
+});
+
+test("pending driver access cannot be directly assigned or receive broadcasts", async () => {
+  await requestExistingDriverForShop(SHOP_A, SELLER_A.sub, { driverId: DRIVER_ID });
+  seedOrder("ORD-PENDING-ASSIGN-001", SHOP_A);
+  seedOrder("ORD-PENDING-BROADCAST-001", SHOP_A);
+
+  await assert.rejects(
+    () => assignSellerDriverToOrder(DRIVER_ID, "ORD-PENDING-ASSIGN-001", SHOP_A, SELLER_A, {}),
+    (err) => { assert.equal(err.status, 403); return true; }
+  );
+  await assert.rejects(
+    () => createSellerDeliveryOffer(SHOP_A, "Rose Vault", SELLER_A.sub, { orderId: "ORD-PENDING-BROADCAST-001" }),
+    (err) => { assert.equal(err.status, 409); return true; }
+  );
+});
+
+test("pending driver access cannot accept an existing offer or be selected for reassignment", async () => {
+  await __grantActiveAccessForTests(DRIVER_ID, SHOP_A);
+  seedOrder("ORD-PENDING-OFFER-001", SHOP_A);
+  const offer = await createSellerDeliveryOffer(SHOP_A, "Rose Vault", SELLER_A.sub, { orderId: "ORD-PENDING-OFFER-001" });
+  __resetDriverShopAccessForTests();
+  await requestExistingDriverForShop(SHOP_A, SELLER_A.sub, { driverId: DRIVER_ID });
+
+  await assert.rejects(
+    () => acceptDriverOffer(offer.id, DRIVER_ID, { sub: "driver-user", role: "driver", driverId: DRIVER_ID }),
+    (err) => { assert.equal(err.status, 403); return true; }
+  );
+
+  await __grantActiveAccessForTests(OTHER_DRIVER_ID, SHOP_A);
+  seedHeldAssignment("ORD-PENDING-REASSIGN-001", SHOP_A, "delivery_failed");
+  const failedOrder = getSeedOrders().find((item) => item.orderId === "ORD-PENDING-REASSIGN-001");
+  failedOrder.driverAssignment.driverId = OTHER_DRIVER_ID;
+  failedOrder.driverAssignment.lastFailureReason = "CUSTOMER_UNREACHABLE";
+  failedOrder.driverAssignment.attemptCount = 1;
+
+  await assert.rejects(
+    () => reassignFailedDelivery(SHOP_A, "ORD-PENDING-REASSIGN-001", { driverId: DRIVER_ID }, SELLER_A),
+    (err) => { assert.equal(err.status, 403); return true; }
+  );
 });
 
 // 8. rejected driver is not assignable

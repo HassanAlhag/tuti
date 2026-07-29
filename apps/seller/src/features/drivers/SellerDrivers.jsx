@@ -178,7 +178,10 @@ export function SellerDrivers({ seller }) {
   );
   const broadcastableOrders = assignableOrders;
   const activeDrivers = useMemo(() => drivers.filter((driver) => isSellerDriverActive(driver)), [drivers]);
-  const onDeliveryDrivers = useMemo(() => drivers.filter((driver) => driver.status === "on_delivery"), [drivers]);
+  const onDeliveryDrivers = useMemo(
+    () => drivers.filter((driver) => (driver.driverStatus || driver.driverGlobalStatus || driver.status) === "on_delivery"),
+    [drivers]
+  );
   const broadcastZone = String(broadcastForm?.deliveryZone || "").trim();
   const broadcastEligibleDrivers = useMemo(
     () => activeDrivers.filter((driver) => driverMatchesBroadcastZone(driver, broadcastZone)),
@@ -248,7 +251,7 @@ export function SellerDrivers({ seller }) {
     }
     setAssignForm((current) => {
       const next = {
-        driverId: current?.driverId || activeDrivers[0]?.id || "",
+        driverId: current?.driverId || activeDrivers[0]?.driverId || activeDrivers[0]?.id || "",
         orderId: current?.orderId || assignableOrders[0]?.orderId || "",
         force: Boolean(current?.force),
       };
@@ -694,8 +697,13 @@ export function SellerDrivers({ seller }) {
 
                     <div className="sd-driver-status-col">
                       <span className={`sd-driver-status sd-driver-status--${driverTone}`}>
-                        {formatDriverStatus(driver.status)}
+                        {formatDriverStatus(driver.accessStatus || driver.status)}
                       </span>
+                      {driver.driverStatus || driver.driverGlobalStatus ? (
+                        <span className="sd-driver-assignment-empty">
+                          Account {formatDriverStatus(driver.driverStatus || driver.driverGlobalStatus).toLowerCase()}
+                        </span>
+                      ) : null}
                       {activeOrder ? (
                         <span className="sd-driver-assignment-chip">
                           {activeOrder.orderId} · {activeOrder.status}
@@ -1182,11 +1190,14 @@ export function SellerDrivers({ seller }) {
                     disabled={!activeDrivers.length}
                   >
                     <option value="">{activeDrivers.length ? "Select driver" : "No active drivers"}</option>
-                    {activeDrivers.map((driver) => (
-                      <option key={driver.id} value={driver.id}>
+                    {activeDrivers.map((driver) => {
+                      const optionDriverId = driver.driverId || driver.id;
+                      return (
+                      <option key={optionDriverId} value={optionDriverId}>
                         {driver.name} · {formatDriverVehicle(driver.vehicleType)}
                       </option>
-                    ))}
+                    );
+                    })}
                   </select>
                 </label>
                 <label className="sd-field">

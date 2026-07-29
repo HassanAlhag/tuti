@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
   Car,
+  CheckCircle2,
   CircleDollarSign,
   Package,
   Phone,
@@ -19,6 +20,13 @@ import { MetricCard } from "@tuti/shared/components/MetricCard.jsx";
 import { PageTitle } from "@tuti/shared/components/PageTitle.jsx";
 import { PanelHeader } from "@tuti/shared/components/PanelHeader.jsx";
 import { formatCurrency } from "@tuti/shared/utils/money.js";
+import {
+  formatAccessStatus,
+  formatDriverAccountStatus,
+  getPendingApprovalCount,
+  getPendingApprovalKey,
+  isPendingDriverApproval,
+} from "./driverApprovalViewModel.js";
 
 const VEHICLE_ICONS = { motorcycle: Truck, car: Car, van: Truck };
 const STATUS_TONE   = { active: "success", inactive: "warning", on_delivery: "brand" };
@@ -129,11 +137,20 @@ export function AdminDrivers() {
   const [failureModal,       setFailureModal]       = useState(null);
   const [reassignDriverId,   setReassignDriverId]   = useState("");
   const [failureActionError, setFailureActionError] = useState("");
+  const [approvalMessage, setApprovalMessage] = useState("");
+  const [approvalError, setApprovalError] = useState("");
+  const [rejectRequest, setRejectRequest] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // ── Data fetches ─────────────────────────────────────────────────────
   const { data: driversData, isLoading: driversLoading } = useQuery({
     queryKey: ["drivers"],
     queryFn:  () => driversApi.list(),
+  });
+
+  const { data: pendingAccessData, isLoading: pendingAccessLoading } = useQuery({
+    queryKey: ["driver-access-pending"],
+    queryFn:  () => driversApi.listPendingAccess(),
   });
 
   const { data: ordersData } = useQuery({
@@ -147,6 +164,8 @@ export function AdminDrivers() {
   });
 
   const drivers = driversData?.drivers || [];
+  const pendingApprovals = (Array.isArray(pendingAccessData) ? pendingAccessData : []).filter(isPendingDriverApproval);
+  const pendingApprovalCount = getPendingApprovalCount(pendingApprovals);
   const orders  = ordersData?.orders   || [];
   const deliveryOffers = Array.isArray(deliveryOffersData)
     ? deliveryOffersData
@@ -179,7 +198,7 @@ export function AdminDrivers() {
       driver.shopName,
       driver.shopId,
     ].some((value) => normalize(value).includes(normalize(searchTerm)));
-    const matchesStatus = statusFilter === "all" || driverStatus === statusFilter;
+    const matchesStatus = statusFilter === "all" || (statusFilter !== "pending_approvals" && driverStatus === statusFilter);
     const matchesShop = shopFilter === "all" || driverShopKey === shopFilter;
     return matchesSearch && matchesStatus && matchesShop;
   });
@@ -233,6 +252,36 @@ export function AdminDrivers() {
       setAssignError("");
     },
     onError: (err) => setAssignError(err?.message || "Assignment failed."),
+  });
+
+  const approveAccessMutation = useMutation({
+    mutationFn: (accessId) => driversApi.approveAccess(accessId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["driver-access-pending"] });
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+      setApprovalError("");
+      setApprovalMessage("Driver access approved. The driver can now be assigned for that shop.");
+    },
+    onError: (err) => {
+      setApprovalMessage("");
+      setApprovalError(err?.message || "Unable to approve this driver access request.");
+    },
+  });
+
+  const rejectAccessMutation = useMutation({
+    mutationFn: ({ accessId, reason }) => driversApi.rejectAccess(accessId, { reason }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["driver-access-pending"] });
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+      setRejectRequest(null);
+      setRejectReason("");
+      setApprovalError("");
+      setApprovalMessage("Driver access request rejected.");
+    },
+    onError: (err) => {
+      setApprovalMessage("");
+      setApprovalError(err?.message || "Unable to reject this driver access request.");
+    },
   });
 
   function invalidateFailedDeliveryData() {
@@ -312,6 +361,7 @@ export function AdminDrivers() {
         <MetricCard icon={Truck}           label="Total deliveries" value={totalDeliveries}                     note="All time" />
         <MetricCard icon={WalletCards}     label="COD balance"      value={formatCurrency(totalCodBalance)}     note="Pending remittance" />
         <MetricCard icon={Package}         label="Assignable orders" value={assignableOrders.length}            note="Ready or shipped" />
+        <MetricCard icon={CheckCircle2}    label="Pending approvals" value={pendingApprovalCount}               note="Seller driver requests" />
       </section>
 
       {(assignableOrders.length === 0 || activeAssignableDrivers.length === 0) && (
@@ -341,6 +391,7 @@ export function AdminDrivers() {
             <span>Status</span>
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">All statuses</option>
+              <option value="pending_approvals">Pending approvals ({pendingApprovalCount})</option>
               <option value="active">Active</option>
               <option value="on_delivery">On delivery</option>
               <option value="inactive">Inactive</option>
@@ -377,6 +428,141 @@ export function AdminDrivers() {
           </button>
         </div>
       </div>
+
+      <section className="panel drivers-approvals-panel">
+        <PanelHeader icon={CheckCircle2} title="Pending driver approvals" action={`${pendingApprovalCount} pending`} />
+        {approvalMessage ? (
+          <div className="drivers-approval-feedback drivers-approval-feedback--success">
+            <CheckCircle2 size={14} />
+            <span>{approvalMessage}</span>
+          </div>
+        ) : null}
+        {approvalError ? (
+          <div className="drivers-approval-feedback drivers-approval-feedback--error">
+            <AlertTriangle size={14} />
+            <span>{approvalError}</span>
+          </div>
+        ) : null}
+        {pendingAccessLoading ? (
+          <div className="app-status">Loading pending driver approvals…</div>
+        ) : pendingApprovals.length === 0 ? (
+          <EmptyState icon={CheckCircle2} text="No pending driver approvals. Seller requests will appear here before they can assign drivers." />
+        ) : (
+          <div className="drivers-approvals-list">
+            {pendingApprovals.map((request) => {
+              const accessId = getPendingApprovalKey(request);
+              const isSubmitting =
+                (approveAccessMutation.isPending && approveAccessMutation.variables === accessId)
+                || (rejectAccessMutation.isPending && rejectAccessMutation.variables?.accessId === accessId);
+              return (
+                <article className="drivers-approval-card" key={accessId}>
+                  <div className="drivers-approval-driver">
+                    <strong>{request.driverName || request.name || "Driver record missing"}</strong>
+                    <span><Phone size={12} /> {request.driverPhone || request.phone || "No phone"}</span>
+                    {(request.driverEmail || request.email) ? <span>{request.driverEmail || request.email}</span> : null}
+                  </div>
+                  <div className="drivers-approval-shop">
+                    <span className="drivers-shop-badge">{request.shopName || request.shopId}</span>
+                    <small>{request.shopId}</small>
+                  </div>
+                  <div className="drivers-approval-meta">
+                    <span>Requested {formatShortDateTime(request.createdAt)}</span>
+                    <span>Account: {formatDriverAccountStatus(request.driverStatus || request.driverGlobalStatus)}</span>
+                  </div>
+                  <div className="drivers-approval-status">
+                    <span className="drivers-status-badge drivers-status-badge--warning">
+                      Access: {formatAccessStatus(request.accessStatus || request.status)}
+                    </span>
+                  </div>
+                  <div className="drivers-approval-actions">
+                    <button
+                      className="primary-action compact"
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => approveAccessMutation.mutate(accessId)}
+                    >
+                      {approveAccessMutation.isPending && approveAccessMutation.variables === accessId ? "Approving…" : "Approve"}
+                    </button>
+                    <button
+                      className="ghost-action compact"
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        setRejectRequest(request);
+                        setRejectReason("");
+                        setApprovalError("");
+                        setApprovalMessage("");
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {rejectRequest && (
+        <div className="drivers-modal-overlay">
+          <div className="drivers-modal">
+            <div className="drivers-modal-head">
+              <strong>Reject driver access request</strong>
+              <button
+                className="icon-button"
+                type="button"
+                onClick={() => {
+                  setRejectRequest(null);
+                  setRejectReason("");
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="drivers-assign-form">
+              <p className="drivers-remit-note">
+                Reject access for {rejectRequest.driverName || "this driver"} at {rejectRequest.shopName || rejectRequest.shopId}.
+                The seller will need to submit a new request before this driver can work for the shop.
+              </p>
+              <label className="admin-contract-field">
+                <span>Reason (optional)</span>
+                <textarea
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(event) => setRejectReason(event.target.value)}
+                  placeholder="Optional note for the admin record"
+                />
+              </label>
+              {approvalError ? <p className="admin-contract-error">{approvalError}</p> : null}
+              <div className="admin-contract-modal-actions">
+                <button
+                  className="ghost-action compact"
+                  type="button"
+                  disabled={rejectAccessMutation.isPending}
+                  onClick={() => {
+                    setRejectRequest(null);
+                    setRejectReason("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="primary-action compact"
+                  type="button"
+                  disabled={rejectAccessMutation.isPending}
+                  onClick={() => rejectAccessMutation.mutate({
+                    accessId: getPendingApprovalKey(rejectRequest),
+                    reason: rejectReason,
+                  })}
+                >
+                  {rejectAccessMutation.isPending ? "Rejecting…" : "Reject request"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create driver modal */}
       {showCreate && (

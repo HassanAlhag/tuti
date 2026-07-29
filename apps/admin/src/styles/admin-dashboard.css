@@ -6107,6 +6107,93 @@
   justify-content: flex-end;
 }
 
+/* ── Pending driver approvals ───────────────────────────────────── */
+.drivers-approvals-panel {
+  border-color: rgba(184, 138, 46, 0.22);
+}
+
+.drivers-approval-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 var(--sp-4) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.drivers-approval-feedback--success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid rgba(15, 122, 93, 0.2);
+}
+
+.drivers-approval-feedback--error {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid rgba(168, 62, 48, 0.2);
+}
+
+.drivers-approvals-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.drivers-approval-card {
+  display: grid;
+  grid-template-columns:
+    minmax(13rem, 1.35fr)
+    minmax(11rem, 1fr)
+    minmax(13rem, 1.1fr)
+    minmax(10rem, auto)
+    auto;
+  gap: var(--sp-4);
+  align-items: center;
+  padding: var(--sp-4);
+  border-top: 1px solid var(--line-2);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(251, 248, 241, 0.88));
+}
+
+.drivers-approval-card:hover {
+  background: var(--paper);
+}
+
+.drivers-approval-driver,
+.drivers-approval-shop,
+.drivers-approval-meta,
+.drivers-approval-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.drivers-approval-driver strong {
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+}
+
+.drivers-approval-driver span,
+.drivers-approval-meta span,
+.drivers-approval-shop small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.drivers-approval-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
 .drivers-context-strip {
   display: flex;
   flex-wrap: wrap;
@@ -6541,6 +6628,19 @@
       minmax(8rem, 0.95fr)
       minmax(8rem, 1.05fr);
   }
+
+  .drivers-approval-card {
+    grid-template-columns:
+      minmax(11rem, 1.25fr)
+      minmax(9rem, 0.9fr)
+      minmax(10rem, 1fr)
+      minmax(9rem, auto);
+  }
+
+  .drivers-approval-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 780px) {
@@ -6603,6 +6703,19 @@
   .drivers-actions {
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+
+  .drivers-approval-card {
+    grid-template-columns: 1fr;
+    gap: var(--sp-3);
+  }
+
+  .drivers-approval-actions {
+    width: 100%;
+  }
+
+  .drivers-approval-actions button {
+    flex: 1 1 8rem;
   }
 
   .drivers-cod-row {

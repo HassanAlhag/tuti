@@ -21,7 +21,7 @@ Object.defineProperty(globalThis, "window", {
   value: { localStorage: memoryLocalStorage },
 });
 
-const { authApi } = await import("./client.js");
+const { authApi, driversApi } = await import("./client.js");
 const { useAuthStore } = await import("../store/authStore.js");
 
 function jsonResponse(status, body) {
@@ -150,4 +150,22 @@ test("malformed refresh response clears auth safely", async () => {
   assert.equal(useAuthStore.getState().user, null);
   assert.equal(useAuthStore.getState().accessToken, null);
   assert.equal(useAuthStore.getState().refreshToken, null);
+});
+
+test("driversApi uses admin driver-access approval endpoints", async () => {
+  const calls = [];
+  globalThis.fetch = async (url, options = {}) => {
+    calls.push({ url, method: options.method || "GET", body: parseBody(options) });
+    return jsonResponse(200, { data: [] });
+  };
+
+  await driversApi.listPendingAccess();
+  await driversApi.approveAccess("dsa-123", { canReceiveBroadcasts: true });
+  await driversApi.rejectAccess("dsa-456", { reason: "Incomplete documents" });
+
+  assert.deepEqual(calls, [
+    { url: "/api/drivers/access/pending", method: "GET", body: {} },
+    { url: "/api/drivers/access/dsa-123/approve", method: "POST", body: { canReceiveBroadcasts: true } },
+    { url: "/api/drivers/access/dsa-456/reject", method: "POST", body: { reason: "Incomplete documents" } },
+  ]);
 });

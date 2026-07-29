@@ -75,6 +75,7 @@ function normalizeAccessRecord(record) {
     driverId: raw.driverId,
     shopId: raw.shopId,
     status: raw.status,
+    accessStatus: raw.status,
     requestedByType: raw.requestedByType,
     requestedByUserId: raw.requestedByUserId ?? null,
     approvedByUserId: raw.approvedByUserId ?? null,

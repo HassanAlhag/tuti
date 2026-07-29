@@ -277,6 +277,11 @@ export const driversApi = {
   assign:          (driverId, orderId)   => request(`/drivers/${driverId}/assign/${orderId}`, { method: "POST", body: JSON.stringify({}) }),
   recordDelivery:  (driverId, orderId, payload) => request(`/drivers/${driverId}/orders/${orderId}/delivery`, { method: "PATCH", body: JSON.stringify(payload) }),
   remitCod:        (driverId, amount)    => request(`/drivers/${driverId}/cod-remit`, { method: "PATCH", body: JSON.stringify({ amount }) }),
+  listPendingAccess: () => request("/drivers/access/pending"),
+  approveAccess: (accessId, payload = {}) =>
+    request(`/drivers/access/${accessId}/approve`, { method: "POST", body: JSON.stringify(payload) }),
+  rejectAccess: (accessId, payload = {}) =>
+    request(`/drivers/access/${accessId}/reject`, { method: "POST", body: JSON.stringify(payload) }),
   // Delivery-failure resolution (admin)
   retryDelivery:      (orderId)          => request(`/drivers/orders/${orderId}/delivery/retry`, { method: "POST", body: JSON.stringify({}) }),
   reassignDelivery:   (orderId, payload) => request(`/drivers/orders/${orderId}/delivery/reassign`, { method: "POST", body: JSON.stringify(payload) }),

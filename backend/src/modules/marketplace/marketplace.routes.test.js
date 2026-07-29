@@ -9,10 +9,16 @@ process.env.MONGO_URI = "";
 process.env.JWT_SECRET = "marketplace-route-test-secret-at-least-32-chars";
 
 const { marketplaceRouter } = await import("./marketplace.routes.js");
+const { driversRouter } = await import("../drivers/drivers.routes.js");
 const {
   __injectSeedOrderForTests,
   __resetSeedOrdersForTests,
 } = await import("../orders/orders.service.js");
+const {
+  __resetSeedDriversForTests,
+  __resetDriverShopAccessForTests,
+} = await import("../drivers/drivers.service.js");
+const { DEMO_SELLER_USER_ID } = await import("../../seed/marketplace.seed.js");
 const { seedRepository } = await import("../../repositories/seedRepository.js");
 
 const REVIEW_PRODUCT_ID = "prf-001";
@@ -33,6 +39,8 @@ function resetState() {
   state.products = initialProducts.map((product) => structuredClone(product));
   state.reviews = initialReviews.map((review) => structuredClone(review));
   __resetSeedOrdersForTests();
+  __resetSeedDriversForTests();
+  __resetDriverShopAccessForTests();
 }
 
 function injectDeliveredOrder(customerId = CUSTOMER_ID) {
@@ -67,6 +75,7 @@ before(async () => {
   const app = express();
   app.use(express.json());
   app.use("/api/marketplace", marketplaceRouter);
+  app.use("/api/drivers", driversRouter);
   app.use((error, _req, res, _next) => {
     res.status(error.status || 500).json({ error: error.message || "Unexpected server error." });
   });
@@ -77,6 +86,40 @@ before(async () => {
   baseUrl = `http://127.0.0.1:${port}`;
 });
 
+async function postSellerDriverRequest(body, user = null) {
+  const headers = { "Content-Type": "application/json" };
+  if (user) headers.Authorization = `Bearer ${tokenFor(user)}`;
+
+  const response = await fetch(`${baseUrl}/api/marketplace/seller/drivers/request-existing`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
+async function getSellerDrivers(user) {
+  const response = await fetch(`${baseUrl}/api/marketplace/seller/drivers`, {
+    headers: { Authorization: `Bearer ${tokenFor(user)}` },
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
+async function postDriverAccess(path, user, body = {}) {
+  const response = await fetch(`${baseUrl}/api/drivers${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${tokenFor(user)}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
 after(async () => {
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
@@ -84,6 +127,41 @@ after(async () => {
 });
 
 beforeEach(resetState);
+
+test("seller driver request route separates global driverStatus from shop accessStatus", async () => {
+  const seller = { sub: DEMO_SELLER_USER_ID, role: "seller", shopId: "shop-oud-lane", name: "Demo Seller" };
+
+  const requested = await postSellerDriverRequest({ driverId: "drv-001", status: "active" }, seller);
+  assert.equal(requested.response.status, 201);
+  assert.equal(requested.payload.data.status, "pending_admin_approval");
+  assert.equal(requested.payload.data.accessStatus, "pending_admin_approval");
+  assert.equal(requested.payload.data.driverStatus, "active");
+  assert.equal(requested.payload.data.approvedByUserId, null);
+  assert.equal(requested.payload.data.approvedAt, null);
+
+  const roster = await getSellerDrivers(seller);
+  assert.equal(roster.response.status, 200);
+  const row = roster.payload.data.find((driver) => driver.driverId === "drv-001");
+  assert.ok(row);
+  assert.equal(row.status, "pending_admin_approval");
+  assert.equal(row.accessStatus, "pending_admin_approval");
+  assert.equal(row.driverStatus, "active");
+});
+
+test("driver access approval route is admin-only and returns active accessStatus after approval", async () => {
+  const seller = { sub: DEMO_SELLER_USER_ID, role: "seller", shopId: "shop-oud-lane", name: "Demo Seller" };
+  const admin = { sub: "admin-route-001", role: "admin", name: "Admin User" };
+  const requested = await postSellerDriverRequest({ driverId: "drv-001" }, seller);
+  assert.equal(requested.response.status, 201);
+
+  const sellerApproval = await postDriverAccess(`/access/${requested.payload.data.id}/approve`, seller, {});
+  assert.equal(sellerApproval.response.status, 403);
+
+  const adminApproval = await postDriverAccess(`/access/${requested.payload.data.id}/approve`, admin, {});
+  assert.equal(adminApproval.response.status, 200);
+  assert.equal(adminApproval.payload.data.status, "active");
+  assert.equal(adminApproval.payload.data.accessStatus, "active");
+});
 
 test("marketplace review route keeps guest reviews unverified even when verified is supplied", async () => {
   injectDeliveredOrder();

@@ -247,11 +247,18 @@ test("driver access admin routes: admin can list pending, approve, reject, and r
 
   const pending = await getDriverRoute("/access/pending", adminUser());
   assert.equal(pending.response.status, 200);
-  assert.ok(pending.payload.data.some((row) => row.id === requested.id));
+  const pendingRow = pending.payload.data.find((row) => row.id === requested.id);
+  assert.ok(pendingRow);
+  assert.equal(pendingRow.accessId, requested.id);
+  assert.equal(pendingRow.accessStatus, "pending_admin_approval");
+  assert.equal(pendingRow.driverStatus, "active");
+  assert.equal(pendingRow.driverName, "Khalid Bin Hamdan");
+  assert.equal(pendingRow.shopName, "Rose Vault");
 
   const approve = await postDriverRoute(`/access/${requested.id}/approve`, adminUser(), { canReceiveBroadcasts: true });
   assert.equal(approve.response.status, 200);
   assert.equal(approve.payload.data.status, "active");
+  assert.equal(approve.payload.data.accessStatus, "active");
 
   const shops = await getDriverRoute(`/${DRIVER_ID}/shops`, adminUser());
   assert.equal(shops.response.status, 200);
