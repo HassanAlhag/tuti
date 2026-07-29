@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuthStore }    from "@tuti/shared/store/authStore.js";
 import { useIdleTimeout }  from "@tuti/shared/hooks/useIdleTimeout.js";
 import { marketplaceApi, sellerBrandProfileApi } from "@tuti/shared/api/client.js";
+import { classifyLoadError } from "./features/shell/loadErrorClassifier.js";
 import { SellerLayout }    from "./features/shell/SellerLayout.jsx";
 import { SellerLogin }     from "./features/auth/SellerLogin.jsx";
 import {
@@ -60,6 +61,7 @@ export default function App() {
   const [brandProfile,  setBrandProfile]  = useState(null);
   const [loading,       setLoading]       = useState(true);
   const [loadError,     setLoadError]     = useState("");
+  const [loadErrorKind, setLoadErrorKind] = useState("network");
   const [newProduct,    setNewProduct]    = useState(DEFAULT_PRODUCT);
   const [uploadNote,    setUploadNote]    = useState("");
   const [deepLinkTarget, setDeepLinkTarget] = useState({ orderId: "", productId: "", notice: "" });
@@ -98,7 +100,11 @@ export default function App() {
           setSection("onboarding");
         }
       })
-      .catch((e)    => { if (mounted) setLoadError(e.message); })
+      .catch((e) => {
+        if (!mounted) return;
+        setLoadError(e.message);
+        setLoadErrorKind(classifyLoadError(e));
+      })
       .finally(()   => { if (mounted) setLoading(false); });
 
     function onPopState() {
@@ -175,6 +181,24 @@ export default function App() {
   }
 
   if (loading) return <div className="sd-loading" style={{ minHeight: "100vh" }}>Loading…</div>;
+
+  // A 401 here means the access token was rejected AND the refresh attempt
+  // (see packages/shared/api/client.js) also failed to restore a session --
+  // that's an unauthenticated state, not a connection or ownership problem,
+  // so route it back to login exactly like the canAccess gate above.
+  if (loadError && loadErrorKind === "unauthenticated") {
+    return <SellerLogin idleExpired={idleExpired} onResume={() => setIdleExpired(false)} />;
+  }
+
+  if (loadError && loadErrorKind === "ownership") return (
+    <div className="sd-loading" style={{ minHeight: "100vh", color: "var(--danger)" }}>
+      <strong>Shop not found</strong> — {loadError}
+      <p style={{ marginTop: "0.5rem", fontWeight: 400 }}>
+        Your account signed in successfully, but we couldn't verify a shop linked to it. Contact support if this seems wrong.
+      </p>
+    </div>
+  );
+
   if (loadError) return (
     <div className="sd-loading" style={{ minHeight: "100vh", color: "var(--danger)" }}>
       <strong>Cannot connect</strong> — {loadError}
