@@ -6,6 +6,15 @@ const driverSchema = new mongoose.Schema(
     name:              { type: String, required: true, trim: true },
     phone:             { type: String, required: true },
     email:             { type: String, default: "", lowercase: true, trim: true },
+    // Digits-only phone / lowercased email, computed at write time --
+    // exact-match dedup lookups (shared/normalizeContact.js) query these
+    // instead of doing a fuzzy scan over the raw, inconsistently-formatted
+    // `phone`/`email` fields. See modules/drivers/driverDirectory.js.
+    normalizedPhone:   { type: String, default: "", index: true },
+    normalizedEmail:   { type: String, default: "", index: true },
+    // Legacy single-shop ownership -- kept only for migration
+    // compatibility (see tools/migrateDriverShopAccess.js). New
+    // authorization code must never read this; use DriverShopAccess.
     shopId:            { type: String, default: null, index: true },
     shopName:          { type: String, default: "" },
     createdBySellerUserId: { type: String, default: null },
